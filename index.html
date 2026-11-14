@@ -4218,7 +4218,7 @@ function handlePlayerAction(unit, action, resolve){
     if (enemies.length === 1){
       performAttack(unit, enemies[0], 1.0, 'phys', resolve);
     } else {
-      showTargetSelect(enemies, (target) => {
+      showTargetSelect(enemies, resolve, (target) => {
         performAttack(unit, target, 1.0, 'phys', resolve);
       });
     }
@@ -4254,7 +4254,7 @@ function handlePlayerAction(unit, action, resolve){
   }
 }
 
-function showTargetSelect(enemies, onSelect){
+function showTargetSelect(enemies, resolve, onSelect){
   const actions = $('battleActions');
   actions.innerHTML = '';
   
@@ -4265,7 +4265,7 @@ function showTargetSelect(enemies, onSelect){
     actions.innerHTML = '';
     // 重新进入玩家回合
     if (typeof playerTurn === 'function'){
-      playerTurn(battle.units.find(u => u.isPlayer)).then(() => {});
+      playerTurn(battle.units.find(u => u.isPlayer)).then(resolve);
     }
   });
   actions.appendChild(back);
@@ -4323,7 +4323,7 @@ function showSkillMenu(unit, resolve){
             applySkill(unit, sk, enemies[0]);
             resolve();
           } else {
-            showTargetSelect(enemies, (t) => {
+            showTargetSelect(enemies, resolve, (t) => {
               unit.mp -= sk.mp;
               applySkill(unit, sk, t);
               resolve();
