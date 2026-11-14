@@ -3247,7 +3247,22 @@ function renderPlayer(vw, vh){
 }
 
 /* ================= 更新场景标题 ================= */
+function syncLocationState(){
+  const scene = getSceneAt(P.x, P.y);
+  if (isTown(P.x, P.y)){
+    P.scene = '长安城';
+    P.subScene = Math.hypot(P.x, P.y) < 4.5 ? '中心广场' : '长安城';
+  } else if (scene){
+    P.scene = scene.name;
+    P.subScene = scene.desc;
+  } else {
+    P.scene = '荒野';
+    P.subScene = '荒野过渡区';
+  }
+}
+
 function updateSceneTitle(){
+  syncLocationState();
   const scene = getSceneAt(P.x, P.y);
   const titleEl = $('sceneTitle');
   
