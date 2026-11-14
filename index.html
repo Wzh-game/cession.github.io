@@ -149,12 +149,9 @@ html,body{
   cursor:pointer;
 }
 #portrait svg{width:100%;height:100%;display:block}
-#portrait img{
-  width:100%;height:100%;display:none;
-  object-fit:cover;
-}
-#portrait.avatar-frog svg{display:none}
-#portrait.avatar-frog img{display:block}
+#portrait .frog-svg{display:none}
+#portrait.avatar-frog .original-svg{display:none}
+#portrait.avatar-frog .frog-svg{display:block}
 #portrait::after{
   content:'';position:absolute;left:0;right:0;bottom:0;height:3px;
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
@@ -478,13 +475,9 @@ html,body{
   transition:left .12s linear,top .12s linear;
 }
 #player svg{width:100%;height:100%;display:block}
-#player img{
-  width:100%;height:100%;display:none;
-  object-fit:cover;
-  image-rendering:auto;
-}
-#player.avatar-frog svg{display:none}
-#player.avatar-frog img{display:block}
+#player .frog-svg{display:none}
+#player.avatar-frog .original-svg{display:none}
+#player.avatar-frog .frog-svg{display:block}
 #player.walking{
   animation:playerWalk .35s steps(2) infinite;
 }
@@ -1532,7 +1525,7 @@ button{
   <!-- ============ 顶部状态栏 ============ -->
   <header id="topbar">
     <div id="portrait" title="点击更换人物形象">
-      <svg viewBox="0 0 16 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <svg class="original-svg" viewBox="0 0 16 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
         <!-- 头发 -->
         <rect x="4" y="0" width="8" height="2" fill="#2a1620"/>
         <rect x="3" y="2" width="1" height="4" fill="#2a1620"/>
@@ -1574,7 +1567,23 @@ button{
         <rect x="4" y="13" width="1" height="1" fill="#c8a860"/>
         <rect x="11" y="13" width="1" height="1" fill="#c8a860"/>
       </svg>
-      <img src="assets/frog-avatar.jpg" alt="青蛙人物形象">
+      <svg class="frog-svg" viewBox="0 0 16 18" shape-rendering="crispEdges" role="img" aria-label="青蛙人物形象" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="0" width="4" height="2" fill="#28751e"/>
+        <rect x="9" y="0" width="4" height="2" fill="#28751e"/>
+        <rect x="2" y="2" width="12" height="3" fill="#3d9d20"/>
+        <rect x="1" y="5" width="14" height="7" fill="#67d51e"/>
+        <rect x="2" y="12" width="12" height="4" fill="#4ab51c"/>
+        <rect x="4" y="16" width="3" height="2" fill="#f28a08"/>
+        <rect x="9" y="16" width="3" height="2" fill="#f28a08"/>
+        <rect x="3" y="4" width="4" height="4" fill="#dbe8e8"/>
+        <rect x="9" y="4" width="4" height="4" fill="#dbe8e8"/>
+        <rect x="4" y="5" width="2" height="3" fill="#000"/>
+        <rect x="10" y="5" width="2" height="3" fill="#000"/>
+        <rect x="6" y="8" width="4" height="2" fill="#ffb20b"/>
+        <rect x="7" y="10" width="2" height="1" fill="#d86e08"/>
+        <rect x="4" y="12" width="2" height="1" fill="#75e62b"/>
+        <rect x="10" y="12" width="2" height="1" fill="#75e62b"/>
+      </svg>
     </div>
     
     <div class="info-mid">
@@ -2271,6 +2280,26 @@ function setAvatar(avatar){
   toast(P.avatar === 'frog' ? '🐸 已换上青蛙形象' : '🧝 已换回原本形象');
 }
 
+function frogAvatarSvg(){
+  return `<svg class="frog-svg" viewBox="0 0 16 18" shape-rendering="crispEdges" role="img" aria-label="青蛙人物形象" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="0" width="4" height="2" fill="#28751e"/>
+    <rect x="9" y="0" width="4" height="2" fill="#28751e"/>
+    <rect x="2" y="2" width="12" height="3" fill="#3d9d20"/>
+    <rect x="1" y="5" width="14" height="7" fill="#67d51e"/>
+    <rect x="2" y="12" width="12" height="4" fill="#4ab51c"/>
+    <rect x="4" y="16" width="3" height="2" fill="#f28a08"/>
+    <rect x="9" y="16" width="3" height="2" fill="#f28a08"/>
+    <rect x="3" y="4" width="4" height="4" fill="#dbe8e8"/>
+    <rect x="9" y="4" width="4" height="4" fill="#dbe8e8"/>
+    <rect x="4" y="5" width="2" height="3" fill="#000"/>
+    <rect x="10" y="5" width="2" height="3" fill="#000"/>
+    <rect x="6" y="8" width="4" height="2" fill="#ffb20b"/>
+    <rect x="7" y="10" width="2" height="1" fill="#d86e08"/>
+    <rect x="4" y="12" width="2" height="1" fill="#75e62b"/>
+    <rect x="10" y="12" width="2" height="1" fill="#75e62b"/>
+  </svg>`;
+}
+
 function renderAvatarPanel(){
   const body = $('avatarBody');
   if (!body) return;
@@ -2283,7 +2312,7 @@ function renderAvatarPanel(){
         <span class="avatar-choice-name">原本形象</span>
       </button>
       <button class="avatar-choice ${P.avatar === 'frog' ? 'selected' : ''}" data-avatar="frog">
-        <span class="avatar-preview"><img src="assets/frog-avatar.jpg" alt="青蛙人物形象"></span>
+        <span class="avatar-preview">${frogAvatarSvg()}</span>
         <span class="avatar-choice-name">青蛙形象</span>
       </button>
     </div>
@@ -3160,7 +3189,7 @@ function renderPlayer(vw, vh){
     pEl = document.createElement('div');
     pEl.id = 'player';
     pEl.innerHTML = `
-      <svg viewBox="0 0 16 20" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <svg class="original-svg" viewBox="0 0 16 20" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
         <!-- 阴影由::after处理 -->
         <!-- 头发 -->
         <rect x="4" y="0" width="8" height="2" fill="#2a1620"/>
@@ -3207,7 +3236,7 @@ function renderPlayer(vw, vh){
         <rect x="3" y="19" width="4" height="1" fill="#2a1a10"/>
         <rect x="9" y="19" width="4" height="1" fill="#2a1a10"/>
       </svg>
-      <img src="assets/frog-avatar.jpg" alt="青蛙人物形象">
+      ${frogAvatarSvg()}
     `;
     stage.appendChild(pEl);
   }
