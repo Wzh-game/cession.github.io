@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>梦幻西游 · 单机版</title>
+<title>梦幻西游 · 1.1 单机版</title>
 <style>
 /* ============================================================
    梦幻西游 · Q版像素单机  —— 第 1 批
@@ -1517,6 +1517,31 @@ button{
 @media (min-aspect-ratio:2/1){
   #game{width:100vw;max-width:100vw;}
 }
+
+/* 1.1 多邻宗战斗快捷技能：固定在战斗界面右下角 */
+#battleOverlay.has-duo #battleActions{padding-right:min(190px,42vw);}
+.duo-skill-dock{
+  position:absolute;right:10px;bottom:10px;z-index:240;
+  width:min(184px,40vw);display:grid;grid-template-columns:1fr;gap:7px;
+}
+.duo-skill-dock[hidden]{display:none!important;}
+.duo-skill-btn{
+  min-height:48px;padding:7px 8px;border:2px solid #426b32;border-radius:8px;
+  color:#f4ffe9;font-family:inherit;font-weight:bold;
+  background:linear-gradient(180deg,#6dbb58,#2d7138);
+  box-shadow:0 3px 0 #163b20, inset 0 1px 0 rgba(255,255,255,.35);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  text-shadow:0 1px 2px #183018;touch-action:manipulation;
+}
+.duo-skill-btn.music{background:linear-gradient(180deg,#548bd0,#294c91);border-color:#284477;box-shadow:0 3px 0 #14264c,inset 0 1px 0 rgba(255,255,255,.35);}
+.duo-skill-btn small{font-size:9px;font-weight:normal;color:#e3f5d8;}
+.duo-skill-btn:disabled{opacity:.42;filter:grayscale(.7);}
+@media(max-width:520px){
+  #battleOverlay.has-duo #battleActions{padding-right:142px;}
+  .duo-skill-dock{right:6px;bottom:6px;width:132px;gap:5px;}
+  .duo-skill-btn{min-height:43px;padding:5px 4px;font-size:10px;}
+  .duo-skill-btn small{font-size:8px;}
+}
 </style>
 </head>
 <body>
@@ -1896,6 +1921,78 @@ const SECTS = [
       { id:'hou2', name:'狮搏',     lv:5, mp:16, type:'phys',  power:2.5, target:'single', desc:'猛扑撕咬，250%物理伤害' },
       { id:'kuang',name:'狂兽咆哮', lv:10,mp:30, type:'phys',  power:1.55,target:'all',    desc:'对敌方全体造成155%物理伤害' },
       { id:'xue',  name:'血战八方', lv:20,mp:48, type:'phys',  power:2.2, target:'all',    desc:'狂暴绞杀，对全体造成220%物理伤害' },
+    ]
+  },
+,
+  {
+    id:'nver', name:'女儿村', icon:'🌺', color:'#e080b0',
+    desc:'灵巧迅捷，擅长迷香与持续压制。',
+    longDesc:'女儿村弟子身法轻灵，以花香迷阵扰乱敌人，兼具速度与控制。',
+    base:{hp:125,mp:60,atk:16,def:10,spd:19,magic:15},
+    grow:{hp:15,mp:6,atk:3.0,def:1.7,spd:1.8,magic:2.5},
+    skills:[
+      {id:'nvhua',name:'花舞刃',lv:1,mp:8,type:'phys',power:1.7,target:'single',desc:'迅捷出手，造成170%物理伤害'},
+      {id:'mihun',name:'迷魂香',lv:5,mp:18,type:'debuff',power:0,target:'single',desc:'迷乱目标，使其无法行动2回合'},
+      {id:'luoying',name:'落英缤纷',lv:10,mp:30,type:'magic',power:1.55,target:'all',desc:'花瓣化刃，对敌方全体造成155%法术伤害'}
+    ]
+  },
+  {
+    id:'wuzhuang', name:'五庄观', icon:'☯️', color:'#70b890',
+    desc:'道法自然，攻守平衡，兼具恢复能力。',
+    longDesc:'五庄观弟子参悟天地大道，以袖里乾坤制敌，以清风拂面调息。',
+    base:{hp:145,mp:58,atk:17,def:14,spd:12,magic:16},
+    grow:{hp:18,mp:5,atk:3.0,def:2.4,spd:1.0,magic:2.8},
+    skills:[
+      {id:'zhenyuan',name:'镇元诀',lv:1,mp:10,type:'magic',power:1.8,target:'single',desc:'凝聚道力，造成180%法术伤害'},
+      {id:'qingfeng',name:'清风拂面',lv:5,mp:20,type:'heal',power:2.4,target:'self',desc:'恢复自身气血'},
+      {id:'xiuli',name:'袖里乾坤',lv:10,mp:34,type:'magic',power:1.8,target:'all',desc:'乾坤之力席卷敌方全体'}
+    ]
+  },
+  {
+    id:'difu', name:'阴曹地府', icon:'💀', color:'#9b83c8',
+    desc:'幽冥术法，诅咒削弱，擅长持续作战。',
+    longDesc:'阴曹地府弟子行走幽冥，借九幽之力削弱对手，并以冥火追魂。',
+    base:{hp:138,mp:62,atk:15,def:13,spd:13,magic:19},
+    grow:{hp:17,mp:6,atk:2.7,def:2.2,spd:1.0,magic:3.4},
+    skills:[
+      {id:'minghuo',name:'幽冥鬼火',lv:1,mp:10,type:'magic',power:2.0,target:'single',desc:'释放幽冥鬼火，造成200%法术伤害'},
+      {id:'suo',name:'拘魂锁',lv:5,mp:18,type:'debuff',power:0,target:'single',desc:'拘束目标，使其无法行动2回合'},
+      {id:'jiuyou',name:'九幽冥风',lv:10,mp:32,type:'magic',power:1.65,target:'all',desc:'冥风席卷敌方全体'}
+    ]
+  },
+  {
+    id:'mowang', name:'魔王寨', icon:'🔥', color:'#e07840',
+    desc:'烈焰法术，爆发强劲，擅长群体输出。',
+    longDesc:'魔王寨弟子驾驭地脉真火，以烈焰焚敌，群体法术威力惊人。',
+    base:{hp:132,mp:68,atk:14,def:10,spd:12,magic:21},
+    grow:{hp:16,mp:7,atk:2.5,def:1.8,spd:1.0,magic:4.0},
+    skills:[
+      {id:'huoqiu',name:'三昧火',lv:1,mp:10,type:'magic',power:2.05,target:'single',desc:'三昧真火灼烧目标，造成205%法术伤害'},
+      {id:'yanwu',name:'烈焰风暴',lv:5,mp:22,type:'magic',power:1.5,target:'all',desc:'烈焰风暴攻击敌方全体'},
+      {id:'dihuo',name:'地火燎原',lv:10,mp:38,type:'magic',power:2.0,target:'all',desc:'地脉火焰吞没敌方全体'}
+    ]
+  },
+  {
+    id:'huasheng', name:'化生寺', icon:'📿', color:'#d6bd75',
+    desc:'慈悲济世，恢复与守护能力出众。',
+    longDesc:'化生寺弟子修持佛法，以佛光护体、禅音疗伤，擅长稳固战线。',
+    base:{hp:158,mp:64,atk:13,def:15,spd:9,magic:18},
+    grow:{hp:21,mp:7,atk:2.2,def:2.8,spd:0.7,magic:3.2},
+    skills:[
+      {id:'foyin',name:'佛音震心',lv:1,mp:9,type:'magic',power:1.65,target:'single',desc:'佛音化为冲击，造成165%法术伤害'},
+      {id:'chunyang',name:'春风化雨',lv:5,mp:20,type:'heal',power:3.0,target:'self',desc:'春风化雨，恢复自身气血'},
+      {id:'foguang',name:'佛光护佑',lv:10,mp:34,type:'heal',power:4.5,target:'self',desc:'佛光普照，大幅恢复自身气血'}
+    ]
+  },
+  {
+    id:'duolingo', name:'多邻宗', icon:'🦉', color:'#78c96b',
+    desc:'以语言为法、以节奏为阵，控制与增益兼备。',
+    longDesc:'多邻宗弟子研习万国语言与灵韵乐章。以【学英语】打断敌方行动，再以【音乐】唤起节奏共鸣。专属快捷技能会在战斗时出现在右下角。',
+    base:{hp:128,mp:78,atk:14,def:11,spd:16,magic:20},
+    grow:{hp:16,mp:9,atk:2.5,def:1.8,spd:1.3,magic:3.6},
+    skills:[
+      {id:'duo_english',name:'学英语',lv:1,mp:8,type:'debuff',power:0,target:'single',desc:'喊出英语咒语“Study English!”令一名敌人硬控1回合，跳过其行动'},
+      {id:'duo_music',name:'音乐共鸣',lv:5,mp:20,type:'magic',power:1.35,target:'all',desc:'奏响灵韵乐章，对敌方全体造成135%法术伤害，并使自身后续2回合伤害提升25%'}
     ]
   },
 ];
@@ -3898,6 +3995,7 @@ const battle = {
   scene: null,
   loopRunning: false,
   token: 0,
+  musicBuffUntilRound: 0,
 };
 
 /* 创建战斗界面 DOM */
@@ -3915,6 +4013,7 @@ function createBattleUI(){
       <div class="result-banner" id="resultBanner"></div>
     </div>
     <div id="battleActions"></div>
+    <div id="duoSkillDock" class="duo-skill-dock" hidden></div>
   `;
   document.getElementById('stage').appendChild(overlay);
   battle.overlay = overlay;
@@ -3940,7 +4039,8 @@ function calcDamage(attacker, defender, power, type){
   // 防御减免系数（物理被防御更多减免）
   const defFactor = (type === 'magic') ? 0.4 : 0.7;
   
-  const base = atkStat * power * (0.9 + Math.random() * 0.2);
+  const musicBoost = attacker.isPlayer && battle.round <= battle.musicBuffUntilRound ? 1.25 : 1;
+  const base = atkStat * power * (0.9 + Math.random() * 0.2) * musicBoost;
   const reduction = defender.def * defFactor;
   let dmg = Math.max(1, base - reduction);
   
@@ -4025,6 +4125,7 @@ function battlePrepare(mobs){
   battle.victory = false;
   battle.fled = false;
   battle.round = 0;
+  battle.musicBuffUntilRound = 0;
   battle.loopRunning = false;
   battle.token++;
   const battleToken = battle.token;
@@ -4082,6 +4183,7 @@ function battlePrepare(mobs){
   battle.units = units;
   
   // 显示战斗界面
+  overlay.classList.toggle('has-duo', P.sect === 'duolingo');
   overlay.classList.remove('fading');
   overlay.classList.add('show');
   $('battleLog').innerHTML = '';
@@ -4185,7 +4287,12 @@ function playerTurn(unit){
     }
     const actions = $('battleActions');
     actions.innerHTML = '';
-    
+    const duoDock = $('duoSkillDock');
+    if (duoDock){
+      duoDock.hidden = P.sect !== 'duolingo';
+      duoDock.innerHTML = '';
+    }
+
     // 主菜单：攻击 / 技能 / 防御 / 逃跑 / 物品
     const mainMenu = [
       { key:'attack',  name:'普通攻击', icon:'⚔️', cls:'basic' },
@@ -4202,11 +4309,84 @@ function playerTurn(unit){
       btn.innerHTML = `<span class="bs-name">${m.icon} ${m.name}</span>`;
       btn.addEventListener('click', () => {
         actions.innerHTML = '';
+        if (duoDock) duoDock.hidden = true;
         handlePlayerAction(unit, m.key, resolve);
       });
       actions.appendChild(btn);
     });
+
+    // 多邻宗专属的两个战斗快捷键：只在玩家行动阶段出现。
+    if (duoDock && P.sect === 'duolingo'){
+      const english = document.createElement('button');
+      english.className = 'duo-skill-btn';
+      english.innerHTML = '<span>📚 学英语</span><small>硬控敌人 1 回合 · 8 法力</small>';
+      english.disabled = unit.mp < 8;
+      english.addEventListener('click', () => {
+        duoDock.hidden = true;
+        actions.innerHTML = '';
+        useDuolingoShortcut(unit, 'english', resolve);
+      });
+
+      const music = document.createElement('button');
+      music.className = 'duo-skill-btn music';
+      music.innerHTML = '<span>🎵 音乐共鸣</span><small>Lv.5 解锁 · 20 法力</small>';
+      music.disabled = P.lv < 5 || unit.mp < 20;
+      music.addEventListener('click', () => {
+        duoDock.hidden = true;
+        actions.innerHTML = '';
+        useDuolingoShortcut(unit, 'music', resolve);
+      });
+      duoDock.append(english, music);
+    }
   });
+}
+
+
+/* 多邻宗快捷技能 */
+function useDuolingoShortcut(unit, skill, resolve){
+  if (!battle.active || battle.over || !unit || !unit.alive) { resolve(); return; }
+
+  if (skill === 'english'){
+    if (unit.mp < 8){ blog('法力不足，无法施展【学英语】。','bad'); resolve(); return; }
+    const enemies = battle.units.filter(u => u.alive && u.isEnemy);
+    if (!enemies.length){ resolve(); return; }
+    const cast = target => {
+      if (!target || !target.alive){ resolve(); return; }
+      unit.mp -= 8;
+      if (unit.isPlayer) P.mp = unit.mp;
+      // stun=1：目标下一次行动时跳过本回合，随后自动解除。
+      target.stun = Math.max(target.stun || 0, 1);
+      blog(`📚 <b>${unit.name}</b> 大喊 “Study English!” 施展【学英语】，<b>${target.name}</b> 被硬控 1 回合！`,'warn');
+      showDamageFloat(target.id,'STUN','crit');
+      renderBattleUnits();
+      updateHUD();
+      setTimeout(resolve,450);
+    };
+    if (enemies.length === 1) cast(enemies[0]);
+    else showTargetSelect(enemies,resolve,cast);
+    return;
+  }
+
+  if (skill === 'music'){
+    if (P.lv < 5){ blog('【音乐共鸣】需要达到 Lv.5。','dim'); resolve(); return; }
+    if (unit.mp < 20){ blog('法力不足，无法奏响【音乐共鸣】。','bad'); resolve(); return; }
+    unit.mp -= 20;
+    if (unit.isPlayer) P.mp = unit.mp;
+    const enemies = battle.units.filter(u => u.alive && u.isEnemy);
+    enemies.forEach(target => {
+      const result = calcDamage(unit,target,1.35,'magic');
+      target.hp = Math.max(0,target.hp-result.dmg);
+      if (target.hp <= 0) target.alive = false;
+      shakeUnit(target.id);
+      showDamageFloat(target.id,`-${result.dmg}`,result.crit?'crit':'');
+      blog(`🎵 【音乐共鸣】的音浪击中 <b>${target.name}</b>，造成 <b>${result.dmg}</b> 点法术伤害。`,'good');
+    });
+    battle.musicBuffUntilRound = battle.round + 2;
+    blog('🎼 灵韵节拍回荡：接下来 2 回合造成的伤害提高 25%！','good');
+    renderBattleUnits();
+    updateHUD();
+    setTimeout(resolve,500);
+  }
 }
 
 function handlePlayerAction(unit, action, resolve){
@@ -4605,6 +4785,8 @@ function finishBattle(result){
     P.pet.hp = Math.max(1, Math.floor(P.pet.maxHp * 0.2));
   }
   
+  const duoDock = $('duoSkillDock');
+  if (duoDock) duoDock.hidden = true;
   const banner = $('resultBanner');
   banner.innerHTML = '';
   
