@@ -3184,6 +3184,43 @@ function isWalkable(x, y){
   return getTile(x, y) !== 'water';
 }
 
+/* ================= 区域中心 Boss =================
+   每个场景中心固定生成一只专属 Boss；点击可挑战，不影响普通怪物刷新。
+*/
+const SCENE_BOSSES = {
+  changan:  { id:'boss_changan',  name:'长安镇城妖将', icon:'👹' },
+  jiangnan: { id:'boss_jiangnan', name:'碧波树皇',     icon:'🌳' },
+  datang:   { id:'boss_datang',   name:'黄沙魔君',     icon:'🐲' },
+  beiju:    { id:'boss_beiju',    name:'极寒雪魔',     icon:'🐻‍❄️' },
+  huoyan:   { id:'boss_huoyan',   name:'熔岩炎帝',     icon:'🔥' },
+};
+function getSceneBossAt(x, y){
+  for (const scene of SCENES){
+    const boss = SCENE_BOSSES[scene.id];
+    if (boss && x === Math.round(scene.cx) && y === Math.round(scene.cy)){
+      const lv = scene.lv + 5;
+      const hp = 280 + lv * 48;
+      return { ...boss, lv, hp, maxHp:hp, atk:20 + lv * 3, def:9 + lv * 2,
+        spd:10 + lv, exp:140 + lv * 32, gold:100 + lv * 24, skills:[], isBoss:true };
+    }
+  }
+  return null;
+}
+function challengeSceneBoss(sceneId){
+  if (battle && battle.active) return;
+  const scene = SCENES.find(s => s.id === sceneId);
+  if (!scene) return;
+  const boss = getSceneBossAt(Math.round(scene.cx), Math.round(scene.cy));
+  if (!boss) return;
+  if (Math.hypot(P.x - scene.cx, P.y - scene.cy) > 3.5){
+    toast('⚔️ 请先靠近区域中心的 Boss（3 格以内）');
+    return;
+  }
+  if (P.hp <= 0){ toast('气血不足，无法挑战'); return; }
+  addLog(`【Boss挑战】你向 ${boss.name} 发起挑战！`, 'warn');
+  battlePrepare([boss]);
+}
+
 /* ================= 野外地图怪物 =================
    怪物直接显示在地图上，不占用碰撞格。
    使用固定哈希，让同一坐标在重绘后仍显示同一种怪物。
@@ -3222,6 +3259,9 @@ function makeMonsterImage(mob){
 
   // 使用内嵌 SVG 生成独立图片，不依赖网络图片地址，手机和电脑都能显示。
   const colors = {
+    boss_changan:['#8b1f26','#ffd45c'], boss_jiangnan:['#245b32','#9ef08a'],
+    boss_datang:['#754018','#ffc36b'], boss_beiju:['#244b70','#b9efff'],
+    boss_huoyan:['#70221c','#ff9b48'],
     lang:['#6b4a2f','#d7a36b'], shanzei:['#5b3b25','#c88a4a'], liukou:['#3a2930','#9b5960'],
     shuyao:['#2f6b35','#7fbe58'], chimang:['#8d2d32','#e26b57'], linghu:['#b86b35','#ffd18a'],
     shamo:['#806238','#d6ad6b'], shadao:['#70452c','#d79b58'], xieyan:['#7b2b1e','#ff7a45'],
@@ -3302,19 +3342,36 @@ function renderWorld(){
         }
       }
 
-      // 地图上直接显示怪物图片和名称；怪物不阻挡玩家移动
-      const mapMob = getMapMonster(wx, wy);
+      // 区域中心 Boss 优先显示；其他位置继续显示原有普通怪物。
+      const bossMob = getSceneBossAt(wx, wy);
+      const mapMob = bossMob || getMapMonster(wx, wy);
       if (mapMob && !(wx === P.x && wy === P.y)){
         const mobEl = document.createElement('div');
-        mobEl.className = 'map-monster';
-        mobEl.title = `${mapMob.name} Lv.${mapMob.lv}`;
+        mobEl.className = bossMob ? 'map-monster map-boss' : 'map-monster';
+        mobEl.title = bossMob ? `👑 ${mapMob.name} Lv.${mapMob.lv} · 点击挑战` : `${mapMob.name} Lv.${mapMob.lv}`;
+        if (bossMob){
+          mobEl.style.pointerEvents = 'auto';
+          mobEl.style.cursor = 'pointer';
+          mobEl.setAttribute('role','button');
+          mobEl.setAttribute('aria-label',`挑战${mapMob.name}`);
+          mobEl.addEventListener('click', e => {
+            e.preventDefault(); e.stopPropagation();
+            const targetScene = SCENES.find(s => Math.round(s.cx) === wx && Math.round(s.cy) === wy);
+            if (targetScene) challengeSceneBoss(targetScene.id);
+          });
+        }
         const img = document.createElement('img');
         img.className = 'map-monster-img';
         img.alt = mapMob.name;
         img.src = makeMonsterImage(mapMob);
         const name = document.createElement('span');
         name.className = 'map-monster-name';
-        name.textContent = `${mapMob.name} Lv.${mapMob.lv}`;
+        name.textContent = bossMob ? `👑 ${mapMob.name} Lv.${mapMob.lv}` : `${mapMob.name} Lv.${mapMob.lv}`;
+        if (bossMob){
+          name.style.color = '#ffe08a';
+          name.style.borderColor = '#ffbd45';
+          name.style.background = 'rgba(75,12,8,.94)';
+        }
         mobEl.appendChild(img);
         mobEl.appendChild(name);
         el.appendChild(mobEl);
