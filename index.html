@@ -705,7 +705,7 @@ html,body{
 #bottomBar{
   flex-shrink:0;z-index:25;
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+  grid-template-columns:repeat(6,minmax(0,1fr));
   gap:4px;
   padding:6px 8px 8px;
   background:
@@ -1686,6 +1686,7 @@ button{
       <span class="mi">📜</span>
       <span class="mt">任务</span>
     </button>
+    <button class="menu-btn" data-menu="cultivation"><span class="mi">📚</span><span class="mt">功法</span></button>
   </footer>
   
   <!-- ============ 弹窗容器 ============ -->
@@ -1776,6 +1777,7 @@ button{
     </div>
   </div>
   
+  <div class="modal" id="modalCultivation"><div class="dialog"><div class="dialog-head"><div class="dialog-title">功法修炼</div><button class="dialog-close" data-close="modalCultivation">✕</button></div><div class="dialog-body" id="cultivationBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalCultivation">关闭</button></div></div></div>
   <!-- 门派选择（初始弹窗） -->
   <div class="modal show" id="modalSect">
     <div class="dialog">
@@ -2080,7 +2082,7 @@ const P = {
   quest: null,
   questDone: 0,
   flags: {},
-  avatar: 'original',
+  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{},
 };
 
 /* 经验公式 */
@@ -2480,6 +2482,7 @@ $$('.menu-btn').forEach(btn => {
     if (menu === 'skill') openSkillPanel();
     if (menu === 'pet')   openPetPanel();
     if (menu === 'task')  openTaskPanel();
+    if (menu === 'cultivation'){ renderCultivation(); openModal('modalCultivation'); }
   });
 });
 
@@ -3256,32 +3259,19 @@ function getMapMonster(x, y){
 
 /* ================= 怪物地图图片 ================= */
 function makeMonsterImage(mob){
-  if (makeMonsterImage.cache.has(mob.id)) return makeMonsterImage.cache.get(mob.id);
-
-  // 使用内嵌 SVG 生成独立图片，不依赖网络图片地址，手机和电脑都能显示。
-  const colors = {
-    boss_changan:['#8b1f26','#ffd45c'], boss_jiangnan:['#245b32','#9ef08a'],
-    boss_datang:['#754018','#ffc36b'], boss_beiju:['#244b70','#b9efff'],
-    boss_huoyan:['#70221c','#ff9b48'],
-    lang:['#6b4a2f','#d7a36b'], shanzei:['#5b3b25','#c88a4a'], liukou:['#3a2930','#9b5960'],
-    shuyao:['#2f6b35','#7fbe58'], chimang:['#8d2d32','#e26b57'], linghu:['#b86b35','#ffd18a'],
-    shamo:['#806238','#d6ad6b'], shadao:['#70452c','#d79b58'], xieyan:['#7b2b1e','#ff7a45'],
-    xuelang:['#53677a','#dcecff'], bingpo:['#3c78a8','#a9eaff'], xuenv:['#53608f','#e6edff'],
-    huoya:['#8a3d22','#ffb13b'], rongyan:['#4f3328','#ff6b3d'], yanmo:['#4a2028','#ff4f4f']
-  };
-  const c = colors[mob.id] || ['#4b4b4b','#dddddd'];
-  const icon = String(mob.icon || '👾').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=48 height=48 viewBox=\"0 0 48 48\">`+
-    `<rect x=2 y=2 width=44 height=44 rx=7 fill=\"${c[0]}\" stroke=\"#160d08\" stroke-width=3/>`+
-    `<circle cx=24 cy=23 r=16 fill=\"${c[1]}\" opacity=\".92\"/>`+
-    `<text x=24 y=31 text-anchor=\"middle\" font-size=23 font-family=\"Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif\">${icon}</text>`+
-    `<path d=\"M10 39h28\" stroke=\"#fff\" stroke-opacity=\".25\" stroke-width=2/>`+
-    `</svg>`;
-  const image = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-  makeMonsterImage.cache.set(mob.id, image);
-  return image;
+ if(makeMonsterImage.cache.has(mob.id))return makeMonsterImage.cache.get(mob.id);
+ const shapes={
+ boss_changan:'<rect x="12" y="4" width="24" height="7" fill="#ffd65b"/><rect x="8" y="11" width="32" height="24" fill="#a52b32"/><rect x="5" y="15" width="7" height="18" fill="#e6b84c"/><rect x="36" y="15" width="7" height="18" fill="#e6b84c"/><rect x="14" y="17" width="7" height="5" fill="#fff0a0"/><rect x="27" y="17" width="7" height="5" fill="#fff0a0"/><rect x="17" y="27" width="14" height="4" fill="#260d13"/><rect x="17" y="35" width="5" height="9" fill="#54202a"/><rect x="27" y="35" width="5" height="9" fill="#54202a"/>',
+ boss_jiangnan:'<rect x="19" y="3" width="10" height="9" fill="#a7ed72"/><rect x="8" y="9" width="32" height="22" fill="#347b3c"/><rect x="3" y="17" width="9" height="13" fill="#62b84b"/><rect x="36" y="17" width="9" height="13" fill="#62b84b"/><rect x="15" y="18" width="6" height="5" fill="#eaffae"/><rect x="28" y="18" width="6" height="5" fill="#eaffae"/><rect x="20" y="26" width="9" height="4" fill="#173d24"/><rect x="20" y="31" width="8" height="13" fill="#80502c"/>',
+ boss_datang:'<rect x="18" y="3" width="12" height="8" fill="#f5c36b"/><rect x="10" y="11" width="28" height="26" fill="#a96329"/><rect x="4" y="18" width="8" height="15" fill="#d18b3d"/><rect x="36" y="18" width="8" height="15" fill="#d18b3d"/><rect x="15" y="17" width="7" height="6" fill="#fff0a0"/><rect x="27" y="17" width="7" height="6" fill="#fff0a0"/><rect x="18" y="28" width="13" height="5" fill="#432318"/>',
+ boss_beiju:'<rect x="18" y="3" width="12" height="8" fill="#d9f8ff"/><rect x="9" y="11" width="30" height="27" fill="#477ca9"/><rect x="4" y="16" width="8" height="17" fill="#9deaff"/><rect x="36" y="16" width="8" height="17" fill="#9deaff"/><rect x="14" y="17" width="7" height="6" fill="#fff"/><rect x="28" y="17" width="7" height="6" fill="#fff"/><rect x="17" y="28" width="14" height="4" fill="#16395c"/>',
+ boss_huoyan:'<rect x="18" y="2" width="12" height="10" fill="#ffdf54"/><rect x="10" y="11" width="28" height="27" fill="#b93620"/><rect x="4" y="18" width="8" height="14" fill="#ff7b2f"/><rect x="36" y="18" width="8" height="14" fill="#ff7b2f"/><rect x="15" y="17" width="7" height="6" fill="#fff1a0"/><rect x="27" y="17" width="7" height="6" fill="#fff1a0"/><rect x="18" y="28" width="13" height="5" fill="#48151a"/>'
+ };
+ const colors={lang:'#d7a36b',shanzei:'#c88a4a',liukou:'#9b5960',shuyao:'#7fbe58',chimang:'#e26b57',linghu:'#ffd18a',shamo:'#d6ad6b',shadao:'#d79b58',xieyan:'#ff7a45',xuelang:'#dcecff',bingpo:'#a9eaff',xuenv:'#e6edff',huoya:'#ffb13b',rongyan:'#ff6b3d',yanmo:'#ff4f4f'};
+ const art=shapes[mob.id],svg='<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" shape-rendering="crispEdges"><rect x="1" y="1" width="46" height="46" fill="#21150e" stroke="#090605" stroke-width="2"/>'+(art||'<rect x="8" y="8" width="32" height="32" fill="'+(colors[mob.id]||'#aaa')+'"/><text x="24" y="32" text-anchor="middle" font-size="22">'+(mob.icon||'👾')+'</text>')+'</svg>';
+ const url='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);makeMonsterImage.cache.set(mob.id,url);return url;
 }
-makeMonsterImage.cache = new Map();
+makeMonsterImage.cache=new Map();
 
 /* ================= 渲染世界 ================= */
 let lastRenderX = null, lastRenderY = null;
@@ -5083,9 +5073,10 @@ function finishBattle(result){
     P.battles++;
     P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
     if (!P.killStats || typeof P.killStats !== 'object') P.killStats = {};
-    battle.units.filter(u => u.isEnemy && !u.alive).forEach(u => {
-      P.killStats[u.mobId || u.name] = (P.killStats[u.mobId || u.name] || 0) + 1;
-    });
+    battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
+ P.killStats[u.mobId||u.name]=(P.killStats[u.mobId||u.name]||0)+1;
+ if(u.mobId&&u.mobId.startsWith('boss_')&&!P.bossDrops[u.mobId]){const b=CULTIVATION_BOOKS.find(x=>x.boss===u.mobId);if(b){P.cultivationBooks.push(b.id);P.bossDrops[u.mobId]=true;toast('Boss掉落功法：'+b.name);addLog('获得功法 '+b.name,'good');}}
+});
     gainExp(exp);
     
     banner.innerHTML = `
@@ -5317,12 +5308,31 @@ function renderSellList(list){
   });
 }
 
+const CULTIVATION_BOOKS=[
+{id:'jingang',boss:'boss_changan',name:'金刚护体诀',minutes:10,desc:'气血上限+80，防御+8',effect:{maxHp:80,def:8}},
+{id:'qingmu',boss:'boss_jiangnan',name:'青木长生经',minutes:30,desc:'气血上限+180',effect:{maxHp:180}},
+{id:'liusha',boss:'boss_datang',name:'流沙裂岳功',minutes:60,desc:'攻击+18，速度+5',effect:{atk:18,spd:5}},
+{id:'xuanbing',boss:'boss_beiju',name:'玄冰心法',minutes:120,desc:'防御+25，法力上限+100',effect:{def:25,maxMp:100}},
+{id:'jiuyang',boss:'boss_huoyan',name:'九阳焚天诀',minutes:240,desc:'攻击+40，法术+35，气血上限+300',effect:{atk:40,magic:35,maxHp:300}}
+];
+function applyCultivationEffect(b){for(const k of ['atk','def','spd','magic'])P[k]+=b.effect[k]||0;if(b.effect.maxHp){P.maxHp+=b.effect.maxHp;P.hp+=b.effect.maxHp;}if(b.effect.maxMp){P.maxMp+=b.effect.maxMp;P.mp+=b.effect.maxMp;}}
+function renderCultivation(){
+ const body=$('cultivationBody');if(!body)return;const active=CULTIVATION_BOOKS.find(b=>b.id===P.cultivationActive);
+ let h='<p style="font-size:11px;color:#d9c38d">在线且页面处于前台时累计修炼；离线或切到后台不计时。每本功法修成概率为50%。</p>';
+ if(active){h+='<div class="list-item"><div class="li-body"><b>正在修炼：'+active.name+'</b><div class="li-desc">'+Math.floor(P.cultivationProgressMs/60000)+' / '+active.minutes+' 分钟</div><div style="height:7px;background:#21160c"><div style="height:7px;width:'+Math.min(100,P.cultivationProgressMs/(active.minutes*60000)*100)+'%;background:#e6b84c"></div></div></div><button class="li-btn" id="cultivationCancel">停止</button></div>';}
+ CULTIVATION_BOOKS.forEach((b,i)=>{const owned=P.cultivationBooks.includes(b.id),done=P.flags['cult_done_'+b.id];h+='<div class="list-item"><div class="li-icon">📖</div><div class="li-body"><div class="li-name">'+(i+1)+'. '+b.name+(done?' ✓已修成':owned?'':' · 未获得')+'</div><div class="li-desc">'+b.minutes+'分钟 · '+b.desc+'</div></div>'+(owned&&!done&&!active?'<button class="li-btn" data-cultivate="'+b.id+'">开始</button>':'<span style="font-size:10px">'+(done?'已完成':owned?'修炼中':'未解锁')+'</span>')+'</div>';});
+ body.innerHTML=h;const cancel=$('cultivationCancel');if(cancel)cancel.onclick=()=>{P.cultivationActive=null;P.cultivationProgressMs=0;saveGame();renderCultivation();};
+ body.querySelectorAll('[data-cultivate]').forEach(x=>x.onclick=()=>{P.cultivationActive=x.dataset.cultivate;P.cultivationProgressMs=0;saveGame();renderCultivation();toast('开始在线修炼');});
+}
+function tickCultivation(){if(!P.cultivationActive||document.visibilityState!=='visible')return;const b=CULTIVATION_BOOKS.find(x=>x.id===P.cultivationActive);if(!b){P.cultivationActive=null;return;}P.cultivationProgressMs+=1000;if(P.cultivationProgressMs>=b.minutes*60000){P.cultivationActive=null;P.cultivationProgressMs=0;if(Math.random()<.5){P.flags['cult_done_'+b.id]=true;applyCultivationEffect(b);toast('修炼成功：'+b.name);addLog('修成 '+b.name,'good');}else{toast('修炼失败，功法已消耗');addLog('修炼失败：'+b.name,'bad');}saveGame();renderCultivation();updateHUD();}else if($('modalCultivation')?.classList.contains('show'))renderCultivation();}
+
 /* ============================================================
    第 8 批：初始化 / 游戏主循环 / 存档系统
    ============================================================ */
 
 const SAVE_KEY = 'mhxy_single_player_save_v1';
 let gameLoopTimer = null;
+let cultivationTimer=null;
 
 /* 保存游戏 */
 function saveGame(){
@@ -5342,7 +5352,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5354,7 +5364,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs'
+    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops'
   ];
   allowed.forEach(key => {
     if (Object.prototype.hasOwnProperty.call(data, key)) P[key] = data[key];
@@ -5379,6 +5389,9 @@ function applySaveData(data){
   if (!P.bag || typeof P.bag !== 'object') P.bag = {};
   if (!Array.isArray(P.petBox)) P.petBox = [];
   if (!Array.isArray(P.logs)) P.logs = [];
+  if (!Array.isArray(P.cultivationBooks)) P.cultivationBooks=[];
+  if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
+  P.cultivationProgressMs=Math.max(0,Number(P.cultivationProgressMs)||0);
 
   return Boolean(P.sect);
 }
@@ -5410,6 +5423,7 @@ function clearSave(){
 /* 游戏主循环：负责定时刷新 HUD，并自动保存 */
 function startGameLoop(){
   if (gameLoopTimer) clearInterval(gameLoopTimer);
+  if(cultivationTimer)clearInterval(cultivationTimer);cultivationTimer=setInterval(tickCultivation,1000);
 
   updateHUD();
   renderWorld();
