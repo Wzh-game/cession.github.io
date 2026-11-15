@@ -2148,7 +2148,7 @@ function renderSectSelect(){
   
   const tip = document.createElement('div');
   tip.style.cssText = 'text-align:center;font-size:12px;color:#ffd060;letter-spacing:3px;margin-bottom:14px;text-shadow:0 1px 0 #000';
-  tip.innerHTML = '少侠初入江湖，请择一门派投之';
+  tip.innerHTML = changingSectMode ? '选择新的门派。确认后等级、经验与全部召唤兽将清零' : '少侠初入江湖，请择一门派投之';
   body.appendChild(tip);
   
   const list = document.createElement('div');
@@ -2191,10 +2191,55 @@ function renderSectSelect(){
 }
 
 /* 确认选择门派 */
+let changingSectMode = false;
+
 $('btnSectConfirm').addEventListener('click', () => {
   if (!pendingSect) return;
-  chooseSect(pendingSect);
+  if (changingSectMode) convertSect(pendingSect);
+  else chooseSect(pendingSect);
 });
+
+/* 自由转换门派：保留银两、背包、地图进度等；等级/经验/召唤兽清零 */
+function convertSect(id){
+  const next = SECTS.find(x => x.id === id);
+  if (!next || id === P.sect) {
+    if (id === P.sect) toast('你已经属于这个门派了');
+    return;
+  }
+  if (typeof battle !== 'undefined' && battle.active) {
+    toast('战斗中无法转换门派');
+    return;
+  }
+  const old = SECTS.find(x => x.id === P.sect);
+  const accepted = window.confirm(
+    '确定转换为【' + next.name + '】吗？\\n\\n转换后将永久失去：\\n• 当前等级与全部经验（重置为 Lv.1）\\n• 当前召唤兽与仓库中的所有宠物\\n\\n银两、背包物品、任务、地图进度和角色外观会保留。'
+  );
+  if (!accepted) return;
+
+  P.sect = id;
+  P.lv = 1;
+  P.exp = 0;
+  P.pet = null;
+  P.petBox = [];
+  P.maxHp = next.base.hp;
+  P.maxMp = next.base.mp;
+  P.atk = next.base.atk;
+  P.def = next.base.def;
+  P.spd = next.base.spd;
+  P.magic = next.base.magic;
+  P.hp = P.maxHp;
+  P.mp = P.maxMp;
+
+  changingSectMode = false;
+  pendingSect = null;
+  $('modalSect').classList.remove('show');
+  $('modalChar').classList.remove('show');
+  updateHUD();
+  renderWorld();
+  saveGame();
+  toast('🔄 已转入' + next.name + '，修为与召唤兽已清空');
+  addLog('【转门派】' + (old ? old.name : '原门派') + ' → ' + next.name + '；等级、经验与召唤兽已重置', 'warn');
+}
 
 function chooseSect(id){
   const s = SECTS.find(x => x.id === id);
@@ -2515,6 +2560,23 @@ function openCharPanel(){
     });
   }
   
+  const changeBtn = document.createElement('button');
+  changeBtn.className = 'btn';
+  changeBtn.style.cssText = 'width:100%;margin-top:12px;border:1px solid #c08040;background:linear-gradient(180deg,#8a3a20,#5a2010);color:#ffe8a0;font-weight:bold';
+  changeBtn.textContent = '🔄 自由转换门派';
+  changeBtn.addEventListener('click', () => {
+    if (typeof battle !== 'undefined' && battle.active) {
+      toast('战斗中无法转换门派');
+      return;
+    }
+    changingSectMode = true;
+    pendingSect = null;
+    $('btnSectConfirm').disabled = true;
+    renderSectSelect();
+    openModal('modalSect');
+  });
+  body.appendChild(changeBtn);
+
   openModal('modalChar');
 }
 
