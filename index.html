@@ -2212,7 +2212,7 @@ function convertSect(id){
   }
   const old = SECTS.find(x => x.id === P.sect);
   const accepted = window.confirm(
-    '确定转换为【' + next.name + '】吗？\\n\\n转换后将永久失去：\\n• 当前等级与全部经验（重置为 Lv.1）\\n• 当前召唤兽与仓库中的所有宠物\\n\\n银两、背包物品、任务、地图进度和角色外观会保留。'
+    '确定转换为【' + next.name + '】吗？\n\n转换后将永久失去：\n• 当前等级与全部经验（重置为 Lv.1）\n• 当前召唤兽与仓库中的所有宠物\n\n银两、背包物品、任务、地图进度和角色外观会保留。'
   );
   if (!accepted) return;
 
