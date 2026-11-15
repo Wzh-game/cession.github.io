@@ -4157,9 +4157,10 @@ function createBattleUI(){
       .battle-scene:before,.battle-scene:after{content:'';position:absolute;left:5%;width:90%;height:20%;border-radius:50%;border:2px solid rgba(193,151,255,.34);background:rgba(97,57,143,.2);pointer-events:none;}
       .battle-scene:before{top:24%;}.battle-scene:after{bottom:8%;border-color:rgba(90,166,255,.35);background:rgba(49,103,159,.2);}
       .battle-scene-title{align-self:flex-start;padding:5px 16px;border:3px solid #9c7130;border-radius:22px;background:linear-gradient(#f5d98a,#b88a3d);color:#4b2d16;font-weight:900;letter-spacing:3px;text-shadow:1px 1px #fff0b5;box-shadow:0 3px #4a2a16;z-index:2;}
-      .battle-row{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:12px;min-height:0;padding:4px;}
-      .battle-row.enemy{flex:1;align-items:flex-start;}
-      .battle-row.player{align-items:flex-end;min-height:122px;}
+      .battle-row{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-content:center;gap:12px;min-height:0;padding:4px;}
+      /* 敌方阵容整体靠战场右侧；玩家与宠物阵容整体靠左侧。 */
+      .battle-row.enemy{flex:1;align-items:flex-start;justify-content:flex-end;margin-left:8%;}
+      .battle-row.player{align-items:flex-end;justify-content:flex-start;min-height:122px;margin-right:8%;}
       .battle-unit{width:clamp(105px,18%,160px);min-width:94px;max-width:160px;padding:6px 8px 7px;background:linear-gradient(180deg,rgba(48,25,75,.96),rgba(20,10,37,.96));border:2px solid #08040d;border-radius:7px;box-shadow:3px 4px 0 rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.13);}
       .battle-unit.is-player{background:linear-gradient(180deg,#315b8d,#102b51);border-color:#050b16;}
       .battle-unit.is-pet{background:linear-gradient(180deg,#397c4c,#143c25);}
