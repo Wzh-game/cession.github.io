@@ -4165,6 +4165,7 @@ function createBattleUI(){
       .battle-unit.is-pet{background:linear-gradient(180deg,#397c4c,#143c25);}
       .bu-head{flex-direction:column;gap:2px;margin-bottom:5px;}
       .bu-icon{width:100%;height:clamp(54px,10vh,92px);font-size:clamp(42px,7vw,72px);line-height:1;background:transparent;border:0;border-radius:0;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.55));}
+      .bu-icon .battle-sprite{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.55));}
       .bu-name{width:100%;text-align:center;font-size:12px;}
       .bu-name small{color:#ffd56c;font-size:10px;}
       .bu-hp{height:9px;border:1px solid #08040d;}
@@ -4257,31 +4258,63 @@ function calcDamage(attacker, defender, power, type){
 }
 
 /* ==================== 单位卡片渲染 ==================== */
+/* 每个单位使用独立的本地像素网格立绘，不再把 Emoji 当角色图像。 */
+const BATTLE_PIXEL_ART = {
+hero:{rows:['....HHHH....','...HSSSSH...','...SSFFSS...','...SSFFSS...','....SSSS....','..BBBBBBBB..','..BWWWWWWB..','.BBWWWWWWBB.','.BBWWGGWWBB.','...WWGGWW...','...KK..KK...','..KKK..KKK..'],colors:{H:'#30202a',S:'#f2c69d',F:'#201c28',B:'#2e7b79',W:'#e8dfbd',G:'#c99a43',K:'#47302a'}},
+wolf:{rows:['............','..GG....GG..','.GGGG..GGGG.','GGGGGGGGGGGG','GGGWWGGWWGGG','GGGGGGGGGGGG','.GGGGGGGGGG.','..GGGGGGGG..','..GGG..GGG..','.GGG....GGG.','GG..........','............'],colors:{G:'#737f91',W:'#f4eadc'}},
+bandit:{rows:['....HHHH....','...HHHHHH...','...SSSSSS...','...SFFSFS...','....SSSS....','..RRRRRRRR..','..RKKKKKKR..','.RRKKKKKKRR.','.RRKKKKKKRR.','...KK..KK...','...KK..KK...','..KKK..KKK..'],colors:{H:'#38242a',S:'#e9b78d',F:'#211922',R:'#9b3542',K:'#4b3027'}},
+tree:{rows:['....GGGG....','..GGGGGGGG..','.GGGGGGGGGG.','GGGGGGGGGGGG','GGGGGGGGGGGG','.GGGGGGGGGG.','...GGGGGG...','.....TT.....','.....TT.....','....TTTT....','....TTTT....','....TTTT....'],colors:{G:'#398d45',T:'#684126'}},
+snake:{rows:['............','..GGG.......','.GWWGG......','..GGGGG.....','....GGGGG...','......GGGG..','.......GGGG.','......GGGG..','.....GGG....','....GG......','...GG.......','............'],colors:{G:'#b44a39',W:'#f4d78a'}},
+fox:{rows:['..OO....OO..','.OOOO..OOOO.','OOOOOOOOOOOO','OOOWWOOOWWOO','OOOOOOOOOOOO','.OOOOOOOOOO.','..OOOOOOOO..','..OOO..OOO..','.OOO....OOO.','OO..........','............','............'],colors:{O:'#d77a32',W:'#fff0d8'}},
+golem:{rows:['....RRRR....','..RRRRRRRR..','.RRRRRRRRRR.','RRRWWRRWWRRR','RRRRRRRRRRRR','RRRRRRRRRRRR','.RRRRRRRRRR.','..RRRRRRRR..','..RRR..RRR..','.RRR....RRR.','RR..........','............'],colors:{R:'#a77a50',W:'#ffd17a'}},
+archer:{rows:['....HHHH....','...HHHHHH...','...SSSSSS...','...SFFSFS...','....SSSS....','..GGGGGGGG..','..GWWWWWWG..','.GGWWWWWWGG.','.GGWWWWWWGG.','...GG..GG...','...KK..KK...','..KKK..KKK..'],colors:{H:'#493222',S:'#e7b78d',F:'#211922',G:'#b18a43',W:'#416b43',K:'#493222'}},
+fire:{rows:['.....RR.....','....RRRR....','...RRYYRR...','..RRYYYYRR..','.RRYYYYYYRR.','RRYYWWYYWWRR','RRYYYYYYYYRR','.RRYYYYYYRR.','..RRYYYYRR..','...RR..RR...','..RR....RR..','............'],colors:{R:'#bd3e28',Y:'#ff9b32',W:'#fff0a0'}},
+ice:{rows:['.....CC.....','....CCCC....','...CCCCCC...','..CCWWWWCC..','.CCWWWWWWCC.','CCWWCCWWCCWW','CCWWWWWWWWCC','.CCWWWWWWCC.','..CCCCCCCC..','...CC..CC...','..CC....CC..','............'],colors:{C:'#5aaed1',W:'#e0f8ff'}},
+snowwitch:{rows:['....VVVV....','...VVVVVV...','...SSSSSS...','...SFFSFS...','....SSSS....','..CCCCCCCC..','..CWWWWWWC..','.CCWWWWWWCC.','.CCWWWWWWCC.','...WW..WW...','...KK..KK...','..KKK..KKK..'],colors:{V:'#e9efff',S:'#f1d2bd',F:'#34304b',C:'#536eaa',W:'#e7f5ff',K:'#39405f'}},
+crow:{rows:['.....YY.....','....YYYY....','...BBBBBB...','..BBBBBBBB..','.BBBWWBBBBB.','BBBBBBBBBBBB','BBBBBBBBBBBB','.BBBBBBBBBB.','..BBB..BBB..','..BB....BB..','............','............'],colors:{Y:'#ffbb36',B:'#342c45',W:'#fff0a8'}},
+lava:{rows:['....RRRR....','...RRYYRR...','..RRYYYYRR..','.RRYYYYYYRR.','RRYYWWWWYYRR','RRYYYYYYYYRR','RRYYYYYYYYRR','.RRYYYYYYRR.','..RRRRRRRR..','...RR..RR...','..RR....RR..','............'],colors:{R:'#63332d',Y:'#ef713b',W:'#ffd36a'}},
+demon:{rows:['.RR......RR.','RRRR....RRRR','RRRRRRRRRRRR','.RRRRRRRRRR.','..SSSSSSSS..','..SFFSSFFS..','...SSSSSS...','.RRRRRRRRRR.','RRRRRRRRRRRR','..RRR..RRR..','.RRR....RRR.','RR..........'],colors:{R:'#a52f35',S:'#bd6b54',F:'#21131d'}},
+flowerpet:{rows:['....PPPP....','..PPPPPPPP..','.PPPPPPPPPP.','..PPWWPPWW..','...PPPPPP...','....GGGG....','..GGGGGGGG..','..GGGGGGGG..','...GG..GG...','...GG..GG...','..GGG..GGG..','............'],colors:{P:'#d96fa8',W:'#ffe9f4',G:'#4b9c57'}},
+tigerpet:{rows:['..OO....OO..','.OOOO..OOOO.','OOOOOOOOOOOO','OOOWWOOOWWOO','OOOOOOOOOOOO','.OBOOOOOOBO.','..OOOOOOOO..','..OOO..OOO..','.OOO....OOO.','OO..........','............','............'],colors:{O:'#d68a32',W:'#fff0d0',B:'#35251e'}},
+dragonpet:{rows:['...GG....GG.','..GGGG..GGGG','GGGGGGGGGGGG','GGWWGGGGWWGG','GGGGGGGGGGGG','.GGGGGGGGGG.','..GGGGGGGG..','..GGG..GGG..','.GGG....GGG.','GG..........','............','............'],colors:{G:'#5d9fc0',W:'#e8f7ff'}},
+birdpet:{rows:['.....YY.....','....YYYY....','...YYYYYY...','..YYWWWWYY..','.YYYYYYYYYY.','YYYYYYYYYYYY','.YYYYYYYYYY.','..YYYYYYYY..','...YY..YY...','..YY....YY..','............','............'],colors:{Y:'#e5ae36',W:'#fff3a8'}}
+};
+function battleSpriteKey(u){
+  if(u.isPlayer)return 'hero';
+  if(u.isPet)return ({huahua:'flowerpet',linghu:'fox',hupo:'tigerpet',xiaolong:'dragonpet',jinwu:'birdpet'})[u.petId]||'flowerpet';
+  const id=u.mobId||'';
+  if(id==='boss_changan'||id==='boss_huoyan')return 'demon';
+  if(id==='boss_jiangnan')return 'tree';
+  if(id==='boss_datang')return 'golem';
+  if(id==='boss_beiju')return 'ice';
+  return ({lang:'wolf',shanzei:'bandit',liukou:'bandit',shuyao:'tree',chimang:'snake',linghu:'fox',shamo:'golem',shadao:'archer',xieyan:'fire',xuelang:'wolf',bingpo:'ice',xuenv:'snowwitch',huoya:'crow',rongyan:'lava',yanmo:'demon'})[id]||(u.isEnemy?'golem':'hero');
+}
+function makeBattleSprite(u){
+  const art=BATTLE_PIXEL_ART[battleSpriteKey(u)]||BATTLE_PIXEL_ART.golem;
+  const pixels=[];
+  for(let y=0;y<art.rows.length;y++)for(let x=0;x<art.rows[y].length;x++){
+    const color=art.colors[art.rows[y][x]];
+    if(color)pixels.push(`<rect x="${x}" y="${y}" width="1" height="1" fill="${color}"/>`);
+  }
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 12 12" shape-rendering="crispEdges">${pixels.join('')}</svg>`;
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+}
+
 function battleUnitCard(u){
   const hpPct = clamp(u.hp / u.maxHp * 100, 0, 100);
-  const cls = [
-    'battle-unit',
-    u.isPlayer ? 'is-player' : '',
-    u.isPet ? 'is-pet' : '',
-    !u.alive ? 'dead' : '',
-    u.acting ? 'acting' : '',
-  ].filter(Boolean).join(' ');
-  
-  const statusIcons = [];
-  if (u.stun && u.stun > 0) statusIcons.push(`<span>💫定身${u.stun}</span>`);
-  if (u.guard) statusIcons.push(`<span>🛡️防御</span>`);
-  
+  const cls = ['battle-unit',u.isPlayer?'is-player':'',u.isPet?'is-pet':'',!u.alive?'dead':'',u.acting?'acting':''].filter(Boolean).join(' ');
+  const statusIcons=[];
+  if(u.stun&&u.stun>0)statusIcons.push(`<span>💫定身${u.stun}</span>`);
+  if(u.guard)statusIcons.push(`<span>🛡️防御</span>`);
   return `
     <div class="${cls}" data-uid="${u.id}">
       <div class="bu-head">
-        <div class="bu-icon">${u.icon || (u.isPlayer ? '🧝' : '👹')}</div>
-        <div class="bu-name">${u.name}${u.lv ? `<small>Lv.${u.lv}</small>` : ''}</div>
+        <div class="bu-icon"><img class="battle-sprite" src="${makeBattleSprite(u)}" alt="${u.name}像素立绘"></div>
+        <div class="bu-name">${u.name}${u.lv?`<small>Lv.${u.lv}</small>`:''}</div>
       </div>
-      <div class="bu-hp">
-        <div class="fill" style="width:${hpPct}%"></div>
-      </div>
-      <div class="bu-hp-text">${Math.max(0, Math.ceil(u.hp))}/${u.maxHp}</div>
-      ${statusIcons.length ? `<div class="bu-status">${statusIcons.join('')}</div>` : ''}
+      <div class="bu-hp"><div class="fill" style="width:${hpPct}%"></div></div>
+      <div class="bu-hp-text">${Math.max(0,Math.ceil(u.hp))}/${u.maxHp}</div>
+      ${statusIcons.length?`<div class="bu-status">${statusIcons.join('')}</div>`:''}
     </div>
   `;
 }
@@ -4342,6 +4375,7 @@ function battlePrepare(mobs){
     id: 'player',
     name: P.name,
     icon: '🧝',
+    spriteId: 'hero',
     isPlayer: true,
     hp: P.hp, maxHp: P.maxHp,
     mp: P.mp, maxMp: P.maxMp,
@@ -4355,6 +4389,7 @@ function battlePrepare(mobs){
       id: 'pet',
       name: P.pet.name,
       icon: P.pet.icon,
+      petId: P.pet.id,
       isPet: true,
       hp: P.pet.hp, maxHp: P.pet.maxHp,
       mp: 0, maxMp: 0,
