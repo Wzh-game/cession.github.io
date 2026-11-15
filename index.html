@@ -4057,6 +4057,7 @@ const battle = {
   loopRunning: false,
   token: 0,
   musicBuffUntilRound: 0,
+  jiangjunStacks: 0,
 };
 
 /* 创建战斗界面 DOM */
@@ -4113,6 +4114,12 @@ function calcDamage(attacker, defender, power, type){
   if (defender.guard){
     dmg *= 0.5;
   }
+
+  // 多邻宗【将军】：每层使玩家最终攻击伤害翻倍，最多4层（16倍）。
+  const jiangjunMultiplier = attacker.isPlayer && P.sect === 'duolingo'
+    ? Math.pow(2, Math.min(4, battle.jiangjunStacks || 0))
+    : 1;
+  dmg *= jiangjunMultiplier;
   
   return { dmg: Math.floor(dmg), crit };
 }
@@ -4187,6 +4194,7 @@ function battlePrepare(mobs){
   battle.fled = false;
   battle.round = 0;
   battle.musicBuffUntilRound = 0;
+  battle.jiangjunStacks = 0;
   battle.loopRunning = false;
   battle.token++;
   const battleToken = battle.token;
@@ -4397,7 +4405,17 @@ function playerTurn(unit){
         actions.innerHTML = '';
         useDuolingoShortcut(unit, 'music', resolve);
       });
-      duoDock.append(english, music);
+
+      const jiangjun = document.createElement('button');
+      jiangjun.className = 'duo-skill-btn jiangjun';
+      jiangjun.innerHTML = '<span>⚔️ 将军 ×' + Math.pow(2, battle.jiangjunStacks) + '</span><small>Lv.1 · 10 法力 · 已叠加 ' + battle.jiangjunStacks + '/4 层</small>';
+      jiangjun.disabled = unit.mp < 10 || battle.jiangjunStacks >= 4;
+      jiangjun.addEventListener('click', () => {
+        duoDock.hidden = true;
+        actions.innerHTML = '';
+        useDuolingoShortcut(unit, 'jiangjun', resolve);
+      });
+      duoDock.append(english, music, jiangjun);
     }
   });
 }
@@ -4425,6 +4443,22 @@ function useDuolingoShortcut(unit, skill, resolve){
     };
     if (enemies.length === 1) cast(enemies[0]);
     else showTargetSelect(enemies,resolve,cast);
+    return;
+  }
+
+  if (skill === 'jiangjun'){
+    if (P.lv < 1){ blog('【将军】需要达到 Lv.1。','dim'); resolve(); return; }
+    if (unit.mp < 10){ blog('法力不足，无法施展【将军】。','bad'); resolve(); return; }
+    if (battle.jiangjunStacks >= 4){ blog('【将军】已经叠满4层，伤害倍率达到16倍！','good'); resolve(); return; }
+    unit.mp -= 10;
+    if (unit.isPlayer) P.mp = unit.mp;
+    battle.jiangjunStacks++;
+    const multiplier = Math.pow(2, battle.jiangjunStacks);
+    blog('⚔️ <b>' + unit.name + '</b> 施展【将军】！攻击伤害提升至 <b>' + multiplier + '倍</b>（' + battle.jiangjunStacks + '/4层），持续本场战斗！','good');
+    showDamageFloat(unit.id, '伤害×' + multiplier, 'crit');
+    renderBattleUnits();
+    updateHUD();
+    setTimeout(resolve,450);
     return;
   }
 
