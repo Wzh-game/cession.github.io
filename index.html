@@ -4124,16 +4124,91 @@ function createBattleUI(){
   const overlay = document.createElement('div');
   overlay.id = 'battleOverlay';
   overlay.innerHTML = `
-    <div class="battle-scene">
-      <div class="battle-row enemy" id="enemyRow"></div>
-      <div id="battleLog"></div>
-      <div class="battle-row player" id="playerRow"></div>
-      <div class="turn-banner" id="turnBanner"></div>
-      <div class="result-banner" id="resultBanner"></div>
+    <div class="battle-layout">
+      <div class="battle-scene">
+        <div class="battle-scene-title">◆ 回合制战斗 ◆</div>
+        <div class="battle-row enemy" id="enemyRow"></div>
+        <div class="battle-row player" id="playerRow"></div>
+        <div class="turn-banner" id="turnBanner"></div>
+        <div class="result-banner" id="resultBanner"></div>
+      </div>
+      <aside class="battle-log-panel">
+        <div class="battle-log-title">战 斗 记 录</div>
+        <div id="battleLog"></div>
+      </aside>
     </div>
-    <div id="battleActions"></div>
+    <div class="battle-footer">
+      <div id="battleActions"></div>
+      <div class="battle-tip">经典回合制战斗：普通攻击、技能、物品、防御、逃跑、自动战斗，策略自由搭配。</div>
+    </div>
     <div id="duoSkillDock" class="duo-skill-dock" hidden></div>
   `;
+  if (!document.getElementById('battleRetroStyle')){
+    const retroStyle = document.createElement('style');
+    retroStyle.id = 'battleRetroStyle';
+    retroStyle.textContent = `
+      #battleOverlay{padding:14px 3.5% 12px;gap:10px;overflow:hidden;background:
+        radial-gradient(ellipse at 50% 45%,rgba(103,48,145,.38),transparent 58%),
+        radial-gradient(circle at 20% 15%,rgba(255,255,255,.07) 0 1px,transparent 2px),
+        radial-gradient(circle at 80% 30%,rgba(255,255,255,.08) 0 1px,transparent 2px),
+        linear-gradient(160deg,#16091f 0%,#2b1044 52%,#10071d 100%);}
+      .battle-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,26%);gap:14px;flex:1;min-height:0;}
+      .battle-scene{min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:8px;padding:8px 4px 12px;position:relative;}
+      .battle-scene:before,.battle-scene:after{content:'';position:absolute;left:5%;width:90%;height:20%;border-radius:50%;border:2px solid rgba(193,151,255,.34);background:rgba(97,57,143,.2);pointer-events:none;}
+      .battle-scene:before{top:24%;}.battle-scene:after{bottom:8%;border-color:rgba(90,166,255,.35);background:rgba(49,103,159,.2);}
+      .battle-scene-title{align-self:flex-start;padding:5px 16px;border:3px solid #9c7130;border-radius:22px;background:linear-gradient(#f5d98a,#b88a3d);color:#4b2d16;font-weight:900;letter-spacing:3px;text-shadow:1px 1px #fff0b5;box-shadow:0 3px #4a2a16;z-index:2;}
+      .battle-row{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:12px;min-height:0;padding:4px;}
+      .battle-row.enemy{flex:1;align-items:flex-start;}
+      .battle-row.player{align-items:flex-end;min-height:122px;}
+      .battle-unit{width:clamp(105px,18%,160px);min-width:94px;max-width:160px;padding:6px 8px 7px;background:linear-gradient(180deg,rgba(48,25,75,.96),rgba(20,10,37,.96));border:2px solid #08040d;border-radius:7px;box-shadow:3px 4px 0 rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.13);}
+      .battle-unit.is-player{background:linear-gradient(180deg,#315b8d,#102b51);border-color:#050b16;}
+      .battle-unit.is-pet{background:linear-gradient(180deg,#397c4c,#143c25);}
+      .bu-head{flex-direction:column;gap:2px;margin-bottom:5px;}
+      .bu-icon{width:100%;height:clamp(54px,10vh,92px);font-size:clamp(42px,7vw,72px);line-height:1;background:transparent;border:0;border-radius:0;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.55));}
+      .bu-name{width:100%;text-align:center;font-size:12px;}
+      .bu-name small{color:#ffd56c;font-size:10px;}
+      .bu-hp{height:9px;border:1px solid #08040d;}
+      .bu-hp .fill{background:linear-gradient(90deg,#39c879,#91f1a2);}
+      .bu-hp-text{text-align:right;font-size:10px;color:#e7d8ff;}
+      .battle-log-panel{display:flex;flex-direction:column;min-height:0;padding:12px;border:2px solid #80613b;border-radius:8px;background:rgba(7,4,13,.88);box-shadow:inset 0 0 0 2px rgba(255,255,255,.05);}
+      .battle-log-title{text-align:center;color:#e6c77c;font-size:15px;font-weight:bold;letter-spacing:7px;padding:2px 0 10px;border-bottom:1px solid rgba(230,199,124,.3);}
+      #battleLog{flex:1;min-height:0;max-height:none;margin-top:8px;border:0;border-radius:0;background:transparent;padding:0 2px;font-size:12px;line-height:1.8;}
+      .battle-footer{display:flex;flex-direction:column;gap:10px;flex-shrink:0;}
+      #battleActions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;max-width:74%;padding:0;}
+      .battle-skill{min-height:48px;padding:8px 4px;border:3px solid #09050f;border-radius:5px;font-size:12px;box-shadow:2px 3px 0 rgba(0,0,0,.5);}
+      .battle-skill .bs-name{font-size:12px;}
+      .battle-tip{width:100%;padding:10px 14px;border:2px solid #927044;border-radius:9px;background:rgba(12,5,10,.9);color:#f5e8c8;text-align:center;font-size:clamp(12px,2vw,21px);font-weight:bold;line-height:1.45;text-shadow:1px 2px #000;}
+      #battleOverlay .turn-banner{z-index:8;}
+      #battleOverlay .result-banner{z-index:9;}
+      @media(max-width:700px){
+        #battleOverlay{padding:8px;gap:7px;}
+        .battle-layout{grid-template-columns:minmax(0,1fr) minmax(112px,31%);gap:6px;}
+        .battle-log-panel{padding:7px 6px;}
+        .battle-log-title{font-size:11px;letter-spacing:2px;padding-bottom:6px;}
+        #battleLog{font-size:10px;line-height:1.55;}
+        .battle-scene-title{font-size:11px;padding:4px 9px;letter-spacing:1px;}
+        .battle-row{gap:5px;}
+        .battle-row.player{min-height:95px;}
+        .battle-unit{width:calc(50% - 5px);min-width:0;padding:4px;}
+        .bu-icon{height:clamp(38px,8vh,65px);font-size:clamp(32px,9vw,52px);}
+        .bu-name{font-size:10px;}
+        .bu-hp-text{font-size:9px;}
+        #battleActions{max-width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+        .battle-skill{min-height:42px;font-size:10px;padding:6px 2px;}
+        .battle-skill .bs-name{font-size:10px;}
+        .battle-tip{font-size:11px;padding:7px 8px;}
+        .duo-skill-dock{right:7px;bottom:88px;width:116px;}
+      }
+      @media(max-height:520px) and (orientation:landscape){
+        #battleOverlay{padding:5px 10px;gap:5px;}
+        .battle-row.player{min-height:70px;}
+        .bu-icon{height:42px;font-size:36px;}
+        .battle-tip{display:none;}
+        .battle-skill{min-height:36px;}
+      }
+    `;
+    document.head.appendChild(retroStyle);
+  }
   document.getElementById('stage').appendChild(overlay);
   battle.overlay = overlay;
   return overlay;
