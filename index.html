@@ -546,8 +546,9 @@ html,body{
 }
 
 /* ================= 小地图按钮 ================= */
+#miniMapControl{position:absolute;top:10px;right:10px;z-index:14;display:flex;flex-direction:column;align-items:center;gap:4px;}
 #miniMapBtn{
-  position:absolute;top:10px;right:10px;
+  position:relative;top:auto;right:auto;
   z-index:14;
   width:46px;height:46px;
   background:
@@ -582,6 +583,8 @@ html,body{
   margin-top:2px;letter-spacing:.5px;
   text-shadow:0 1px 0 #000;
 }
+#playerCoordHud{padding:3px 5px;border:1px solid rgba(240,200,96,.65);border-radius:5px;background:rgba(24,13,7,.9);color:#ffe8a0;font-size:9px;font-weight:700;white-space:nowrap;}
+#miniMapControl.map-open #playerCoordHud{display:none;}
 
 /* ================= 方向键 ================= */
 #dpad{
@@ -1647,10 +1650,7 @@ button{
       长安城 <b>·</b> <i>中心广场</i>
     </div>
     
-    <div id="miniMapBtn">
-      <div class="mi">🗺️</div>
-      <div class="mt">地图</div>
-    </div>
+    <div id="miniMapControl"><div id="miniMapBtn"><div class="mi">🗺️</div><div class="mt">地图</div></div><div id="playerCoordHud">坐标 X:0 Y:0</div></div>
     
     <div id="dpad">
       <button class="u" data-dir="up">▲</button>
@@ -2291,6 +2291,7 @@ function updateHUD(){
   $('expMax').textContent = expNeed();
   
   $('goldVal').textContent = fmt(P.gold);
+  const coordHud=$('playerCoordHud');if(coordHud)coordHud.textContent=`坐标 X:${P.x} Y:${P.y}`;
 }
 
 /* ============================================================
@@ -5720,48 +5721,32 @@ document.addEventListener('gestureend', function(e){
         </div>
       `;
       $('game').appendChild(modal);
-      modal.addEventListener('click', e => {
-        if (e.target === modal) modal.classList.remove('show');
-      });
-      modal.querySelector('[data-close]').addEventListener('click', () => modal.classList.remove('show'));
-      modal.querySelector('#worldMapClose').addEventListener('click', () => modal.classList.remove('show'));
+      const closeWorldMap=()=>{modal.classList.remove('show');const control=$('miniMapControl');if(control)control.classList.remove('map-open');};
+      modal.addEventListener('click',e=>{if(e.target===modal)closeWorldMap();});
+      modal.querySelector('[data-close]').addEventListener('click',closeWorldMap);
+      modal.querySelector('#worldMapClose').addEventListener('click',closeWorldMap);
     }
 
-    const body = $('worldMapBody');
-    const mapW = 460, mapH = 300;
-    const minX = -125, maxX = 125, minY = -105, maxY = 140;
-    const sx = mapW / (maxX - minX);
-    const sy = mapH / (maxY - minY);
-
-    let html = `<div style="position:relative;width:100%;height:${mapH}px;background:radial-gradient(circle at 50% 50%,#315f35,#18351c);border:2px solid #6a4810;border-radius:8px;overflow:hidden">`;
-
-    SCENES.forEach(s => {
-      const x = (s.cx - minX) * sx;
-      const y = (s.cy - minY) * sy;
-      const w = s.radius * 2 * sx;
-      const h = s.radius * 2 * sy;
-      const emoji = s.biome === 'town' ? '🏰' : s.biome === 'plain' ? '🌾' : s.biome === 'desert' ? '🏜️' : s.biome === 'snow' ? '❄️' : '🌋';
-      const bossInfo = SCENE_BOSSES[s.id] ? getSceneBossAt(Math.round(s.cx), Math.round(s.cy)) : null;
-      html += `
-        <div title="${s.name}" style="position:absolute;left:${x-w/2}px;top:${y-h/2}px;width:${w}px;height:${h}px;border:1px solid rgba(255,220,120,.45);border-radius:50%;background:rgba(240,200,96,.08);display:flex;align-items:center;justify-content:center">
-          <span style="font-size:22px;filter:drop-shadow(0 2px 2px #000)">${emoji}</span>
-          <span style="position:absolute;bottom:3px;white-space:nowrap;font-size:9px;color:#ffe8a0;text-shadow:0 1px 2px #000">${s.name}</span>
-          ${bossInfo ? `<span title="区域 Boss：${bossInfo.name} Lv.${bossInfo.lv}" style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);padding:2px 5px;white-space:nowrap;border:1px solid #ffd45c;border-radius:10px;background:linear-gradient(180deg,#8b2020,#421010);color:#fff2b8;font-size:9px;font-weight:900;box-shadow:0 0 8px rgba(255,80,40,.8);z-index:4">👑 ${bossInfo.name} Lv.${bossInfo.lv}</span>` : ''}
-        </div>
-      `;
+    const body=$('worldMapBody');
+    // 地面坐标比例 1:5：每个地面坐标单位绘制为 5px。
+    const minX=-125,maxX=125,minY=-105,maxY=140,scale=5;
+    const mapW=(maxX-minX)*scale,mapH=(maxY-minY)*scale,sx=scale,sy=scale;
+    let html=`<div style="max-height:56vh;overflow:auto;border:2px solid #8a6428;border-radius:8px;background:#142719;-webkit-overflow-scrolling:touch"><div id="worldMapCanvas" style="position:relative;width:${mapW}px;height:${mapH}px;overflow:hidden;background-color:#284d30;background-image:linear-gradient(rgba(220,230,160,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(220,230,160,.09) 1px,transparent 1px),radial-gradient(ellipse at 50% 48%,#527b42 0%,#315d38 48%,#193923 100%);background-size:25px 25px,25px 25px,100% 100%"><div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 124px,rgba(240,220,150,.16) 124px 125px),repeating-linear-gradient(90deg,transparent 0 124px,rgba(240,220,150,.16) 124px 125px);pointer-events:none"></div>`;
+    SCENES.forEach(s=>{
+      const x=(s.cx-minX)*sx,y=(s.cy-minY)*sy,w=s.radius*2*sx,h=s.radius*2*sy;
+      const emoji=s.biome==='town'?'🏰':s.biome==='plain'?'🌾':s.biome==='desert'?'🏜️':s.biome==='snow'?'❄️':'🌋';
+      const bossInfo=SCENE_BOSSES[s.id]?getSceneBossAt(Math.round(s.cx),Math.round(s.cy)):null;
+      html+=`<div title="${s.name}" style="position:absolute;left:${x-w/2}px;top:${y-h/2}px;width:${w}px;height:${h}px;border:2px solid rgba(255,220,120,.42);border-radius:50%;background:rgba(240,200,96,.10);display:flex;align-items:center;justify-content:center"><span style="font-size:30px">${emoji}</span><span style="position:absolute;bottom:5px;white-space:nowrap;font-size:13px;color:#ffe8a0">${s.name}</span></div>`;
+      if(bossInfo){const bx=(Math.round(s.cx)-minX)*sx,by=(Math.round(s.cy)-minY)*sy;
+        html+=`<div title="${bossInfo.name} 坐标 (${Math.round(s.cx)}, ${Math.round(s.cy)})" style="position:absolute;left:${bx-10}px;top:${by-10}px;width:20px;height:20px;border:2px solid #fff0a0;border-radius:50%;background:#a51e25;box-shadow:0 0 0 4px rgba(255,190,55,.35),0 0 16px #ff6b35;z-index:6;display:flex;align-items:center;justify-content:center">👑</div><div style="position:absolute;left:${bx+14}px;top:${by-13}px;padding:4px 6px;border:1px solid #ffd45c;border-radius:5px;background:rgba(45,12,8,.94);color:#fff0b0;font-size:11px;line-height:1.35;white-space:nowrap;z-index:7">${bossInfo.name} Lv.${bossInfo.lv}<br><span style="color:#9de2a6">坐标 (${Math.round(s.cx)}, ${Math.round(s.cy)})</span></div>`;
+      }
     });
+    const px=(P.x-minX)*sx,py=(P.y-minY)*sy;
+    html+=`<div title="玩家当前位置 (${P.x}, ${P.y})" style="position:absolute;left:${px-8}px;top:${py-8}px;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#ff5040;box-shadow:0 0 0 4px rgba(255,80,64,.3),0 0 14px #ff5040;z-index:10"></div><div style="position:absolute;left:12px;top:12px;padding:6px 9px;background:rgba(35,8,8,.92);border:1px solid #ffd45c;border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">👑 Boss 位置 · 比例 1:5</div><div style="position:absolute;left:12px;bottom:12px;padding:6px 9px;background:rgba(20,10,4,.92);border:1px solid rgba(240,200,96,.6);border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">玩家坐标 X:${P.x} · Y:${P.y}</div></div></div>`;
+    body.innerHTML=html;modal.classList.add('show');
+    const control=$('miniMapControl');if(control)control.classList.add('map-open');
+    const scroller=body.firstElementChild;requestAnimationFrame(()=>{if(scroller){scroller.scrollLeft=Math.max(0,px-scroller.clientWidth/2);scroller.scrollTop=Math.max(0,py-scroller.clientHeight/2);}});
 
-    const px = (P.x - minX) * sx;
-    const py = (P.y - minY) * sy;
-    html += `
-      <div style="position:absolute;left:${px-6}px;top:${py-6}px;width:12px;height:12px;border-radius:50%;background:#ff5040;border:2px solid #fff;box-shadow:0 0 12px #ff5040;z-index:10"></div>
-      <div style="position:absolute;left:10px;top:8px;padding:4px 8px;background:rgba(35,8,8,.9);border:1px solid #ffd45c;border-radius:5px;color:#ffe8a0;font-size:10px;z-index:11">👑 金色标记 = 区域 Boss</div>
-      <div style="position:absolute;left:10px;bottom:8px;padding:4px 8px;background:rgba(20,10,4,.8);border:1px solid rgba(240,200,96,.4);border-radius:5px;color:#ffe8a0;font-size:10px;z-index:11">当前位置：${P.scene} · (${P.x}, ${P.y})</div>
-    `;
-    html += '</div>';
-
-    body.innerHTML = html;
-    modal.classList.add('show');
   };
 
   /* ---------- 钱庄：原界面已有“钱庄”图标，现在真正可用 ---------- */
