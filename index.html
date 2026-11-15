@@ -3345,7 +3345,7 @@ function renderWorld(){
       // 区域中心 Boss 优先显示；其他位置继续显示原有普通怪物。
       const bossMob = getSceneBossAt(wx, wy);
       const mapMob = bossMob || getMapMonster(wx, wy);
-      if (mapMob && !(wx === P.x && wy === P.y)){
+      if (mapMob && (bossMob || !(wx === P.x && wy === P.y))){
         const mobEl = document.createElement('div');
         mobEl.className = bossMob ? 'map-monster map-boss' : 'map-monster';
         mobEl.title = bossMob ? `👑 ${mapMob.name} Lv.${mapMob.lv} · 点击挑战` : `${mapMob.name} Lv.${mapMob.lv}`;
