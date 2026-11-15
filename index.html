@@ -5352,7 +5352,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, flags:P.flags,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5364,7 +5364,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops'
+    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','flags'
   ];
   allowed.forEach(key => {
     if (Object.prototype.hasOwnProperty.call(data, key)) P[key] = data[key];
@@ -5391,6 +5391,7 @@ function applySaveData(data){
   if (!Array.isArray(P.logs)) P.logs = [];
   if (!Array.isArray(P.cultivationBooks)) P.cultivationBooks=[];
   if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
+  if (!P.flags || typeof P.flags!=='object') P.flags={};
   P.cultivationProgressMs=Math.max(0,Number(P.cultivationProgressMs)||0);
 
   return Boolean(P.sect);
