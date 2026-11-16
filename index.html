@@ -5239,7 +5239,7 @@ function closeBattleUI(){
   }
   battle.units = [];
   battle.round = 0;
-  renderWorld();
+  if(worldOpen){openWorld();}else{renderWorld();}
 }
 
 
