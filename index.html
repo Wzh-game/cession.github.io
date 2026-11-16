@@ -2110,7 +2110,7 @@ const GEAR_CATALOG={
 const BOSS_GEAR_DROPS={boss_changan:'boss_guardian_blade',boss_jiangnan:'boss_ancient_heart',boss_datang:'boss_desert_crown',boss_beiju:'boss_frost_steps',boss_huoyan:'boss_flame_soul'};
 const GEAR_SLOTS=[['weapon','武器'],['armor','护甲'],['helmet','头盔'],['boots','鞋履'],['accessory','饰品']];
 function getGearQuality(item){return item&&item.quality||'普通';}
-function grantBossGear(bossId){const id=BOSS_GEAR_DROPS[bossId],item=id&&GEAR_CATALOG[id];if(!item)return null;if(!P.bossGearDrops||typeof P.bossGearDrops!=='object')P.bossGearDrops={};if(P.bossGearDrops[bossId])return null;P.bossGearDrops[bossId]=true;P.gearInventory.push({id,level:0});addLog('【Boss掉落】获得'+getGearQuality(item)+'装备 '+item.name,'good');return item;}
+function grantBossGear(bossId){const id=BOSS_GEAR_DROPS[bossId],item=id&&GEAR_CATALOG[id];if(!item)return null;if(!P.bossGearDrops||typeof P.bossGearDrops!=='object')P.bossGearDrops={};if(P.bossGearDrops[bossId]||P.gearInventory.some(g=>g.id===id)){P.bossGearDrops[bossId]=true;return null;}P.bossGearDrops[bossId]=true;P.gearInventory.push({id,level:0});addLog('【Boss掉落】获得'+getGearQuality(item)+'装备 '+item.name,'good');return item;}
 function gearStats(item,level=0){const out={};['atk','def','spd','magic','hp','mp'].forEach(k=>{if(item[k])out[k]=Math.floor(item[k]*(1+level*.2));});return out;}
 function applyGearDelta(stats,sign){Object.keys(stats||{}).forEach(k=>{const key=k==='hp'?'maxHp':k==='mp'?'maxMp':k;if(Number.isFinite(P[key]))P[key]=Math.max(key==='maxHp'||key==='maxMp'?1:0,P[key]+stats[k]*sign);});P.hp=Math.min(P.hp,P.maxHp);P.mp=Math.min(P.mp,P.maxMp);}
 function getEquippedGear(slot){const id=P.equipment&&P.equipment[slot];return id?P.gearInventory.find(g=>g.id===id)||null:null;}
@@ -4138,6 +4138,9 @@ window.addEventListener('resize', () => {
       min-width:220px;
     }
     .rb-info b{color:#ffd060;font-size:15px}
+    .rb-loot-title{margin-top:10px;padding-top:8px;border-top:1px solid rgba(240,200,96,.45);color:#ffe29a;font-weight:bold;letter-spacing:2px}
+    .rb-loot-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:3px 6px;margin-top:3px;border-radius:4px;background:rgba(255,255,255,.06);text-align:left}
+    .rb-loot-item small{font-size:10px;color:#d5baff;white-space:nowrap}
     .rb-btn{
       padding:11px 40px;
       font-family:inherit;font-size:14px;font-weight:bold;
