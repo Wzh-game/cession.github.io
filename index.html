@@ -6119,6 +6119,7 @@ const V2_DEFAULT={
  immortal:{unlocked:false,level:1,exp:0,levelCap:100,realm:0,spiritPower:0},
  ascension:{started:false,tribulations:0,completed:false,completedAt:0},
  world:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0},
+ worlds:{mortal:{scene:'',subScene:'',x:0,y:0,steps:0},immortal:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0}},
  equipment:{owned:[],equipped:{weapon:null,helmet:null,armor:null,shoes:null,accessory:null,artifact:null}},
  materials:{仙玉:0,仙晶:0,灵石:0,仙桃:0,仙器碎片:0,极寒晶核:0,魔神核心:0},
  quests:{completed:[],active:[]},
@@ -6133,17 +6134,33 @@ const log=(s)=>{V2.logs.unshift({s,t:Date.now()});V2.logs=V2.logs.slice(0,35);};
 function normalizeV2(raw){
  const v=raw&&typeof raw==='object'?raw:{};
  const merge=(base,src)=>{Object.keys(base).forEach(k=>{if(src&&Object.prototype.hasOwnProperty.call(src,k)){if(base[k]&&typeof base[k]==='object'&&!Array.isArray(base[k]))base[k]=merge(clone(base[k]),src[k]);else if(Array.isArray(base[k]))base[k]=Array.isArray(src[k])?src[k].slice():base[k];else base[k]=src[k];}});return base;};
- return merge(clone(V2_DEFAULT),v);
+ const out=merge(clone(V2_DEFAULT),v);
+ // 旧版 V2.world 是仙界地图；新存档将凡界与仙界分开保存。旧存档优先迁移，不重置探索进度。
+ const savedImmortal=v.worlds&&v.worlds.immortal&&typeof v.worlds.immortal==='object'?v.worlds.immortal:v.world;
+ if(savedImmortal&&typeof savedImmortal==='object')out.world=merge(clone(V2_DEFAULT.world),savedImmortal);
+ out.worlds=out.worlds&&typeof out.worlds==='object'?out.worlds:{mortal:clone(V2_DEFAULT.worlds.mortal),immortal:clone(out.world)};
+ out.worlds.mortal=Object.assign({},V2_DEFAULT.worlds.mortal,out.worlds.mortal||{});
+ out.worlds.immortal=out.world;
+ return out;
+}
+function syncWorldPartitions(){
+ if(!V2.worlds||typeof V2.worlds!=='object')V2.worlds={mortal:{},immortal:V2.world};
+ if(!V2.worlds.mortal||typeof V2.worlds.mortal!=='object')V2.worlds.mortal={};
+ V2.worlds.mortal.scene=String(P.scene||'');V2.worlds.mortal.subScene=String(P.subScene||'');
+ V2.worlds.mortal.x=Number(P.x)||0;V2.worlds.mortal.y=Number(P.y)||0;V2.worlds.mortal.steps=Math.max(0,Number(P.steps)||0);
+ V2.worlds.immortal=V2.world;
+ return V2.worlds;
 }
 function loadV2(){
  try{
   const raw=localStorage.getItem('mhxy_v2_extension');
   if(raw)V2=normalizeV2(JSON.parse(raw));
   if(window.P&&P.lv){V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));V2.mortal.exp=Math.max(0,Number(P.exp)||0);}
+  syncWorldPartitions();
  }catch(e){console.warn('2.0扩展存档读取失败',e);}
 }
 function saveV2(){
- try{localStorage.setItem('mhxy_v2_extension',JSON.stringify(V2));if(typeof saveGame==='function')saveGame();return true;}
+ try{syncWorldPartitions();localStorage.setItem('mhxy_v2_extension',JSON.stringify(V2));if(typeof saveGame==='function')saveGame();return true;}
  catch(e){console.warn('2.0存档保存失败',e);return false;}
 }
 function wrapSave(){
@@ -6154,7 +6171,7 @@ function wrapSave(){
  }
  if(typeof applySaveData==='function'&&!applySaveData.__v2){
   const old=applySaveData;
-  const wrapped=function(d){const ok=old(d);if(d&&d.ascensionV2)V2=normalizeV2(d.ascensionV2);return ok;};
+  const wrapped=function(d){const ok=old(d);if(d&&d.ascensionV2)V2=normalizeV2(d.ascensionV2);syncWorldPartitions();return ok;};
   wrapped.__v2=true;applySaveData=wrapped;
  }
 }
@@ -6288,6 +6305,7 @@ const IMMORTAL_MOBS={nantian:[['巡天兵卒','🛡️',110,15,5],['天庭灵鸦
 function worldMoveOne(dx,dy){
  if(battleV2||(typeof battle!=='undefined'&&battle.active)||!worldOpen)return;const nx=Math.max(45,Math.min(2150,Math.round((V2.world.x+dx*32)/32)*32)),ny=Math.max(45,Math.min(1500,Math.round((V2.world.y+dy*32)/32)*32));if(nx===V2.world.x&&ny===V2.world.y)return;
  V2.world.x=nx;V2.world.y=ny;worldSteps++;const r=regionAt(nx,ny);V2.world.region=r.id;if(!V2.world.visited.includes(r.id)){V2.world.visited.push(r.id);log('首次探索：'+r.name);toast('发现新区域：'+r.name);}
+ syncWorldPartitions();saveV2();
  if(worldSteps%5===0&&!(r.id==='nantian'&&nx<480&&ny<480)){const p=IMMORTAL_MOBS[r.id]||IMMORTAL_MOBS.nantian,m=p[Math.floor(Math.random()*p.length)],lv=Math.max(1,V2.immortal.level+Math.floor(Math.random()*3)-1),sc=1+lv*.12,hp=Math.floor(m[2]*sc);startBattle({name:m[0],icon:m[1],hp,maxHp:hp,atk:Math.floor(m[3]+lv*3),def:Math.floor(m[4]+lv),phase:0},'random');log('仙界遭遇：'+m[0]+'（仙阶 '+lv+'）');}
 }
 function pixelRect(c,x,y,w,h,color){c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),w,h);}
@@ -6447,7 +6465,7 @@ function renderCultivationCompat(){
 }
 
 /* 永久开发者测试中心：正式版本常驻，不随正式发布删除 */
-const DEV_VERSION='2.0-devtools-1.2';
+const DEV_VERSION='2.0-devtools-1.3';
 function devEsc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function captureDevError(msg){V2.developer.errors.unshift({message:String(msg).slice(0,500),time:Date.now()});V2.developer.errors=V2.developer.errors.slice(0,40);}
 function installDevErrorCapture(){
@@ -6561,6 +6579,14 @@ const DEV_TEST_SUITES={
   ['角色移动入口',()=>typeof tryMove==='function'],
   ['小地图入口',()=>typeof openMiniMap==='function'],
   ['角色场景坐标',()=>Number.isFinite(P.x)&&Number.isFinite(P.y)&&typeof P.scene==='string']
+ ]},
+ worldIsolation:{label:'凡界/仙界世界隔离',tests:[
+  ['两界世界状态独立',()=>!!(V2.worlds&&V2.worlds.mortal&&V2.worlds.immortal&&V2.worlds.immortal===V2.world&&V2.worlds.mortal!==V2.worlds.immortal)],
+  ['凡界坐标独立于仙界',()=>Number.isFinite(V2.worlds.mortal.x)&&Number.isFinite(V2.worlds.mortal.y)&&Number.isFinite(V2.world.x)&&Number.isFinite(V2.world.y)&&!(V2.worlds.mortal===V2.worlds.immortal)],
+  ['凡界场景进度独立保存',()=>typeof V2.worlds.mortal.scene==='string'&&typeof V2.worlds.mortal.subScene==='string'&&Number.isFinite(V2.worlds.mortal.steps)],
+  ['仙界探索记录独立保存',()=>Array.isArray(V2.world.visited)&&Array.isArray(V2.world.unlocked)&&V2.world.chests&&V2.world.bossKills],
+  ['旧版2.0仙界存档迁移',()=>{const old=normalizeV2({world:{x:777,y:555,region:'yaochi',visited:['nantian','yaochi']}});return old.world.x===777&&old.worlds.immortal===old.world&&old.worlds.mortal!==old.world;}],
+  ['两界切换不改凡界坐标',()=>Number(V2.worlds.mortal.x)===Number(P.x)&&Number(V2.worlds.mortal.y)===Number(P.y)&&String(V2.worlds.mortal.scene)===String(P.scene||'')]
  ]},
  immortalWorld:{label:'2.0仙界开放世界',tests:[
   ['仙界地图入口',()=>typeof openWorld==='function'&&typeof drawWorld==='function'],['独立像素地图渲染',()=>typeof worldTerrain==='function'&&typeof drawPixelHero==='function'&&typeof drawPixelMob==='function'],['仙界独立怪物图鉴',()=>Object.keys(IMMORTAL_MOBS).length===6&&Object.values(IMMORTAL_MOBS).every(p=>p.length>=3)],['网格步进与五步遭遇',()=>typeof worldMoveOne==='function'&&Number.isFinite(worldSteps)],['战斗复用凡间核心',()=>typeof battlePrepare==='function'&&typeof finishBattle==='function'&&finishBattle!==finishBattleWithImmortal],['战斗期间地图锁定',()=>typeof battle==='object'&&typeof worldNextStepAt==='number'&&typeof worldMoveOne==='function'],
