@@ -1559,7 +1559,7 @@ button{
 </style>
 
 <style>
-#bottomBar{grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;padding-left:5px;padding-right:5px}
+#bottomBar{grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;padding-left:4px;padding-right:4px}
 #bottomBar .menu-btn{min-width:0;padding:5px 1px}#bottomBar .menu-btn .mi{font-size:17px}#bottomBar .menu-btn .mt{font-size:8px;letter-spacing:0}
 .dev-dialog{max-width:520px}.dev-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:10px}
 .dev-summary b,.dev-feature{padding:9px;border:1px solid rgba(240,200,96,.28);border-radius:7px;background:rgba(0,0,0,.18);font-size:11px}
@@ -1703,6 +1703,7 @@ button{
       <span class="mi">🎒</span>
       <span class="mt">背包</span>
     </button>
+    <button class="menu-btn" data-menu="equipment"><span class="mi">⚔️</span><span class="mt">装备</span></button>
     <button class="menu-btn" data-menu="skill">
       <span class="mi">✨</span>
       <span class="mt">技能</span>
@@ -1765,6 +1766,7 @@ button{
     </div>
   </div>
   
+  <div class="modal" id="modalEquipment"><div class="dialog"><div class="dialog-head"><div class="dialog-title">装备 · 锻造</div><button class="dialog-close" data-close="modalEquipment">✕</button></div><div class="dialog-body" id="equipmentBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalEquipment">关闭</button></div></div></div>
   <!-- 技能 -->
   <div class="modal" id="modalSkill">
     <div class="dialog">
@@ -2088,6 +2090,38 @@ const PETS = [
   { id:'jinwu', name:'金乌',     icon:'🐦', price:30000, hp:900, atk:130,def:60, spd:26, desc:'身负太阳真火的神鸟' },
 ];
 
+const GEAR_CATALOG={
+ iron_sword:{name:'精铁长剑',icon:'⚔️',slot:'weapon',slotName:'武器',price:900,atk:12,magic:2,desc:'入门武器，提升攻击与法术'},
+ flame_blade:{name:'赤焰刀',icon:'🗡️',slot:'weapon',slotName:'武器',price:4800,atk:32,magic:12,desc:'蕴含火灵之力的进阶兵刃'},
+ cloud_armor:{name:'云纹甲',icon:'🛡️',slot:'armor',slotName:'护甲',price:1100,def:12,hp:60,desc:'轻便坚韧的护身甲胄'},
+ basalt_armor:{name:'玄岩战铠',icon:'🛡️',slot:'armor',slotName:'护甲',price:5200,def:34,hp:180,desc:'以玄岩精铁锻造的重甲'},
+ jade_helm:{name:'青玉冠',icon:'👑',slot:'helmet',slotName:'头盔',price:850,hp:45,mp:20,desc:'温润灵玉凝成的护额'},
+ dragon_helm:{name:'蛟龙盔',icon:'🐉',slot:'helmet',slotName:'头盔',price:4200,hp:130,def:10,desc:'刻有蛟龙纹样的战盔'},
+ swift_boots:{name:'追风靴',icon:'🥾',slot:'boots',slotName:'鞋履',price:1000,spd:8,def:3,desc:'轻盈灵巧，提升移动身法'},
+ cloud_boots:{name:'踏云履',icon:'👟',slot:'boots',slotName:'鞋履',price:4600,spd:20,hp:70,desc:'踏云而行的珍稀鞋履'},
+ spirit_pendant:{name:'聚灵坠',icon:'📿',slot:'accessory',slotName:'饰品',price:1300,magic:10,mp:45,desc:'凝聚天地灵气的护身坠'},
+ phoenix_pendant:{name:'凤羽佩',icon:'🪶',slot:'accessory',slotName:'饰品',price:6000,atk:12,magic:25,hp:100,desc:'蕴含凤羽灵韵的珍贵饰品'}
+};
+const GEAR_SLOTS=[['weapon','武器'],['armor','护甲'],['helmet','头盔'],['boots','鞋履'],['accessory','饰品']];
+function gearStats(item,level=0){const out={};['atk','def','spd','magic','hp','mp'].forEach(k=>{if(item[k])out[k]=Math.floor(item[k]*(1+level*.2));});return out;}
+function applyGearDelta(stats,sign){Object.keys(stats||{}).forEach(k=>{const key=k==='hp'?'maxHp':k==='mp'?'maxMp':k;if(Number.isFinite(P[key]))P[key]=Math.max(key==='maxHp'||key==='maxMp'?1:0,P[key]+stats[k]*sign);});P.hp=Math.min(P.hp,P.maxHp);P.mp=Math.min(P.mp,P.maxMp);}
+function getEquippedGear(slot){const id=P.equipment&&P.equipment[slot];return id?P.gearInventory.find(g=>g.id===id)||null:null;}
+function renderEquipmentPanel(){
+ const body=$('equipmentBody');if(!body)return;
+ const equipped=GEAR_SLOTS.map(([slot,label])=>{const g=getEquippedGear(slot),it=g&&GEAR_CATALOG[g.id];return '<div class="list-item"><div class="li-icon">'+(it?it.icon:'⬜')+'</div><div class="li-body"><div class="li-name">'+label+' · '+(it?it.name:'未装备')+'</div><div class="li-desc">'+(it?'锻造等级 +'+g.level+' · '+Object.entries(gearStats(it,g.level)).map(([k,v])=>({atk:'攻击',def:'防御',spd:'速度',magic:'法术',hp:'气血',mp:'法力'}[k])+' '+v).join(' / '):'此部位尚无装备')+'</div></div>'+(g?'<button class="li-btn" data-unequip="'+slot+'">卸下</button>':'')+'</div>';}).join('');
+ const inventory=P.gearInventory.map((g,i)=>{const it=GEAR_CATALOG[g.id],isOn=P.equipment[it.slot]===g.id;return '<div class="list-item"><div class="li-icon">'+it.icon+'</div><div class="li-body"><div class="li-name">'+it.name+' <span class="li-count">+ '+g.level+'</span></div><div class="li-desc">'+it.slotName+' · '+it.desc+'</div></div><button class="li-btn" data-equip-index="'+i+'" '+(isOn?'disabled':'')+'>'+(isOn?'已装备':'装备')+'</button><button class="li-btn" data-forge-index="'+i+'">锻造</button></div>';}).join('');
+ const shop=Object.entries(GEAR_CATALOG).map(([id,it])=>'<div class="list-item"><div class="li-icon">'+it.icon+'</div><div class="li-body"><div class="li-name">'+it.name+'</div><div class="li-desc">'+it.slotName+' · '+it.desc+'</div></div><div class="li-right" style="color:#ffd060">'+fmt(it.price)+'<small>两</small></div><button class="li-btn" data-buy-gear="'+id+'" '+(P.gold<it.price?'disabled':'')+'>购买</button></div>').join('');
+ body.innerHTML='<div class="dev-help">装备提供永久属性加成；每个部位只能装备一件。锻造最高 +5，每次消耗 1 颗一级宝石与银两。</div><h3 class="dev-section-title">当前装备</h3>'+equipped+'<h3 class="dev-section-title">装备背包 ('+P.gearInventory.length+')</h3>'+(inventory||'<p class="empty-tip">还没有装备，去装备商铺看看吧</p>')+'<h3 class="dev-section-title">装备商铺</h3>'+shop;
+ body.querySelectorAll('[data-buy-gear]').forEach(btn=>btn.onclick=()=>buyGear(btn.dataset.buyGear));
+ body.querySelectorAll('[data-equip-index]').forEach(btn=>btn.onclick=()=>equipGear(Number(btn.dataset.equipIndex)));
+ body.querySelectorAll('[data-unequip]').forEach(btn=>btn.onclick=()=>unequipGear(btn.dataset.unequip));
+ body.querySelectorAll('[data-forge-index]').forEach(btn=>btn.onclick=()=>forgeGear(Number(btn.dataset.forgeIndex)));
+}
+function buyGear(id){const it=GEAR_CATALOG[id];if(!it||P.gold<it.price)return toast('银两不足');if(P.gearInventory.length>=30)return toast('装备背包已满');P.gold-=it.price;P.gearInventory.push({id,level:0});toast('购入 '+it.name);addLog('【装备】购入 '+it.name,'good');saveGame();updateHUD();renderEquipmentPanel();}
+function equipGear(index){const g=P.gearInventory[index];if(!g)return;const it=GEAR_CATALOG[g.id],old=getEquippedGear(it.slot);if(old)applyGearDelta(gearStats(GEAR_CATALOG[old.id],old.level),-1);P.equipment[it.slot]=g.id;applyGearDelta(gearStats(it,g.level),1);toast('已装备 '+it.name);addLog('【装备】装备 '+it.name,'good');saveGame();updateHUD();renderEquipmentPanel();}
+function unequipGear(slot){const g=getEquippedGear(slot);if(!g)return;applyGearDelta(gearStats(GEAR_CATALOG[g.id],g.level),-1);P.equipment[slot]=null;toast('已卸下装备');saveGame();updateHUD();renderEquipmentPanel();}
+function forgeGear(index){const g=P.gearInventory[index];if(!g)return;const it=GEAR_CATALOG[g.id];if(g.level>=5)return toast('已达到最高锻造等级');if((P.bag.stone1||0)<1)return toast('需要 1 颗一级宝石');const cost=500*(g.level+1);if(P.gold<cost)return toast('银两不足，需要 '+cost+' 两');const active=P.equipment[it.slot]===g.id;if(active)applyGearDelta(gearStats(it,g.level),-1);P.bag.stone1--;P.gold-=cost;g.level++;if(active)applyGearDelta(gearStats(it,g.level),1);toast(it.name+' 锻造成功，当前 +'+g.level);addLog('【锻造】'+it.name+' 提升至 +'+g.level,'good');saveGame();updateHUD();renderEquipmentPanel();}
+
 /* ============================================================
    玩家状态
    ============================================================ */
@@ -2111,6 +2145,8 @@ const P = {
   kills: 0,
   killStats: {},
   bankGold: 0,
+  equipment: {weapon:null,armor:null,helmet:null,boots:null,accessory:null},
+  gearInventory: [],
   quest: null,
   questDone: 0,
   flags: {},
@@ -2511,6 +2547,7 @@ $$('.menu-btn').forEach(btn => {
     const menu = btn.dataset.menu;
     if (menu === 'char')  openCharPanel();
     if (menu === 'bag')   openBagPanel();
+    if (menu === 'equipment'){renderEquipmentPanel();openModal('modalEquipment');}
     if (menu === 'skill') openSkillPanel();
     if (menu === 'pet')   openPetPanel();
     if (menu === 'task')  openTaskPanel();
@@ -5416,7 +5453,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5428,7 +5465,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','laomuCooldownUntil','flags'
+    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','equipment','gearInventory','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','laomuCooldownUntil','flags'
   ];
   allowed.forEach(key => {
     if (Object.prototype.hasOwnProperty.call(data, key)) P[key] = data[key];
@@ -5451,6 +5488,10 @@ function applySaveData(data){
   P.bankGold = Math.max(0, Number(P.bankGold) || 0);
   if (!P.killStats || typeof P.killStats !== 'object') P.killStats = {};
   if (!P.bag || typeof P.bag !== 'object') P.bag = {};
+  if (!P.equipment || typeof P.equipment !== 'object') P.equipment={weapon:null,armor:null,helmet:null,boots:null,accessory:null};
+  ['weapon','armor','helmet','boots','accessory'].forEach(k=>{if(!Object.prototype.hasOwnProperty.call(P.equipment,k))P.equipment[k]=null;});
+  if (!Array.isArray(P.gearInventory)) P.gearInventory=[];
+  P.gearInventory=P.gearInventory.filter(g=>g&&typeof g.id==='string'&&GEAR_CATALOG[g.id]&&Number.isFinite(Number(g.level))).map(g=>({id:g.id,level:Math.max(0,Math.min(5,Math.floor(Number(g.level)||0)))}));
   if (!Array.isArray(P.petBox)) P.petBox = [];
   if (!Array.isArray(P.logs)) P.logs = [];
   if (!Array.isArray(P.cultivationBooks)) P.cultivationBooks=[];
@@ -5566,6 +5607,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)}]);
  registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
  registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
+ registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===10},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
  registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
 }
 registerBuiltInDeveloperTests();window.registerFeatureTest=registerFeatureTest;
