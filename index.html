@@ -6139,7 +6139,7 @@ let currentTab='overview';
 function openPanel(tab){
  ensureRoot();currentTab=tab||'overview';$v('v2Root').classList.add('open');renderPanel();
 }
-function closePanel(){if($v('v2Root'))$v('v2Root').classList.remove('open');}
+function closePanel(){if(worldOpen){worldOpen=false;if(worldRAF)cancelAnimationFrame(worldRAF);worldRAF=0;}if($v('v2Root'))$v('v2Root').classList.remove('open');}
 function card(title,body){return '<section class="v2-card"><h3>'+title+'</h3>'+body+'</section>';}
 function btn(text,action,cls,disabled){return '<button class="v2-btn '+(cls||'')+'" data-v2-action="'+action+'" '+(disabled?'disabled':'')+'>'+text+'</button>';}
 function bossProgress(){
@@ -6279,7 +6279,7 @@ function drawWorld(now){
   ctx.font='13px sans-serif';ctx.fillStyle='#fff0bd';ctx.fillText(dead?'已击败':b.name,r.x-35,r.y+122);
  });
  // NPC和宝箱
- ctx.font='24px sans-serif';ctx.fillText('🧙',V2.world.x+80,V2.world.y-30);
+ ctx.font='24px sans-serif';ctx.fillText('🧙',region.x-85,region.y+25);
  REGIONS.forEach((r,i)=>{const chestX=r.x+115,chestY=r.y-45;ctx.fillText(V2.world.chests[r.id]?'📦':'🧰',chestX,chestY);});
  // 玩家
  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(V2.world.x,V2.world.y+16,16,7,0,0,Math.PI*2);ctx.fill();
@@ -6300,7 +6300,7 @@ function interactWorld(){
  if(Math.hypot(V2.world.x-(r.x+115),V2.world.y-(r.y-45))<90&&!V2.world.chests[r.id]){
   V2.world.chests[r.id]=true;V2.materials.仙玉+=120;V2.materials.灵石+=2;log('开启'+r.name+'秘藏宝箱：仙玉+120、灵石+2');saveV2();toast('发现仙界宝箱！');return;
  }
- if(Math.hypot(V2.world.x-(V2.world.x+80),V2.world.y-(V2.world.y-30))<100){V2.materials.仙玉+=20;log('与仙界游方仙人交谈，获得仙玉');saveV2();toast('游方仙人赠予仙玉');return;}
+ if(Math.hypot(V2.world.x-(r.x-85),V2.world.y-(r.y+25))<95){V2.materials.仙玉+=20;log('与仙界游方仙人交谈，获得仙玉');saveV2();toast('游方仙人赠予仙玉');return;}
  const enemy=regionAt(V2.world.x+120,V2.world.y+80);
  V2.world.encounters++;startBattle({name:enemy.enemy,hp:220+V2.immortal.level*45,atk:25+V2.immortal.level*5,def:8+V2.immortal.level*2,phase:0},'random');
 }
