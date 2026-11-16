@@ -6619,7 +6619,7 @@ function renderDeveloper(){
  const suiteButtons=Object.keys(DEV_TEST_SUITES).map(k=>btn('测试：'+DEV_TEST_SUITES[k].label,'dev:suite:'+k)).join('');
  return '<section class="v2-card v2-dev-card"><h3>开发者选项 <span class="v2-dev-tag">正式版常驻</span></h3><p class="v2-muted">集中测试1.7旧系统与2.0新增系统。每个分类可单独测试，也可一键完整回归。自动检查只读，不会修改角色数据。</p><div class="v2-row"><span>测试模块</span><b>'+DEV_VERSION+'</b></div><div class="v2-row"><span>最近测试</span><b>'+(d.lastRun?new Date(d.lastRun).toLocaleString():'尚未运行')+'</b></div><div class="v2-row"><span>本次结果</span><b class="v2-test-ok">'+pass+'通过</b><b class="v2-test-fail">'+fail+'失败</b></div><div class="v2-dev-actions">'+btn('运行全部新旧功能测试','dev:test','blue')+suiteButtons+'</div></section>'+
  '<section class="v2-card v2-dev-card"><h3>测试结果明细（'+rs.length+'项）</h3>'+rows+'</section>'+
-'<section class="v2-card v2-dev-card"><h3>开发者快捷工具</h3><p class="v2-muted">以下操作会修改当前正式存档，执行前需要确认；建议先导出备份。</p><div class="v2-dev-actions">'+btn('气血法力回满','dev:heal')+btn('立即保存存档','dev:save')+btn('重新运行全部测试','dev:test')+'</div></section>'+
+'<section class="v2-card v2-dev-card"><h3>开发者快捷工具</h3><p class="v2-muted">以下操作会修改当前正式存档，执行前需要确认；建议先导出备份。</p><div class="v2-dev-actions">'+btn('气血法力回满','dev:heal')+btn('凡间等级设为100','dev:level100')+btn('开启飞升试炼','dev:ascend')+btn('增加仙界材料','dev:materials')+btn('发放测试仙器','dev:gear')+btn('测试战斗木桩','dev:battle')+btn('立即保存存档','dev:save')+btn('重新运行全部测试','dev:test')+'</div></section>'+
  '<section class="v2-card v2-dev-card"><h3>运行时错误日志（'+es.length+'）</h3><div class="v2-dev-log">'+devEsc(errors)+'</div><div style="margin-top:8px">'+btn('清空错误日志','dev:clearlogs','red')+'</div></section>'+
  '<section class="v2-card"><h3>永久保留规则</h3><p class="v2-muted">开发者选项属于正式游戏功能。以后每个新增或修改的功能，都必须在这里添加对应测试按钮与回归检查；正式版发布时保留，不会删除。</p></section>';
 }
