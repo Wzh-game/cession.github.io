@@ -6196,7 +6196,7 @@ function renderRecords(){
 }
 function renderWorldIntro(){
  if(!V2.immortal.unlocked)return card('仙界尚未开放','<p>完成飞升任务后即可进入。</p>'+btn('返回飞升页面','overview'));
- return card('仙界开放世界','<p class="v2-muted">大地图采用连续世界坐标和跟随镜头。可点击地面移动，也可使用屏幕方向键；靠近NPC、宝箱、采集点或Boss后点击交互。</p>'+btn('进入地图','enterWorld','blue'));
+ return card('仙界开放世界','<p class="v2-muted">采用与凡间一致的四方向网格移动、地图探索和回合制遭遇战。地图为像素风格，六大区域拥有不同地貌、建筑与怪物；每移动五步会遭遇当地怪物。靠近NPC、宝箱或Boss后点击交互。</p>'+btn('进入地图','enterWorld','blue'));
 }
 function handleAction(a){
  if(a==='ascend'){if(!V2.ascension.started){if(!ascensionReady()){toast('飞升条件尚未满足');return;}V2.ascension.started=true;V2.ascension.tribulations=0;log('开启飞升主线：登天之路');toast('飞升任务开启！');}else toast('天劫试炼已准备就绪');saveV2();renderPanel();}
@@ -6227,7 +6227,7 @@ function startTribulation(){
  startBattle(enemy,'tribulation');
 }
 function openWorld(){
- worldOpen=true;ensureRoot();$v('v2Root').classList.add('open');$v('v2Title').textContent='仙界 · 连通开放世界';
+ worldOpen=true;ensureRoot();$v('v2Root').classList.add('open');$v('v2Title').textContent='仙界 · 像素开放世界';
  $v('v2Tabs').style.display='none';
  $v('v2Body').style.padding='0';$v('v2Body').style.overflow='hidden';
  $v('v2Body').innerHTML='<div class="v2-world-wrap"><canvas id="v2WorldCanvas"></canvas><div class="v2-world-hud"><span class="v2-world-pill" id="v2RegionHud">南天门</span><span class="v2-world-pill" id="v2PosHud">X:300 Y:300</span></div><div class="v2-world-controls"><div class="v2-world-pad"><button class="up" data-dir="up">▲</button><button class="left" data-dir="left">◀</button><button class="down" data-dir="down">▼</button><button class="right" data-dir="right">▶</button></div><div style="display:flex;gap:6px;align-items:end"><button id="v2Interact">交互</button><button id="v2MapExit">返回</button></div></div></div>';
