@@ -2127,7 +2127,7 @@ function gainExp(amount){
 function getSectSkills(){
   if (!P.sect) return [];
   const s = SECTS.find(x => x.id === P.sect);
-  return s ? s.skills.filter(sk => sk.lv <= P.lv) : [];
+  return s ? s.skills.filter(sk => sk.lv <= P.lv && sk.type !== 'special') : [];
 }
 
 /* ============================================================
@@ -4601,7 +4601,7 @@ function useLaomuSkill(unit,id,resolve){
  const cast=target=>{
   if(!target||!target.alive){resolve();return;}
   unit.mp-=cost;if(unit.isPlayer)P.mp=unit.mp;
-  if(id==='roll'){P.laomuCooldownUntil=Date.now()+3600000;unit.invulnerableUntil=Date.now()+60000;blog('🪵【滚木】护体发动！60秒内免疫敌方伤害，冷却60分钟。','good');showDamageFloat(unit.id,'无敌60秒','crit');}
+  if(id==='roll'){P.laomuCooldownUntil=Date.now()+3600000;unit.invulnerableUntil=Date.now()+60000;saveGame();blog('🪵【滚木】护体发动！60秒内免疫敌方伤害，冷却60分钟。','good');showDamageFloat(unit.id,'无敌60秒','crit');}
   else if(id==='sigma'){target.hp=Math.max(0,target.hp-67);if(target.hp<=0)target.alive=false;showDamageFloat(target.id,'-67','crit');blog('👊【西格玛滚木拳】造成固定67点伤害！','good');}
   else if(id==='eye'){const dmg=Math.max(0,(battle.previousRoundDamage||0)*2);target.hp=Math.max(0,target.hp-dmg);if(target.hp<=0)target.alive=false;showDamageFloat(target.id,'-'+dmg,'crit');blog('👁️【滚木之眼】上一轮承受伤害×2，造成'+dmg+'点伤害！','good');}
   else if(id==='vanish'){battle.units=battle.units.filter(u=>u!==target);blog('🌲【浮木消失术】使'+target.name+'消失，未计入击杀奖励。','good');}
