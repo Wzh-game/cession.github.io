@@ -6225,7 +6225,7 @@ function ensureRoot(){
 }
 let currentTab='overview';
 function openPanel(tab){
- const allowed=['overview','gear','regions','world','records','developer'];
+ const allowed=['overview','quests','gear','regions','world','records','developer'];
  if(!allowed.includes(tab))tab='overview';
  ensureRoot();currentTab=tab;$v('v2Root').classList.add('open');
  $v('v2Title').textContent='梦幻西游 · 2.0';renderPanel();
