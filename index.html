@@ -6166,7 +6166,7 @@ function saveV2(){
 function wrapSave(){
  if(typeof getSaveData==='function'&&!getSaveData.__v2){
   const old=getSaveData;
-  const wrapped=function(){const d=old();d.schemaVersion=2;d.ascensionV2=clone(V2);return d;};
+  const wrapped=function(){syncWorldPartitions();const d=old();d.schemaVersion=2;d.ascensionV2=clone(V2);return d;};
   wrapped.__v2=true;getSaveData=wrapped;
  }
  if(typeof applySaveData==='function'&&!applySaveData.__v2){
