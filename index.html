@@ -1557,6 +1557,47 @@ button{
 @keyframes introColor{to{background-position:250% 50%}}
 @media(prefers-reduced-motion:reduce){#gameIntro{animation-duration:2s}#gameIntro .intro-title,#gameIntro .intro-en{animation-duration:2s}#gameIntro .intro-cn{animation-duration:2s,2s}}
 </style>
+<style>
+/* ===== 2.0 单文件仙界扩展 ===== */
+#bottomBar{grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;padding-left:5px;padding-right:5px}
+#bottomBar .menu-btn{min-width:0;padding:5px 1px}
+#bottomBar .menu-btn .mi{font-size:18px}
+#bottomBar .menu-btn .mt{font-size:9px;letter-spacing:0}
+.v2-menu{background:linear-gradient(180deg,#9c7135,#60401b 55%,#38220e)!important}
+#v2Root{position:absolute;inset:0;z-index:150;display:none;background:rgba(8,5,12,.94);color:#f8e8c0;overflow:hidden}
+#v2Root.open{display:flex;flex-direction:column}
+.v2-head{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:linear-gradient(180deg,#553b70,#261b39);border-bottom:2px solid #d5ad61}
+.v2-head strong{font-size:15px;color:#ffe7a4;letter-spacing:2px}
+.v2-close{border:1px solid #d4b46e;border-radius:6px;background:#3d294b;color:#fff;padding:6px 12px;font-size:14px}
+.v2-tabs{display:flex;gap:5px;padding:7px;overflow-x:auto;background:#1b1426}
+.v2-tab{flex:1;min-width:70px;padding:8px 5px;border:1px solid #705b82;border-radius:6px;background:#332443;color:#ead9f4}
+.v2-tab.active{background:linear-gradient(180deg,#a27a3e,#61421d);color:#fff0bd;border-color:#f1d18a}
+.v2-body{flex:1;min-height:0;overflow:auto;padding:12px}
+.v2-card{padding:12px;margin:0 0 10px;border:1px solid rgba(226,190,117,.55);border-radius:9px;background:linear-gradient(145deg,rgba(76,53,88,.95),rgba(34,25,45,.98));box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.v2-card h3{margin-bottom:8px;color:#ffe2a0;font-size:13px}
+.v2-muted{color:#b9aac7;font-size:11px;line-height:1.6}
+.v2-row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+.v2-btn{padding:9px 12px;border:1px solid #c39b55;border-radius:7px;background:linear-gradient(180deg,#946b36,#53371a);color:#fff0c4;font-weight:bold}
+.v2-btn:disabled{opacity:.4;filter:grayscale(1)}
+.v2-btn.blue{background:linear-gradient(180deg,#486e9c,#263e63)}
+.v2-btn.red{background:linear-gradient(180deg,#a94440,#5e2025)}
+.v2-progress{height:8px;background:#160f20;border-radius:8px;overflow:hidden;border:1px solid #6b547e}
+.v2-progress i{display:block;height:100%;background:linear-gradient(90deg,#53b7a0,#b9f1a5)}
+.v2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.v2-region{padding:10px;border:1px solid #766083;border-radius:8px;background:#2c2039}
+.v2-region b{display:block;color:#ffe2a0;margin-bottom:4px}
+#v2WorldCanvas{width:100%;height:100%;display:block;touch-action:none;background:#1b2830}
+.v2-world-wrap{position:relative;flex:1;min-height:0;overflow:hidden}
+.v2-world-hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none;gap:6px}
+.v2-world-pill{padding:5px 8px;background:rgba(17,12,25,.82);border:1px solid #d4b36d;border-radius:6px;color:#ffe7a4;font-size:10px}
+.v2-world-controls{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+.v2-world-controls button{pointer-events:auto;width:45px;height:42px;border:1px solid #d4b36d;border-radius:8px;background:rgba(53,37,64,.9);color:#fff0bd;font-size:18px;touch-action:none}
+.v2-world-pad{display:grid;grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,42px);gap:4px}
+.v2-world-pad .up{grid-column:2}.v2-world-pad .left{grid-column:1;grid-row:2}.v2-world-pad .down{grid-column:2;grid-row:2}.v2-world-pad .right{grid-column:3;grid-row:2}
+.v2-battle-log{max-height:170px;overflow:auto;padding:8px;background:#130e1c;border-radius:7px;font-size:11px;line-height:1.7}
+.v2-slot{padding:8px;border:1px dashed #8b7599;border-radius:7px;background:#21192b;font-size:11px}
+@media(max-width:390px){#bottomBar .menu-btn .mi{font-size:16px}#bottomBar .menu-btn .mt{font-size:8px}.v2-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div id="gameIntro" aria-hidden="true">
@@ -5997,6 +6038,403 @@ document.addEventListener('gestureend', function(e){
   });
   window.setTimeout(function(){if(intro.isConnected)intro.remove();},8500);
 })();
+</script>
+<script>
+
+/* ============================================================
+   梦幻西游 2.0：双线等级 / 飞升 / 连通仙界开放世界 / 装备
+   全部内嵌于 index.html；兼容 1.7 原存档
+   ============================================================ */
+(function(){
+'use strict';
+const $v=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const REGIONS=[
+ {id:'nantian',name:'南天门',x:300,y:300,colour:'#a5a36d',desc:'仙界入口与安全枢纽',boss:'镇天金甲卫',enemy:'天兵巡卫',reward:'仙器碎片'},
+ {id:'yaochi',name:'瑶池仙境',x:900,y:300,colour:'#6baf91',desc:'灵泉、仙桃与古老花园',boss:'瑶池圣兽',enemy:'瑶池灵鹿',reward:'仙桃灵种'},
+ {id:'wanshan',name:'万仙山',x:1500,y:300,colour:'#789b68',desc:'群峰、洞府与失落仙门',boss:'万山妖祖',enemy:'山岳妖灵',reward:'仙界功法'},
+ {id:'bingyu',name:'极寒天域',x:300,y:1120,colour:'#8bb6cb',desc:'永冻雪原与寒冰神殿',boss:'寒霜天君',enemy:'极寒雪魄',reward:'极寒仙器'},
+ {id:'jiuyou',name:'九幽仙狱',x:1000,y:1120,colour:'#795d83',desc:'封印魔域，危险极高',boss:'九幽魔尊',enemy:'九幽魔卒',reward:'魔神核心'},
+ {id:'lingxiao',name:'凌霄神殿',x:1800,y:1120,colour:'#c5a35d',desc:'仙界终局区域与天帝神殿',boss:'凌霄天帝',enemy:'天宫禁卫',reward:'帝品装备'}
+];
+const IMMORTAL_BOSSES=[
+ {id:'ib_nantian',region:'nantian',name:'镇天金甲卫',icon:'🛡️',hp:900,atk:48,def:18,drop:'仙器碎片'},
+ {id:'ib_yaochi',region:'yaochi',name:'瑶池圣兽',icon:'🦌',hp:1450,atk:62,def:25,drop:'仙桃灵种'},
+ {id:'ib_wanshan',region:'wanshan',name:'万山妖祖',icon:'🗻',hp:2300,atk:82,def:34,drop:'仙界功法'},
+ {id:'ib_bingyu',region:'bingyu',name:'寒霜天君',icon:'❄️',hp:3400,atk:105,def:45,drop:'极寒仙器'},
+ {id:'ib_jiuyou',region:'jiuyou',name:'九幽魔尊',icon:'👿',hp:5200,atk:138,def:58,drop:'魔神核心'},
+ {id:'ib_lingxiao',region:'lingxiao',name:'凌霄天帝',icon:'👑',hp:9000,atk:190,def:82,drop:'帝品装备'}
+];
+const REALMS=[
+ {name:'初登仙境',need:0},{name:'真仙',need:8},{name:'金仙',need:20},{name:'仙君',need:40},{name:'仙尊',need:70}
+];
+const EQUIP_BASE=[
+ {id:'sword_cloud',name:'云纹仙剑',slot:'weapon',quality:'仙品',atk:35,magic:18,desc:'初入仙界的制式仙剑'},
+ {id:'helm_star',name:'星辉冠',slot:'helmet',quality:'灵仙',def:22,maxHp:120,desc:'星辉凝成的护冠'},
+ {id:'armor_mist',name:'流霞仙甲',slot:'armor',quality:'真仙',def:45,maxHp:260,desc:'流霞织就，护体凝神'},
+ {id:'boots_wind',name:'踏风云履',slot:'shoes',quality:'灵仙',spd:18,def:12,desc:'踏风而行'},
+ {id:'ring_sun',name:'曜日仙戒',slot:'accessory',quality:'金仙',atk:28,magic:35,desc:'蕴藏曜日之力'},
+ {id:'relic_emperor',name:'天帝遗印',slot:'artifact',quality:'帝品',atk:65,def:45,magic:70,maxHp:500,desc:'凌霄神殿的终极遗物'}
+];
+const V2_DEFAULT={
+ schemaVersion:2,
+ mortal:{level:1,exp:0,levelCap:100},
+ immortal:{unlocked:false,level:1,exp:0,levelCap:100,realm:0,spiritPower:0},
+ ascension:{started:false,tribulations:0,completed:false,completedAt:0},
+ world:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0},
+ equipment:{owned:[],equipped:{weapon:null,helmet:null,armor:null,shoes:null,accessory:null,artifact:null}},
+ materials:{仙玉:0,仙晶:0,灵石:0,仙桃:0,仙器碎片:0,极寒晶核:0,魔神核心:0},
+ quests:{completed:[],active:[]},
+ achievements:[],
+ logs:[]
+};
+let V2=clone(V2_DEFAULT);
+let worldRAF=0,worldOpen=false,worldCtx=null,worldCanvas=null,lastWorldFrame=0,worldTarget=null,worldKeys={};
+let battleV2=null;
+const log=(s)=>{V2.logs.unshift({s,t:Date.now()});V2.logs=V2.logs.slice(0,35);};
+function normalizeV2(raw){
+ const v=raw&&typeof raw==='object'?raw:{};
+ const merge=(base,src)=>{Object.keys(base).forEach(k=>{if(src&&Object.prototype.hasOwnProperty.call(src,k)){if(base[k]&&typeof base[k]==='object'&&!Array.isArray(base[k]))base[k]=merge(clone(base[k]),src[k]);else if(Array.isArray(base[k]))base[k]=Array.isArray(src[k])?src[k].slice():base[k];else base[k]=src[k];}});return base;};
+ return merge(clone(V2_DEFAULT),v);
+}
+function loadV2(){
+ try{
+  const raw=localStorage.getItem('mhxy_v2_extension');
+  if(raw)V2=normalizeV2(JSON.parse(raw));
+  if(window.P&&P.lv){V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));V2.mortal.exp=Math.max(0,Number(P.exp)||0);}
+ }catch(e){console.warn('2.0扩展存档读取失败',e);}
+}
+function saveV2(){
+ try{localStorage.setItem('mhxy_v2_extension',JSON.stringify(V2));if(typeof saveGame==='function')saveGame();return true;}
+ catch(e){console.warn('2.0存档保存失败',e);return false;}
+}
+function wrapSave(){
+ if(typeof getSaveData==='function'&&!getSaveData.__v2){
+  const old=getSaveData;
+  const wrapped=function(){const d=old();d.schemaVersion=2;d.ascensionV2=clone(V2);return d;};
+  wrapped.__v2=true;getSaveData=wrapped;
+ }
+ if(typeof applySaveData==='function'&&!applySaveData.__v2){
+  const old=applySaveData;
+  const wrapped=function(d){const ok=old(d);if(d&&d.ascensionV2)V2=normalizeV2(d.ascensionV2);return ok;};
+  wrapped.__v2=true;applySaveData=wrapped;
+ }
+}
+function injectStyles(){
+ const st=document.createElement('style');st.textContent="\n/* ===== 2.0 单文件仙界扩展 ===== */\n#bottomBar{grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;padding-left:5px;padding-right:5px}\n#bottomBar .menu-btn{min-width:0;padding:5px 1px}\n#bottomBar .menu-btn .mi{font-size:18px}\n#bottomBar .menu-btn .mt{font-size:9px;letter-spacing:0}\n.v2-menu{background:linear-gradient(180deg,#9c7135,#60401b 55%,#38220e)!important}\n#v2Root{position:absolute;inset:0;z-index:150;display:none;background:rgba(8,5,12,.94);color:#f8e8c0;overflow:hidden}\n#v2Root.open{display:flex;flex-direction:column}\n.v2-head{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:linear-gradient(180deg,#553b70,#261b39);border-bottom:2px solid #d5ad61}\n.v2-head strong{font-size:15px;color:#ffe7a4;letter-spacing:2px}\n.v2-close{border:1px solid #d4b46e;border-radius:6px;background:#3d294b;color:#fff;padding:6px 12px;font-size:14px}\n.v2-tabs{display:flex;gap:5px;padding:7px;overflow-x:auto;background:#1b1426}\n.v2-tab{flex:1;min-width:70px;padding:8px 5px;border:1px solid #705b82;border-radius:6px;background:#332443;color:#ead9f4}\n.v2-tab.active{background:linear-gradient(180deg,#a27a3e,#61421d);color:#fff0bd;border-color:#f1d18a}\n.v2-body{flex:1;min-height:0;overflow:auto;padding:12px}\n.v2-card{padding:12px;margin:0 0 10px;border:1px solid rgba(226,190,117,.55);border-radius:9px;background:linear-gradient(145deg,rgba(76,53,88,.95),rgba(34,25,45,.98));box-shadow:inset 0 1px rgba(255,255,255,.08)}\n.v2-card h3{margin-bottom:8px;color:#ffe2a0;font-size:13px}\n.v2-muted{color:#b9aac7;font-size:11px;line-height:1.6}\n.v2-row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}\n.v2-btn{padding:9px 12px;border:1px solid #c39b55;border-radius:7px;background:linear-gradient(180deg,#946b36,#53371a);color:#fff0c4;font-weight:bold}\n.v2-btn:disabled{opacity:.4;filter:grayscale(1)}\n.v2-btn.blue{background:linear-gradient(180deg,#486e9c,#263e63)}\n.v2-btn.red{background:linear-gradient(180deg,#a94440,#5e2025)}\n.v2-progress{height:8px;background:#160f20;border-radius:8px;overflow:hidden;border:1px solid #6b547e}\n.v2-progress i{display:block;height:100%;background:linear-gradient(90deg,#53b7a0,#b9f1a5)}\n.v2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}\n.v2-region{padding:10px;border:1px solid #766083;border-radius:8px;background:#2c2039}\n.v2-region b{display:block;color:#ffe2a0;margin-bottom:4px}\n#v2WorldCanvas{width:100%;height:100%;display:block;touch-action:none;background:#1b2830}\n.v2-world-wrap{position:relative;flex:1;min-height:0;overflow:hidden}\n.v2-world-hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none;gap:6px}\n.v2-world-pill{padding:5px 8px;background:rgba(17,12,25,.82);border:1px solid #d4b36d;border-radius:6px;color:#ffe7a4;font-size:10px}\n.v2-world-controls{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}\n.v2-world-controls button{pointer-events:auto;width:45px;height:42px;border:1px solid #d4b36d;border-radius:8px;background:rgba(53,37,64,.9);color:#fff0bd;font-size:18px;touch-action:none}\n.v2-world-pad{display:grid;grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,42px);gap:4px}\n.v2-world-pad .up{grid-column:2}.v2-world-pad .left{grid-column:1;grid-row:2}.v2-world-pad .down{grid-column:2;grid-row:2}.v2-world-pad .right{grid-column:3;grid-row:2}\n.v2-battle-log{max-height:170px;overflow:auto;padding:8px;background:#130e1c;border-radius:7px;font-size:11px;line-height:1.7}\n.v2-slot{padding:8px;border:1px dashed #8b7599;border-radius:7px;background:#21192b;font-size:11px}\n@media(max-width:390px){#bottomBar .menu-btn .mi{font-size:16px}#bottomBar .menu-btn .mt{font-size:8px}.v2-grid{grid-template-columns:1fr}}\n";document.head.appendChild(st);
+}
+function addMenu(){
+ const bar=$v('bottomBar');if(!bar||bar.dataset.v2)return;bar.dataset.v2='1';
+ const add=(id,icon,label)=>{const b=document.createElement('button');b.className='menu-btn v2-menu';b.innerHTML='<span class="mi">'+icon+'</span><span class="mt">'+label+'</span>';b.addEventListener('click',()=>openPanel(id));bar.appendChild(b);};
+ add('immortal','☁️','仙界');add('gear','⚔️','装备');
+}
+function ensureRoot(){
+ if($v('v2Root'))return;
+ const root=document.createElement('div');root.id='v2Root';
+ root.innerHTML='<div class="v2-head"><strong id="v2Title">梦幻西游 · 2.0</strong><button class="v2-close" id="v2Close">✕ 关闭</button></div><div class="v2-tabs" id="v2Tabs"></div><div class="v2-body" id="v2Body"></div>';
+ $v('game').appendChild(root);
+ $v('v2Close').onclick=closePanel;
+}
+let currentTab='overview';
+function openPanel(tab){
+ ensureRoot();currentTab=tab||'overview';$v('v2Root').classList.add('open');renderPanel();
+}
+function closePanel(){if($v('v2Root'))$v('v2Root').classList.remove('open');}
+function card(title,body){return '<section class="v2-card"><h3>'+title+'</h3>'+body+'</section>';}
+function btn(text,action,cls,disabled){return '<button class="v2-btn '+(cls||'')+'" data-v2-action="'+action+'" '+(disabled?'disabled':'')+'>'+text+'</button>';}
+function bossProgress(){
+ const ids=['boss_changan','boss_jiangnan','boss_datang','boss_beiju','boss_huoyan'];
+ return ids.filter(id=>Number(P.killStats&&P.killStats[id]||0)>0||Boolean(P.bossDrops&&P.bossDrops[id])).length;
+}
+function manualProgress(){return ['jingang','qingmu','liusha','xuanbing','jiuyang'].filter(id=>P.flags&&P.flags['cult_done_'+id]).length;}
+function ascensionReady(){return P.lv>=100&&bossProgress()===5&&manualProgress()>=3;}
+function renderOverview(){
+ const mortal=Math.min(100,Number(P.lv)||1),imm=V2.immortal;
+ const need=Math.max(1,Math.floor(1000*Math.pow(imm.level,1.55)));
+ const percent=Math.min(100,imm.exp/need*100);
+ let h=card('双线修行', '<div class="v2-row"><span>凡间等级</span><b>Lv.'+mortal+' / 100</b></div><div class="v2-row"><span>仙界等级</span><b>'+(imm.unlocked?'Lv.'+imm.level+' / '+imm.levelCap:'尚未飞升')+'</b></div><div class="v2-row"><span>仙界境界</span><b>'+REALMS[imm.realm].name+'</b></div>'+(imm.unlocked?'<div class="v2-progress"><i style="width:'+percent+'%"></i></div><p class="v2-muted">仙界经验 '+Math.floor(imm.exp)+' / '+need+'</p>':'<p class="v2-muted">凡间等级达到100后开启飞升试炼。凡间等级不会清零，飞升后仙界等级独立成长。</p>'));
+ h+=card('飞升条件','<div class="v2-row"><span>凡间等级达到100</span><b>'+(P.lv>=100?'✓':'✕')+'</b></div><div class="v2-row"><span>击败五大凡间Boss</span><b>'+bossProgress()+'/5</b></div><div class="v2-row"><span>修成至少三本凡间功法</span><b>'+manualProgress()+'/3</b></div><p class="v2-muted">飞升不会重置门派、凡间等级、银两、背包、召唤兽、任务或凡间地图进度。</p>'+btn(V2.ascension.completed?'已完成飞升':V2.ascension.started?'继续渡劫':'开启飞升任务','ascend','',!V2.ascension.completed&&!V2.ascension.started&&!ascensionReady()));
+ if(V2.ascension.started&&!V2.ascension.completed){
+  h+=card('三重天劫','<p class="v2-muted">依次完成雷劫、心魔劫、神魂劫，再挑战最终天劫守关者。失败可重新挑战，不会删除旧存档。</p><div class="v2-row"><b>当前进度</b><span>'+V2.ascension.tribulations+'/3</span></div>'+btn(V2.ascension.tribulations<3?['挑战雷劫','挑战心魔劫','挑战神魂劫'][V2.ascension.tribulations]:'挑战最终天劫','tribulation','red'));
+ }
+ h+=card('仙界入口',V2.immortal.unlocked?'<p>仙界已经开启。六大区域连接为一张连续地图，可自由行走、探索、采集、寻找宝箱、挑战Boss。</p>'+btn('进入仙界开放世界','world','blue'):'<p class="v2-muted">完成飞升后解锁仙界大地图。</p>');
+ return h;
+}
+function renderGear(){
+ const slots=[['weapon','武器'],['helmet','头盔'],['armor','护甲'],['shoes','鞋履'],['accessory','饰品'],['artifact','法宝']];
+ let h=card('装备属性','<p class="v2-muted">装备属性会在穿戴时动态计算；卸下后同步移除，不重复叠加基础属性。</p><div class="v2-grid"><div class="v2-slot">攻击：'+P.atk+'</div><div class="v2-slot">防御：'+P.def+'</div><div class="v2-slot">法术：'+P.magic+'</div><div class="v2-slot">速度：'+P.spd+'</div></div>');
+ h+=card('装备栏',slots.map(s=>{const id=V2.equipment.equipped[s[0]],item=EQUIP_BASE.find(x=>x.id===id);return '<div class="v2-row"><span>'+s[1]+'</span><b>'+(item?item.name:'空')+'</b></div>';}).join(''));
+ h+=card('装备收藏',EQUIP_BASE.map(it=>{const owned=V2.equipment.owned.includes(it.id),equipped=V2.equipment.equipped[it.slot]===it.id;return '<div class="v2-row"><span><b>'+it.name+'</b><br><small class="v2-muted">'+it.quality+' · '+it.desc+'</small></span><span>'+(equipped?'已装备':owned?btn('装备','equip:'+it.id,'blue'):btn('尚未获得','', '',true))+'</span></div>';}).join(''));
+ return h;
+}
+function renderRegions(){
+ return card('仙界六大区域 · 连通世界','<p class="v2-muted">区域不是六个独立菜单。所有区域位于同一张连续大地图，山脉、河流、道路、遗迹与关隘构成自然地形边界。</p><div class="v2-grid">'+REGIONS.map(r=>'<div class="v2-region"><b>'+r.name+'</b><span class="v2-muted">'+r.desc+'</span><p class="v2-muted">区域守护：'+r.boss+'</p><p class="v2-muted">首通奖励：'+r.reward+'</p></div>').join('')+'</div>');
+}
+function renderPanel(){
+ if(!$v('v2Root'))return;
+ const tabs=[['overview','修行 / 飞升'],['world','仙界地图'],['gear','装备'],['regions','区域图鉴'],['records','历练记录']];
+ $v('v2Tabs').innerHTML=tabs.map(t=>'<button class="v2-tab '+(currentTab===t[0]?'active':'')+'" data-v2-tab="'+t[0]+'">'+t[1]+'</button>').join('');
+ $v('v2Tabs').querySelectorAll('[data-v2-tab]').forEach(b=>b.onclick=()=>{currentTab=b.dataset.v2Tab;renderPanel();});
+ let html=currentTab==='gear'?renderGear():currentTab==='regions'?renderRegions():currentTab==='records'?renderRecords():currentTab==='world'?renderWorldIntro():renderOverview();
+ $v('v2Body').innerHTML=html;
+ $v('v2Body').querySelectorAll('[data-v2-action]').forEach(b=>b.onclick=()=>handleAction(b.dataset.v2Action));
+}
+function renderRecords(){
+ return card('仙界历练记录','<p class="v2-muted">击败仙界Boss：'+Object.keys(V2.world.bossKills).length+'/6</p><p class="v2-muted">已探索区域：'+V2.world.visited.length+'/6</p><p class="v2-muted">已开启宝箱：'+Object.keys(V2.world.chests).filter(k=>V2.world.chests[k]).length+'</p><p class="v2-muted">仙玉：'+V2.materials.仙玉+' · 仙晶：'+V2.materials.仙晶+' · 灵石：'+V2.materials.灵石+'</p><div class="v2-battle-log">'+V2.logs.map(x=>x.s).join('<br>')+'</div>');
+}
+function renderWorldIntro(){
+ if(!V2.immortal.unlocked)return card('仙界尚未开放','<p>完成飞升任务后即可进入。</p>'+btn('返回飞升页面','overview'));
+ return card('仙界开放世界','<p class="v2-muted">大地图采用连续世界坐标和跟随镜头。可点击地面移动，也可使用屏幕方向键；靠近NPC、宝箱、采集点或Boss后点击交互。</p>'+btn('进入地图','enterWorld','blue'));
+}
+function handleAction(a){
+ if(a==='ascend'){if(!V2.ascension.started){if(!ascensionReady()){toast('飞升条件尚未满足');return;}V2.ascension.started=true;V2.ascension.tribulations=0;log('开启飞升主线：登天之路');toast('飞升任务开启！');}else toast('天劫试炼已准备就绪');saveV2();renderPanel();}
+ else if(a==='tribulation')startTribulation();
+ else if(a==='world'||a==='enterWorld'){if(!V2.immortal.unlocked){toast('尚未飞升');return;}closePanel();openWorld();}
+ else if(a.startsWith('equip:'))equipItem(a.slice(6));
+ else if(a==='overview'){currentTab='overview';renderPanel();}
+}
+function equipItem(id){
+ const item=EQUIP_BASE.find(x=>x.id===id);if(!item||!V2.equipment.owned.includes(id))return;
+ const old=EQUIP_BASE.find(x=>x.id===V2.equipment.equipped[item.slot]);
+ if(old)applyItemStats(old,-1);
+ V2.equipment.equipped[item.slot]=id;applyItemStats(item,1);saveV2();renderPanel();toast('已装备：'+item.name);
+}
+function applyItemStats(it,sign){
+ ['atk','def','spd','magic','maxHp','maxMp'].forEach(k=>{if(it[k]){P[k]+=it[k]*sign;if(k==='maxHp'&&P.hp>P.maxHp)P.hp=P.maxHp;if(k==='maxMp'&&P.mp>P.maxMp)P.mp=P.maxMp;}});
+ if(typeof updateHUD==='function')updateHUD();
+}
+function grantItem(id){
+ if(!V2.equipment.owned.includes(id))V2.equipment.owned.push(id);
+}
+function mortalBossesReady(){return bossProgress()===5;}
+function startTribulation(){
+ const n=V2.ascension.tribulations;
+ const names=['雷劫','心魔劫','神魂劫','最终天劫'];
+ const enemy={name:n===0?'九霄雷灵':n===1?'心魔化身':n===2?'神魂守将':'天劫帝君',hp:[900,1300,1800,2800][n],atk:[55,72,90,115][n],def:[12,18,25,35][n],phase:0};
+ startBattle(enemy,'tribulation');
+}
+function openWorld(){
+ worldOpen=true;ensureRoot();$v('v2Root').classList.add('open');$v('v2Title').textContent='仙界 · 连通开放世界';
+ $v('v2Tabs').style.display='none';
+ $v('v2Body').style.padding='0';$v('v2Body').style.overflow='hidden';
+ $v('v2Body').innerHTML='<div class="v2-world-wrap"><canvas id="v2WorldCanvas"></canvas><div class="v2-world-hud"><span class="v2-world-pill" id="v2RegionHud">南天门</span><span class="v2-world-pill" id="v2PosHud">X:300 Y:300</span></div><div class="v2-world-controls"><div class="v2-world-pad"><button class="up" data-dir="up">▲</button><button class="left" data-dir="left">◀</button><button class="down" data-dir="down">▼</button><button class="right" data-dir="right">▶</button></div><div style="display:flex;gap:6px;align-items:end"><button id="v2Interact">交互</button><button id="v2MapExit">返回</button></div></div></div>';
+ $v('v2MapExit').onclick=()=>{worldOpen=false;cancelAnimationFrame(worldRAF);$v('v2Root').classList.remove('open');$v('v2Tabs').style.display='flex';$v('v2Body').style.padding='12px';$v('v2Body').style.overflow='auto';$v('v2Title').textContent='梦幻西游 · 2.0';currentTab='overview';renderPanel();};
+ worldCanvas=$v('v2WorldCanvas');worldCtx=worldCanvas.getContext('2d');
+ resizeWorldCanvas();worldCanvas.addEventListener('pointerdown',worldPointer);
+ $v('v2Interact').onclick=interactWorld;
+ $v('v2Body').querySelectorAll('[data-dir]').forEach(b=>{
+  const d=b.dataset.dir;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();worldKeys[d]=true;});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>worldKeys[d]=false));
+ });
+ window.addEventListener('resize',resizeWorldCanvas);
+ if(worldRAF)cancelAnimationFrame(worldRAF);lastWorldFrame=performance.now();worldRAF=requestAnimationFrame(drawWorld);
+}
+function resizeWorldCanvas(){
+ if(!worldCanvas)return;const r=worldCanvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+ worldCanvas.width=Math.max(1,Math.floor(r.width*dpr));worldCanvas.height=Math.max(1,Math.floor(r.height*dpr));
+ worldCtx.setTransform(dpr,0,0,dpr,0,0);
+}
+function regionAt(x,y){
+ if(x<720&&y<700)return REGIONS[0];
+ if(x<1250&&y<700)return REGIONS[1];
+ if(x>=1250&&y<700)return REGIONS[2];
+ if(x<720&&y>=700)return REGIONS[3];
+ if(x<1450&&y>=700)return REGIONS[4];
+ return REGIONS[5];
+}
+function worldPointer(e){
+ const r=worldCanvas.getBoundingClientRect(),w=worldCanvas.clientWidth,h=worldCanvas.clientHeight;
+ const scale=Math.min(w/1100,h/760),camX=V2.world.x-w/(2*scale),camY=V2.world.y-h/(2*scale);
+ worldTarget={x:camX+(e.clientX-r.left)/scale,y:camY+(e.clientY-r.top)/scale};
+}
+function drawWorld(now){
+ if(!worldOpen||!worldCtx)return;
+ const dt=Math.min(.05,(now-lastWorldFrame)/1000||0);lastWorldFrame=now;
+ const speed=185;
+ if(worldKeys.up)V2.world.y-=speed*dt;if(worldKeys.down)V2.world.y+=speed*dt;
+ if(worldKeys.left)V2.world.x-=speed*dt;if(worldKeys.right)V2.world.x+=speed*dt;
+ if(worldTarget){const dx=worldTarget.x-V2.world.x,dy=worldTarget.y-V2.world.y,dist=Math.hypot(dx,dy);if(dist<8)worldTarget=null;else{V2.world.x+=dx/dist*Math.min(dist,speed*dt);V2.world.y+=dy/dist*Math.min(dist,speed*dt);}}
+ V2.world.x=Math.max(45,Math.min(2150,V2.world.x));V2.world.y=Math.max(45,Math.min(1500,V2.world.y));
+ const region=regionAt(V2.world.x,V2.world.y);V2.world.region=region.id;
+ if(!V2.world.visited.includes(region.id)){V2.world.visited.push(region.id);log('首次探索：'+region.name);}
+ const w=worldCanvas.clientWidth,h=worldCanvas.clientHeight,scale=Math.min(w/1100,h/760),cx=w/2,cy=h/2;
+ const ctx=worldCtx;ctx.clearRect(0,0,w,h);ctx.save();ctx.translate(cx-V2.world.x*scale,cy-V2.world.y*scale);ctx.scale(scale,scale);
+ ctx.fillStyle='#426b48';ctx.fillRect(0,0,2300,1600);
+ REGIONS.forEach((r,i)=>{
+  const bx=i%3===0?0:i%3===1?650:1300,by=i<3?0:800;
+  ctx.fillStyle=r.colour;ctx.globalAlpha=.28;ctx.beginPath();ctx.ellipse(r.x,r.y,390,310,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(26,20,35,.3)';for(let n=0;n<24;n++){const x=bx+(n*97)%610,y=by+(n*139)%650;ctx.beginPath();ctx.arc(x,y,18+(n%4)*6,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#f3dda0';ctx.font='bold 34px sans-serif';ctx.fillText(r.name,r.x-75,r.y-125);
+ });
+ // 连通道路与河流
+ ctx.strokeStyle='#c8aa77';ctx.lineWidth=44;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(300,300);ctx.lineTo(900,300);ctx.lineTo(1500,300);ctx.lineTo(1500,650);ctx.lineTo(1000,800);ctx.lineTo(1000,1120);ctx.lineTo(300,1120);ctx.stroke();
+ ctx.strokeStyle='#5ca6c7';ctx.lineWidth=28;ctx.beginPath();ctx.moveTo(80,700);ctx.bezierCurveTo(400,600,500,850,760,760);ctx.bezierCurveTo(1050,660,1300,850,1600,730);ctx.stroke();
+ // 树木和山石装饰
+ for(let i=0;i<130;i++){const x=(i*173+91)%2250,y=(i*251+37)%1550;ctx.fillStyle=i%3?'#234c32':'#62735b';ctx.beginPath();ctx.arc(x,y,9+(i%5)*3,0,Math.PI*2);ctx.fill();}
+ REGIONS.forEach(r=>{
+  const b=IMMORTAL_BOSSES.find(x=>x.region===r.id),dead=V2.world.bossKills[b.id];
+  ctx.fillStyle=dead?'#777':'#401b35';ctx.beginPath();ctx.arc(r.x,r.y+75,30,0,Math.PI*2);ctx.fill();
+  ctx.font='30px sans-serif';ctx.fillText(b.icon,r.x-15,r.y+86);
+  ctx.font='13px sans-serif';ctx.fillStyle='#fff0bd';ctx.fillText(dead?'已击败':b.name,r.x-35,r.y+122);
+ });
+ // NPC和宝箱
+ ctx.font='24px sans-serif';ctx.fillText('🧙',V2.world.x+80,V2.world.y-30);
+ REGIONS.forEach((r,i)=>{const chestX=r.x+115,chestY=r.y-45;ctx.fillText(V2.world.chests[r.id]?'📦':'🧰',chestX,chestY);});
+ // 玩家
+ ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(V2.world.x,V2.world.y+16,16,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#f5d38b';ctx.fillRect(V2.world.x-9,V2.world.y-18,18,25);ctx.fillStyle='#e9b1a0';ctx.fillRect(V2.world.x-7,V2.world.y-30,14,13);ctx.fillStyle='#563b75';ctx.fillRect(V2.world.x-12,V2.world.y-34,24,7);
+ ctx.restore();
+ const hud=$v('v2RegionHud'),pos=$v('v2PosHud');if(hud)hud.textContent=region.name+' · '+(V2.immortal.level?'仙阶 Lv.'+V2.immortal.level:'');if(pos)pos.textContent='X:'+Math.round(V2.world.x)+' Y:'+Math.round(V2.world.y);
+ worldRAF=requestAnimationFrame(drawWorld);
+}
+function nearestBoss(){
+ let best=null,dmin=1e9;
+ IMMORTAL_BOSSES.forEach(b=>{const r=REGIONS.find(x=>x.id===b.region),d=Math.hypot(V2.world.x-r.x,V2.world.y-(r.y+75));if(d<dmin){dmin=d;best={boss:b,d};}});
+ return best&&best.d<115?best:null;
+}
+function interactWorld(){
+ const b=nearestBoss();
+ if(b){startBattle({name:b.boss.name,hp:b.boss.hp,atk:b.boss.atk,def:b.boss.def,phase:0},'immortal:'+b.boss.id);return;}
+ const r=regionAt(V2.world.x,V2.world.y);
+ if(Math.hypot(V2.world.x-(r.x+115),V2.world.y-(r.y-45))<90&&!V2.world.chests[r.id]){
+  V2.world.chests[r.id]=true;V2.materials.仙玉+=120;V2.materials.灵石+=2;log('开启'+r.name+'秘藏宝箱：仙玉+120、灵石+2');saveV2();toast('发现仙界宝箱！');return;
+ }
+ if(Math.hypot(V2.world.x-(V2.world.x+80),V2.world.y-(V2.world.y-30))<100){V2.materials.仙玉+=20;log('与仙界游方仙人交谈，获得仙玉');saveV2();toast('游方仙人赠予仙玉');return;}
+ const enemy=regionAt(V2.world.x+120,V2.world.y+80);
+ V2.world.encounters++;startBattle({name:enemy.enemy,hp:220+V2.immortal.level*45,atk:25+V2.immortal.level*5,def:8+V2.immortal.level*2,phase:0},'random');
+}
+function startBattle(enemy,type){
+ battleV2={enemy:Object.assign({},enemy),type:type,playerHp:P.hp,playerMp:P.mp,round:1,log:['遭遇 '+enemy.name+'！']};
+ showBattle();
+}
+function showBattle(){
+ ensureRoot();$v('v2Root').classList.add('open');$v('v2Title').textContent='仙界战斗';
+ $v('v2Tabs').style.display='none';$v('v2Body').style.padding='12px';$v('v2Body').style.overflow='auto';
+ const e=battleV2.enemy;
+ $v('v2Body').innerHTML=card(e.name,'<div style="font-size:30px;text-align:center">⚔️</div><div class="v2-row"><span>敌方气血</span><b>'+Math.max(0,Math.ceil(e.hp))+'</b></div><div class="v2-progress"><i style="width:'+Math.max(0,e.hp/(e.maxHp||e.hp)*100)+'%"></i></div><div class="v2-row"><span>你的气血</span><b>'+Math.ceil(P.hp)+' / '+P.maxHp+'</b></div><div class="v2-row"><span>你的法力</span><b>'+Math.ceil(P.mp)+' / '+P.maxMp+'</b></div><div class="v2-grid">'+btn('普通攻击','attack','blue')+btn('仙术攻击（耗20法力）','spell')+btn('恢复气血（耗药品/或撤退）','heal')+btn('撤退','flee','red')+'</div><h3 style="margin-top:12px">战斗记录</h3><div class="v2-battle-log" id="v2BattleLog">'+battleV2.log.join('<br>')+'</div>');
+ $v('v2Body').querySelectorAll('[data-v2-action]').forEach(b=>b.onclick=()=>battleAction(b.dataset.v2Action));
+}
+function battleAction(a){
+ if(!battleV2)return;
+ const e=battleV2.enemy;
+ if(a==='flee'){battleV2=null;if(worldOpen){$v('v2Tabs').style.display='none';$v('v2Body').style.padding='0';$v('v2Title').textContent='仙界 · 连通开放世界';}else{closePanel();renderPanel();}toast('已撤离战斗');return;}
+ if(a==='heal'){const heal=Math.min(P.maxHp-P.hp,Math.floor(P.maxHp*.28));if(heal<=0){toast('气血充足');return;}P.hp+=heal;battleV2.log.push('你恢复了 '+heal+' 点气血');}
+ else if(a==='spell'){if(P.mp<20){toast('法力不足');return;}P.mp-=20;e.hp-=Math.max(20,Math.floor(P.magic*2.1+V2.immortal.level*14-e.def*.35));battleV2.log.push('仙术命中！');}
+ else{e.hp-=Math.max(8,Math.floor(P.atk+V2.immortal.level*9-e.def*.55));battleV2.log.push('你发动攻击。');}
+ if(e.hp<=0){winBattle();return;}
+ const phase=e.hp<(e.maxHp||e.hp)*.5?1:0;
+ if(phase!==e.phase){e.phase=phase;e.atk=Math.floor(e.atk*1.18);battleV2.log.push('敌人进入第二阶段，攻势增强！');}
+ const dmg=Math.max(1,Math.floor(e.atk*(phase?1.15:1)-P.def*.38));
+ if(!V2.immortal.unlocked&&battleV2.type==='tribulation')P.hp=Math.max(1,P.hp-dmg);
+ else P.hp=Math.max(0,P.hp-dmg);
+ battleV2.log.push(e.name+'对你造成 '+dmg+' 点伤害。');battleV2.round++;
+ if(P.hp<=0){P.hp=Math.max(1,Math.floor(P.maxHp*.25));battleV2.log.push('你被击退，恢复部分气血后退出战斗。');battleV2.type='defeat';}
+ if(battleV2.type==='defeat'){battleV2=null;saveV2();toast('挑战失败，可以重新挑战');if(worldOpen){$v('v2Tabs').style.display='none';$v('v2Body').style.padding='0';$v('v2Title').textContent='仙界 · 连通开放世界';}else renderPanel();return;}
+ showBattle();saveV2();
+}
+function winBattle(){
+ const b=battleV2,kind=b.type,enemy=b.enemy;
+ if(kind==='tribulation'){
+  V2.ascension.tribulations++;
+  log('成功渡过第'+V2.ascension.tribulations+'重天劫');
+  battleV2=null;
+  if(V2.ascension.tribulations>=3){toast('三重天劫已过！最终天劫已现身');}
+  else toast('渡劫成功！');
+  saveV2();currentTab='overview';renderPanel();return;
+ }
+ if(kind.startsWith('immortal:')){
+  const id=kind.slice(9),boss=IMMORTAL_BOSSES.find(x=>x.id===id);
+  if(boss&&!V2.world.bossKills[id]){
+   V2.world.bossKills[id]=true;V2.materials.仙玉+=500;V2.materials.仙晶+=40;
+   const loot=boss.drop;V2.materials[loot]=(V2.materials[loot]||0)+1;
+   const region=REGIONS.find(x=>x.id===boss.region);
+   if(region&&boss.region==='lingxiao')grantItem('relic_emperor');
+   if(boss.region==='nantian')grantItem('sword_cloud');
+   if(boss.region==='yaochi')grantItem('helm_star');
+   if(boss.region==='wanshan')grantItem('armor_mist');
+   if(boss.region==='bingyu')grantItem('boots_wind');
+   if(boss.region==='jiuyou')grantItem('ring_sun');
+   log('首通仙界Boss '+boss.name+'，获得 '+loot+' 与仙玉、仙晶');
+   toast('首通奖励：'+loot);
+   V2.world.unlocked.push(boss.region);
+  }else{V2.materials.仙玉+=100;V2.materials.灵石+=1;toast('再次击败Boss，获得仙玉与灵石');}
+ }else{
+  V2.materials.仙玉+=25+Math.floor(Math.random()*35);V2.immortal.exp+=80+V2.immortal.level*15;
+  V2.immortal.spiritPower+=2;
+  levelImmortal();
+ }
+ battleV2=null;P.hp=P.maxHp;P.mp=P.maxMp;saveV2();
+ if(worldOpen){$v('v2Tabs').style.display='none';$v('v2Body').style.padding='0';$v('v2Title').textContent='仙界 · 连通开放世界';}
+ else{currentTab='overview';renderPanel();}
+}
+function levelImmortal(){
+ let need=Math.floor(1000*Math.pow(V2.immortal.level,1.55));
+ while(V2.immortal.level<V2.immortal.levelCap&&V2.immortal.exp>=need){
+  V2.immortal.exp-=need;V2.immortal.level++;P.maxHp+=35;P.maxMp+=12;P.atk+=8;P.def+=5;P.magic+=7;P.hp=P.maxHp;P.mp=P.maxMp;
+  need=Math.floor(1000*Math.pow(V2.immortal.level,1.55));log('仙界等级提升至 '+V2.immortal.level);
+ }
+ const next=REALMS.findIndex(r=>V2.immortal.level>=r.need*2+1);
+ if(next>V2.immortal.realm&&next>=0){V2.immortal.realm=Math.min(REALMS.length-1,next);log('境界突破：'+REALMS[V2.immortal.realm].name);}
+}
+function finishAscension(){
+ if(V2.ascension.tribulations<3){toast('尚未渡过三重天劫');return;}
+ startBattle({name:'天劫帝君',hp:3200,atk:125,def:42,phase:0},'finalAscension');
+}
+function completeAscension(){
+ V2.immortal.unlocked=true;V2.immortal.level=1;V2.immortal.exp=0;V2.immortal.realm=0;
+ V2.ascension.completed=true;V2.ascension.completedAt=Date.now();
+ V2.world.unlocked=['nantian'];V2.world.visited=['nantian'];V2.world.x=300;V2.world.y=300;
+ grantItem('sword_cloud');V2.materials.仙玉+=300;
+ log('飞升成功！凡间与仙界双线等级正式开启。');
+ saveV2();P.hp=P.maxHp;P.mp=P.maxMp;
+ toast('🌟 飞升成功！仙界开放世界已解锁');
+}
+const oldWinBattle=winBattle;
+winBattle=function(){
+ if(battleV2&&battleV2.type==='finalAscension'){battleV2=null;completeAscension();currentTab='overview';renderPanel();return;}
+ oldWinBattle();
+};
+function addAscensionMenu(){
+ const oldUpdate=updateHUD;
+ if(typeof oldUpdate==='function'&&!oldUpdate.__v2){
+  const wrapped=function(){oldUpdate();const lv=$v('pLv');if(lv){lv.innerHTML='凡 Lv.<b>'+Math.min(100,P.lv)+'</b>'+(V2.immortal.unlocked?' · 仙 <b>'+V2.immortal.level+'</b>':'');}};
+  wrapped.__v2=true;updateHUD=wrapped;updateHUD();
+ }
+}
+function capMortal(){
+ if(typeof gainExp==='function'&&!gainExp.__v2){
+  const old=gainExp;
+  const wrapped=function(amount){
+   if(P.lv<100){old(Math.max(0,amount));if(P.lv>100){P.lv=100;P.exp=0;toast('凡间修为已达上限，请完成飞升任务');}}
+   else if(V2.immortal.unlocked){V2.immortal.exp+=Math.max(0,amount)*.3;levelImmortal();saveV2();}
+   else{P.exp=0;toast('凡间等级已达100，飞升后开启仙界等级');}
+   if(P.lv>=100){P.lv=100;P.exp=0;}
+   if(typeof updateHUD==='function')updateHUD();
+  };
+  wrapped.__v2=true;gainExp=wrapped;
+ }
+}
+function renderCultivationCompat(){
+ // 2.0只扩展独立进度，不修改1.7功法概率、在线计时和掉落规则。
+}
+function init(){
+ if(!window.P||!$v('game'))return;
+ loadV2();wrapSave();injectStyles();addMenu();ensureRoot();capMortal();addAscensionMenu();
+ // 迁移时以旧存档为准；不执行门派重置逻辑。
+ V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));
+ if(V2.immortal.unlocked&&V2.immortal.level<1)V2.immortal.level=1;
+ if(V2.immortal.unlocked&&V2.equipment.owned.length===0)grantItem('sword_cloud');
+ saveV2();
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveV2();});
+ window.addEventListener('beforeunload',saveV2);
+ // 监听原游戏经验成长后的等级变化，防止凡间超过100。
+ const oldAddLog=typeof addLog==='function'?addLog:null;
+ if(oldAddLog&&!oldAddLog.__v2){const w=function(){return oldAddLog.apply(this,arguments);};w.__v2=true;}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+
 </script>
 </body>
 </html>
