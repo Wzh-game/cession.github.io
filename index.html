@@ -2099,6 +2099,15 @@ const PETS = [
 
 
 /* ================= 2.0 召唤兽捕捉、成长与进化 ================= */
+const PET_SKILLS={
+ huahua:{id:'flower_heal',name:'花灵回春',type:'heal',power:0.24,desc:'每三次行动恢复自身最大气血的24%'},
+ linghu:{id:'fox_combo',name:'九尾连袭',type:'phys',power:1.55,desc:'每三次行动发动迅捷连袭，造成1.55倍攻击伤害'},
+ hupo:{id:'tiger_crush',name:'裂地猛扑',type:'phys',power:1.7,desc:'每三次行动发动重击，造成1.7倍攻击伤害'},
+ xiaolong:{id:'frost_breath',name:'霜龙吐息',type:'magic',power:1.45,effect:'stun',desc:'每三次行动造成寒霜伤害，并有20%概率定身'},
+ jinwu:{id:'sun_burn',name:'日曜焚羽',type:'magic',power:1.65,effect:'burn',desc:'每三次行动造成烈焰伤害，并追加灼烧'}
+};
+function petAptitudeRoll(){return {hp:90+Math.floor(Math.random()*21),atk:90+Math.floor(Math.random()*21),def:90+Math.floor(Math.random()*21),spd:90+Math.floor(Math.random()*21)};}
+function petBaseSpecies(pet){return pet&&pet.speciesId||({baihuaxian:'huahua',jiuwei:'linghu',xuanhu:'hupo',binglong:'xiaolong',taiyangjinwu:'jinwu'}[pet&&pet.id]||pet&&pet.id);}
 const PET_EVOLUTIONS={
  huahua:{at:15,id:'baihuaxian',name:'百花灵仙',icon:'🌺',desc:'百花灵气凝聚而成的仙灵'},
  linghu:{at:20,id:'jiuwei',name:'九尾天狐',icon:'🦊',desc:'觉醒远古天狐血脉的灵兽'},
@@ -2112,6 +2121,11 @@ function normalizePetRecord(pet){
  pet.lv=Math.max(1,Math.min(100,Math.floor(Number(pet.lv)||1)));
  pet.exp=Math.max(0,Math.floor(Number(pet.exp)||0));
  pet.stage=Math.max(0,Math.floor(Number(pet.stage)||0));
+ pet.speciesId=petBaseSpecies(pet);
+ if(!pet.aptitude||typeof pet.aptitude!=='object')pet.aptitude={hp:100,atk:100,def:100,spd:100};
+ ['hp','atk','def','spd'].forEach(k=>{pet.aptitude[k]=Math.max(80,Math.min(120,Math.floor(Number(pet.aptitude[k])||100)));});
+ pet.skillRank=Math.max(1,Math.min(3,Math.floor(Number(pet.skillRank)||1)));
+ pet.skillActions=Math.max(0,Math.floor(Number(pet.skillActions)||0));
  if(!Number.isFinite(Number(pet.maxHp))||Number(pet.maxHp)<=0)pet.maxHp=base?base.hp:100;
  ['hp','atk','def','spd'].forEach(k=>{const fallback=base&&base[k]||10;pet[k]=Math.max(k==='hp'?1:0,Math.floor(Number(pet[k])||fallback));});
  pet.maxHp=Math.max(1,Math.floor(Number(pet.maxHp)||pet.hp));pet.hp=clamp(pet.hp,0,pet.maxHp);
@@ -2123,8 +2137,8 @@ function gainPetExp(amount){
  pet.exp+=Math.floor(amount);let levels=0;
  while(pet.lv<100&&pet.exp>=petExpNeed(pet.lv)){
   pet.exp-=petExpNeed(pet.lv);pet.lv++;levels++;
-  const hpGain=Math.max(5,Math.floor(pet.maxHp*.035));pet.maxHp+=hpGain;pet.hp=Math.min(pet.maxHp,pet.hp+hpGain);
-  pet.atk+=Math.max(1,Math.floor(pet.atk*.025));pet.def+=Math.max(1,Math.floor(pet.def*.025));if(pet.lv%5===0)pet.spd++;
+  const hpGain=Math.max(5,Math.floor(pet.maxHp*.035));const hpGrowth=Math.max(1,Math.floor(hpGain*pet.aptitude.hp/100));pet.maxHp+=hpGrowth;pet.hp=Math.min(pet.maxHp,pet.hp+hpGrowth);
+  pet.atk+=Math.max(1,Math.floor(pet.atk*.025*pet.aptitude.atk/100));pet.def+=Math.max(1,Math.floor(pet.def*.025*pet.aptitude.def/100));if(pet.lv%5===0)pet.spd+=Math.max(1,Math.floor(pet.aptitude.spd/100));
   const evo=PET_EVOLUTIONS[pet.id];
   if(evo&&pet.lv>=evo.at&&pet.stage===0){
    const ratio=pet.hp/pet.maxHp;pet.id=evo.id;pet.name=evo.name;pet.icon=evo.icon;pet.desc=evo.desc;pet.stage=1;
@@ -2158,7 +2172,8 @@ function capturePet(){
  P.bag.petSeal--;const chance=clamp(.72+(P.lv-(offer.enemyLv||1))*.025,.15,.95),success=Math.random()<chance;
  if(success){
   const lv=Math.max(1,Math.min(P.lv,offer.enemyLv||1)),scale=1+(lv-1)*.035;
-  const pet={id:t.id,name:t.name,icon:t.icon,desc:t.desc,hp:Math.floor(t.hp*scale),maxHp:Math.floor(t.hp*scale),atk:Math.floor(t.atk*scale),def:Math.floor(t.def*scale),spd:Math.floor(t.spd*scale),lv,exp:0,stage:0};
+  const aptitude=petAptitudeRoll();
+  const pet={id:t.id,speciesId:t.id,name:t.name,icon:t.icon,desc:t.desc,hp:Math.floor(t.hp*scale),maxHp:Math.floor(t.hp*scale),atk:Math.floor(t.atk*scale),def:Math.floor(t.def*scale),spd:Math.floor(t.spd*scale),lv,exp:0,stage:0,aptitude,skillRank:1,skillActions:0};
   if(!P.pet)P.pet=pet;else P.petBox.push(pet);
   toast('🎉 成功捕捉 '+pet.name+'！');addLog('【召唤兽】野外捕捉 '+pet.name,'good');
  }else{toast('捕捉失败，灵宠挣脱了！');addLog('【召唤兽】捕捉失败','warn');}
@@ -3031,7 +3046,9 @@ function renderPetPanel(){
             <div style="color:#80c0ff">🛡️ 防御 ${p.def}</div>
             <div style="color:#a0ffd0">👟 速度 ${p.spd}</div>
             <div style="color:#d8b0ff">⭐ 等级 Lv.${p.lv||1} · 经验 ${p.exp||0}/${petExpNeed(p.lv||1)}</div>
-            <div style="color:#ffd080">✨ ${p.stage?'已进化':'待觉醒：'+(PET_EVOLUTIONS[p.id]?'Lv.'+PET_EVOLUTIONS[p.id].at:'暂无进化')}</div>
+            <div style="color:#ffd080">✨ ${p.stage?'已进化':'待觉醒：'+(PET_EVOLUTIONS[p.speciesId]?'Lv.'+PET_EVOLUTIONS[p.speciesId].at:'暂无进化')}</div>
+            <div style="color:#e0c0ff">🎯 资质 HP ${p.aptitude.hp} · 攻 ${p.aptitude.atk} · 防 ${p.aptitude.def} · 速 ${p.aptitude.spd}</div>
+            <div style="color:#ffe8a0">✨ 专属技能：${(PET_SKILLS[p.speciesId]||{}).name||'无'} · 等级 ${p.skillRank||1}/3</div>
           </div>
         </div>
       `;
@@ -3074,6 +3091,20 @@ function renderPetPanel(){
       });
       btns.appendChild(trainBtn);
       
+      const skillBox=document.createElement('div');
+      skillBox.style.cssText='margin-top:9px;padding:9px;border:1px solid rgba(180,130,230,.35);border-radius:6px;background:rgba(80,40,120,.12);font-size:10.5px;line-height:1.6';
+      const petSkill=PET_SKILLS[p.speciesId]||null;
+      skillBox.innerHTML=petSkill?'<b style="color:#e0c0ff">✨ '+petSkill.name+'（技能 '+(p.skillRank||1)+'/3）</b><div style="color:#c0a8d8;margin:3px 0">'+petSkill.desc+'</div><div style="color:#ffe8a0">每三次召唤兽行动自动施放；研习可提升技能威力。</div>':'尚无专属技能';
+      const skillBtn=document.createElement('button');
+      skillBtn.className='btn small';skillBtn.style.width='100%';skillBtn.style.marginTop='6px';
+      skillBtn.textContent=(p.skillRank||1)>=3?'专属技能已满级':'📘 研习专属技能（500两）';
+      skillBtn.disabled=!petSkill||(p.skillRank||1)>=3||P.gold<500;
+      skillBtn.onclick=()=>{
+        if(!petSkill||(p.skillRank||1)>=3||P.gold<500)return;
+        P.gold-=500;p.skillRank=(p.skillRank||1)+1;saveGame();updateHUD();
+        toast('📘 '+petSkill.name+' 提升至 '+p.skillRank+' 级！');renderPetPanel();
+      };
+      skillBox.appendChild(skillBtn);content.appendChild(skillBox);
       content.appendChild(btns);
       
       // 战斗参数说明
@@ -3138,7 +3169,7 @@ function renderPetPanel(){
             id: p.id, name: p.name, icon: p.icon, desc: p.desc,
             hp: p.hp, maxHp: p.hp,
             atk: p.atk, def: p.def, spd: p.spd,
-            lv: Math.max(1,Math.min(P.lv,10)), exp:0, stage:0,
+            lv: Math.max(1,Math.min(P.lv,10)), exp:0, stage:0,speciesId:p.id,aptitude:petAptitudeRoll(),skillRank:1,skillActions:0,
           };
           toast(`🐾 收服了 ${p.name}！`);
           addLog(`【召唤兽】收服 ${p.name}`, 'good');
@@ -4649,6 +4680,7 @@ function battlePrepare(mobs){
       hp: P.pet.hp, maxHp: P.pet.maxHp,
       mp: 0, maxMp: 0,
       atk: P.pet.atk, def: P.pet.def, spd: P.pet.spd,
+      petSkill:PET_SKILLS[petBaseSpecies(P.pet)]||null,petSkillRank:P.pet.skillRank||1,petActionCount:0,
       alive: true, stun: 0, guard: false, acting: false,
     });
   }
@@ -5230,10 +5262,28 @@ async function petTurn(unit){
   const enemies = battle.units.filter(u => u.alive && u.isEnemy);
   if (!enemies.length) return;
   const target = enemies.reduce((a, b) => a.hp < b.hp ? a : b);
-  
+  unit.petActionCount=(unit.petActionCount||0)+1;
+  const skill=unit.petSkill;
+  if(skill&&unit.petActionCount%3===0){
+    const rank=Math.max(1,Math.min(3,unit.petSkillRank||1));
+    if(skill.type==='heal'){
+      const amount=Math.max(1,Math.floor(unit.maxHp*skill.power*rank));
+      const actual=Math.min(unit.maxHp-unit.hp,amount);unit.hp+=actual;
+      showDamageFloat(unit.id,'+'+actual,'heal');
+      blog('🌸 <b>'+unit.name+'</b> 施展【'+skill.name+'】，恢复 '+actual+' 点气血！','good');
+    }else{
+      blog('✨ <b>'+unit.name+'</b> 施展【'+skill.name+'】！','good');await sleep(250);
+      const {dmg,crit}=calcDamage(unit,target,skill.power+(rank-1)*.18,skill.type);
+      target.hp=Math.max(0,target.hp-dmg);if(target.hp<=0)target.alive=false;
+      shakeUnit(target.id);showDamageFloat(target.id,'-'+dmg,crit?'crit':'');
+      blog('🐾 技能命中 <b>'+target.name+'</b>，造成 <b>'+dmg+'</b> 点伤害'+(crit?'（暴击）':''),'good');
+      if(skill.effect==='stun'&&target.alive&&Math.random()<.2){target.stun=Math.max(target.stun||0,1);blog('❄️ '+target.name+' 被寒霜定身！','good');}
+      if(skill.effect==='burn'&&target.alive){const burn=Math.max(1,Math.floor(unit.atk*.15*rank));target.hp=Math.max(0,target.hp-burn);if(target.hp<=0)target.alive=false;showDamageFloat(target.id,'灼烧 -'+burn,'');blog('🔥 日曜余焰追加 '+burn+' 点伤害！','good');}
+    }
+    renderBattleUnits();await sleep(300);return;
+  }
   blog(`🐾 <b>${unit.name}</b> 扑向 <b>${target.name}</b>！`);
   await sleep(250);
-  
   const { dmg, crit } = calcDamage(unit, target, 1.0, 'phys');
   target.hp = Math.max(0, target.hp - dmg);
   if (target.hp <= 0) target.alive = false;
@@ -5874,7 +5924,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('战斗系统','战斗系统',[{name:'战斗入口存在',run:()=>typeof battlePrepare==='function'},{name:'战斗结算入口存在',run:()=>typeof finishBattle==='function'}]);
  registerFeatureTest('门派与技能','角色成长',[{name:'门派配置有效',run:()=>Array.isArray(SECTS)&&SECTS.length>0},{name:'技能查询函数有效',run:()=>typeof getSectSkills==='function'&&Array.isArray(getSectSkills())}]);
  registerFeatureTest('背包与物品','物品系统',[{name:'物品配置有效',run:()=>!!ITEMS&&typeof ITEMS==='object'&&Object.keys(ITEMS).length>0},{name:'背包数据有效',run:()=>!!P.bag&&typeof P.bag==='object'&&!Array.isArray(P.bag)}]);
- registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)},{name:'捕捉与捕灵符接口存在',run:()=>typeof capturePet==='function'&&typeof buyPetSeal==='function'&&typeof rollPetCaptureOffer==='function'},{name:'召唤兽成长与五条进化配置完整',run:()=>typeof gainPetExp==='function'&&typeof petExpNeed==='function'&&Object.keys(PET_EVOLUTIONS).length===5},{name:'捕捉踪迹和成长字段纳入存档',run:()=>getSaveData().petCaptureOffer===P.petCaptureOffer&&applySaveData.toString().includes('normalizePetRecord')}]);
+ registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)},{name:'捕捉与捕灵符接口存在',run:()=>typeof capturePet==='function'&&typeof buyPetSeal==='function'&&typeof rollPetCaptureOffer==='function'},{name:'召唤兽成长与五条进化配置完整',run:()=>typeof gainPetExp==='function'&&typeof petExpNeed==='function'&&Object.keys(PET_EVOLUTIONS).length===5},{name:'捕捉踪迹和成长字段纳入存档',run:()=>getSaveData().petCaptureOffer===P.petCaptureOffer&&applySaveData.toString().includes('normalizePetRecord')},{name:'五种召唤兽拥有独立专属技能',run:()=>Object.keys(PET_SKILLS).length===5&&Object.keys(PET_SKILLS).every(id=>PET_SKILLS[id].name&&PET_SKILLS[id].power>0)},{name:'资质范围与技能等级受到限制',run:()=>typeof petAptitudeRoll==='function'&&normalizePetRecord.toString().includes('pet.skillRank')},{name:'战斗回合会自动触发专属技能',run:()=>petTurn.toString().includes('unit.petActionCount%3===0')&&petTurn.toString().includes('skill.effect')},{name:'面板支持技能研习与资质展示',run:()=>renderPetPanel.toString().includes('研习专属技能')&&renderPetPanel.toString().includes('p.aptitude')}]);
  registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
  registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
  registerFeatureTest('Boss专属装备掉落','2.0稀有装备',[{name:'五大Boss各有专属装备',run:()=>Object.keys(BOSS_GEAR_DROPS).length===5&&new Set(Object.values(BOSS_GEAR_DROPS)).size===5&&Object.values(BOSS_GEAR_DROPS).every(id=>GEAR_CATALOG[id]&&GEAR_CATALOG[id].bossOnly)},{name:'品质分级包含稀有史诗传说',run:()=>['稀有','史诗','传说'].every(q=>Object.values(GEAR_CATALOG).some(g=>g.quality===q))},{name:'掉落只发放一次且保存标记',run:()=>typeof grantBossGear==='function'&&getSaveData().bossGearDrops===P.bossGearDrops},{name:'Boss装备不进入坊市出售',run:()=>renderEquipmentPanel.toString().includes('filter(([,it])=>!it.bossOnly)')}]);
