@@ -1557,58 +1557,7 @@ button{
 @keyframes introColor{to{background-position:250% 50%}}
 @media(prefers-reduced-motion:reduce){#gameIntro{animation-duration:2s}#gameIntro .intro-title,#gameIntro .intro-en{animation-duration:2s}#gameIntro .intro-cn{animation-duration:2s,2s}}
 </style>
-<style>
-/* ===== 2.0 单文件仙界扩展 ===== */
-#bottomBar{grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;padding-left:5px;padding-right:5px}
-#bottomBar .menu-btn{min-width:0;padding:5px 1px}
-#bottomBar .menu-btn .mi{font-size:18px}
-#bottomBar .menu-btn .mt{font-size:9px;letter-spacing:0}
-.v2-menu{background:linear-gradient(180deg,#9c7135,#60401b 55%,#38220e)!important}
-#v2Root{position:absolute;inset:0;z-index:150;display:none;background:rgba(8,5,12,.94);color:#f8e8c0;overflow:hidden}
-#v2Root.open{display:flex;flex-direction:column}
-.v2-head{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:linear-gradient(180deg,#553b70,#261b39);border-bottom:2px solid #d5ad61}
-.v2-head strong{font-size:15px;color:#ffe7a4;letter-spacing:2px}
-.v2-close{border:1px solid #d4b46e;border-radius:6px;background:#3d294b;color:#fff;padding:6px 12px;font-size:14px}
-.v2-tabs{display:flex;gap:5px;padding:7px;overflow-x:auto;background:#1b1426}
-.v2-tab{flex:1;min-width:70px;padding:8px 5px;border:1px solid #705b82;border-radius:6px;background:#332443;color:#ead9f4}
-.v2-tab.active{background:linear-gradient(180deg,#a27a3e,#61421d);color:#fff0bd;border-color:#f1d18a}
-.v2-body{flex:1;min-height:0;overflow:auto;padding:12px}
-.v2-card{padding:12px;margin:0 0 10px;border:1px solid rgba(226,190,117,.55);border-radius:9px;background:linear-gradient(145deg,rgba(76,53,88,.95),rgba(34,25,45,.98));box-shadow:inset 0 1px rgba(255,255,255,.08)}
-.v2-card h3{margin-bottom:8px;color:#ffe2a0;font-size:13px}
-.v2-muted{color:#b9aac7;font-size:11px;line-height:1.6}
-.v2-row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
-.v2-btn{padding:9px 12px;border:1px solid #c39b55;border-radius:7px;background:linear-gradient(180deg,#946b36,#53371a);color:#fff0c4;font-weight:bold}
-.v2-btn:disabled{opacity:.4;filter:grayscale(1)}
-.v2-btn.blue{background:linear-gradient(180deg,#486e9c,#263e63)}
-.v2-btn.red{background:linear-gradient(180deg,#a94440,#5e2025)}
-.v2-progress{height:8px;background:#160f20;border-radius:8px;overflow:hidden;border:1px solid #6b547e}
-.v2-progress i{display:block;height:100%;background:linear-gradient(90deg,#53b7a0,#b9f1a5)}
-.v2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.v2-region{padding:10px;border:1px solid #766083;border-radius:8px;background:#2c2039}
-.v2-region b{display:block;color:#ffe2a0;margin-bottom:4px}
-#v2WorldCanvas{width:100%;height:100%;display:block;touch-action:none;background:#1b2830}
-.v2-world-wrap{position:relative;flex:1;min-height:0;overflow:hidden}
-.v2-world-hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none;gap:6px}
-.v2-world-pill{padding:5px 8px;background:rgba(17,12,25,.82);border:1px solid #d4b36d;border-radius:6px;color:#ffe7a4;font-size:10px}
-.v2-world-controls{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
-.v2-world-controls button{pointer-events:auto;width:45px;height:42px;border:1px solid #d4b36d;border-radius:8px;background:rgba(53,37,64,.9);color:#fff0bd;font-size:18px;touch-action:none}
-.v2-world-pad{display:grid;grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,42px);gap:4px}
-.v2-world-pad .up{grid-column:2}.v2-world-pad .left{grid-column:1;grid-row:2}.v2-world-pad .down{grid-column:2;grid-row:2}.v2-world-pad .right{grid-column:3;grid-row:2}
-.v2-battle-log{max-height:170px;overflow:auto;padding:8px;background:#130e1c;border-radius:7px;font-size:11px;line-height:1.7}
-.v2-slot{padding:8px;border:1px dashed #8b7599;border-radius:7px;background:#21192b;font-size:11px}
-@media(max-width:390px){#bottomBar .menu-btn .mi{font-size:16px}#bottomBar .menu-btn .mt{font-size:8px}.v2-grid{grid-template-columns:1fr}}
 
-/* 永久开发者测试中心：正式版本保留 */
-#bottomBar{grid-template-columns:repeat(9,minmax(0,1fr))}
-.v2-dev-card{border-color:#66a9c9;background:linear-gradient(145deg,rgba(28,57,76,.96),rgba(22,28,43,.98))}
-.v2-dev-tag{display:inline-block;padding:2px 6px;border:1px solid #4f8da9;border-radius:4px;color:#a9e4ff;font-size:10px}
-.v2-test-row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(155,185,205,.16);font-size:11px}
-.v2-test-ok{color:#8fe0a3}.v2-test-fail{color:#ff9999}
-.v2-dev-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-.v2-dev-actions .v2-btn{font-size:11px;padding:9px 5px}
-.v2-dev-log{max-height:180px;overflow:auto;background:#101722;border:1px solid #43576c;border-radius:7px;padding:8px;font-size:10px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-@media(max-width:390px){#bottomBar{grid-template-columns:repeat(9,minmax(0,1fr))}}
-</style>
 </head>
 <body>
 <div id="gameIntro" aria-hidden="true">
@@ -5168,14 +5117,14 @@ function finishBattle(result){
     gold = Math.floor(gold * bonus);
     
     P.gold += gold;
-    if(!battle.immortalV2)P.battles++;
-    if(!battle.immortalV2)P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
-    if (!battle.immortalV2 && (!P.killStats || typeof P.killStats !== 'object')) P.killStats = {};
-    if(!battle.immortalV2)battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
+    P.battles++;
+    P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
+    if (!P.killStats || typeof P.killStats !== 'object') P.killStats = {};
+    battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
  P.killStats[u.mobId||u.name]=(P.killStats[u.mobId||u.name]||0)+1;
  if(u.mobId&&u.mobId.startsWith('boss_')&&!P.bossDrops[u.mobId]){const b=CULTIVATION_BOOKS.find(x=>x.boss===u.mobId);if(b){P.cultivationBooks.push(b.id);P.bossDrops[u.mobId]=true;toast('Boss掉落功法：'+b.name);addLog('获得功法 '+b.name,'good');}}
 });
-    if(!battle.immortalV2)gainExp(exp);
+    gainExp(exp);
     
     banner.innerHTML = `
       <div class="rb-title win">胜 利</div>
@@ -5188,7 +5137,7 @@ function finishBattle(result){
     
     addLog(`【战斗】胜利！经验 +${exp}，银两 +${gold}`, 'good');
   } else {
-    const lost = battle.immortalV2 ? 0 : Math.floor(P.gold * 0.1);
+    const lost = Math.floor(P.gold * 0.1);
     P.gold = Math.max(0, P.gold - lost);
     P.hp = Math.max(1, Math.floor(P.maxHp * 0.25));
     P.mp = Math.max(0, Math.floor(P.maxMp * 0.3));
@@ -5239,35 +5188,10 @@ function closeBattleUI(){
   }
   battle.units = [];
   battle.round = 0;
-  if(worldOpen){openWorld();}else{renderWorld();}
+  renderWorld();
 }
 
 
-/* 仙界复用凡间同一套回合制战斗、门派技能、召唤兽与结算界面，仅替换敌人与奖励。 */
-const finishBattleWithImmortal=finishBattle;
-finishBattle=function(result){
- const ctx=battle.immortalV2;
- if(!ctx){return finishBattleWithImmortal(result);}
- const won=(result==='victory'||battle.victory);
- finishBattleWithImmortal(result);
- if(won){
-  if(ctx.type==='tribulation'){
-   V2.ascension.tribulations=Math.min(3,V2.ascension.tribulations+1);
-   log('成功渡过第'+V2.ascension.tribulations+'重天劫');toast('渡劫成功！');
-  }else if(ctx.bossId){
-   const boss=IMMORTAL_BOSSES.find(x=>x.id===ctx.bossId);
-   if(boss&&!V2.world.bossKills[boss.id]){
-    V2.world.bossKills[boss.id]=true;V2.materials.仙玉+=500;V2.materials.仙晶+=40;V2.materials[boss.drop]=(V2.materials[boss.drop]||0)+1;
-    if(boss.region==='nantian')grantItem('sword_cloud');if(boss.region==='yaochi')grantItem('helm_star');if(boss.region==='wanshan')grantItem('armor_mist');if(boss.region==='bingyu')grantItem('boots_wind');if(boss.region==='jiuyou')grantItem('ring_sun');if(boss.region==='lingxiao')grantItem('relic_emperor');
-    V2.world.unlocked.push(boss.region);toast('仙界Boss首通奖励：'+boss.drop);log('首通仙界Boss '+boss.name+'，获得 '+boss.drop);
-   }else{V2.materials.仙玉+=100;V2.materials.灵石+=1;}
-  }else{
-   const reward=80+V2.immortal.level*15;V2.materials.仙玉+=25+Math.floor(Math.random()*35);V2.immortal.exp+=reward;V2.immortal.spiritPower+=2;levelImmortal();toast('获得仙界灵力 '+reward+'');
-  }
-  const banner=$('resultBanner');if(banner){banner.innerHTML='<div class="rb-title win">仙 界 胜 利</div><div class="rb-info">'+(ctx.bossId?'获得仙界Boss首通奖励':'获得仙界灵力与仙玉')+'</div><button class="rb-btn" id="rbOk">继 续</button>';setTimeout(()=>{const ok=$('rbOk');if(ok)ok.addEventListener('click',()=>closeBattleUI());},50);}
- }
- battle.immortalV2=null;saveV2();updateHUD();
-};
 /* ============================================================
    坊市商店系统
    ============================================================ */
