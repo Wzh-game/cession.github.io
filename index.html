@@ -5168,14 +5168,14 @@ function finishBattle(result){
     gold = Math.floor(gold * bonus);
     
     P.gold += gold;
-    P.battles++;
-    P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
-    if (!P.killStats || typeof P.killStats !== 'object') P.killStats = {};
-    battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
+    if(!battle.immortalV2)P.battles++;
+    if(!battle.immortalV2)P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
+    if (!battle.immortalV2 && (!P.killStats || typeof P.killStats !== 'object')) P.killStats = {};
+    if(!battle.immortalV2)battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
  P.killStats[u.mobId||u.name]=(P.killStats[u.mobId||u.name]||0)+1;
  if(u.mobId&&u.mobId.startsWith('boss_')&&!P.bossDrops[u.mobId]){const b=CULTIVATION_BOOKS.find(x=>x.boss===u.mobId);if(b){P.cultivationBooks.push(b.id);P.bossDrops[u.mobId]=true;toast('Boss掉落功法：'+b.name);addLog('获得功法 '+b.name,'good');}}
 });
-    gainExp(exp);
+    if(!battle.immortalV2)gainExp(exp);
     
     banner.innerHTML = `
       <div class="rb-title win">胜 利</div>
@@ -5188,7 +5188,7 @@ function finishBattle(result){
     
     addLog(`【战斗】胜利！经验 +${exp}，银两 +${gold}`, 'good');
   } else {
-    const lost = Math.floor(P.gold * 0.1);
+    const lost = battle.immortalV2 ? 0 : Math.floor(P.gold * 0.1);
     P.gold = Math.max(0, P.gold - lost);
     P.hp = Math.max(1, Math.floor(P.maxHp * 0.25));
     P.mp = Math.max(0, Math.floor(P.maxMp * 0.3));
@@ -5242,6 +5242,32 @@ function closeBattleUI(){
   renderWorld();
 }
 
+
+/* 仙界复用凡间同一套回合制战斗、门派技能、召唤兽与结算界面，仅替换敌人与奖励。 */
+const finishBattleWithImmortal=finishBattle;
+finishBattle=function(result){
+ const ctx=battle.immortalV2;
+ if(!ctx){return finishBattleWithImmortal(result);}
+ const won=(result==='victory'||battle.victory);
+ finishBattleWithImmortal(result);
+ if(won){
+  if(ctx.type==='tribulation'){
+   V2.ascension.tribulations=Math.min(3,V2.ascension.tribulations+1);
+   log('成功渡过第'+V2.ascension.tribulations+'重天劫');toast('渡劫成功！');
+  }else if(ctx.bossId){
+   const boss=IMMORTAL_BOSSES.find(x=>x.id===ctx.bossId);
+   if(boss&&!V2.world.bossKills[boss.id]){
+    V2.world.bossKills[boss.id]=true;V2.materials.仙玉+=500;V2.materials.仙晶+=40;V2.materials[boss.drop]=(V2.materials[boss.drop]||0)+1;
+    if(boss.region==='nantian')grantItem('sword_cloud');if(boss.region==='yaochi')grantItem('helm_star');if(boss.region==='wanshan')grantItem('armor_mist');if(boss.region==='bingyu')grantItem('boots_wind');if(boss.region==='jiuyou')grantItem('ring_sun');if(boss.region==='lingxiao')grantItem('relic_emperor');
+    V2.world.unlocked.push(boss.region);toast('仙界Boss首通奖励：'+boss.drop);log('首通仙界Boss '+boss.name+'，获得 '+boss.drop);
+   }else{V2.materials.仙玉+=100;V2.materials.灵石+=1;}
+  }else{
+   const reward=80+V2.immortal.level*15;V2.materials.仙玉+=25+Math.floor(Math.random()*35);V2.immortal.exp+=reward;V2.immortal.spiritPower+=2;levelImmortal();toast('获得仙界灵力 '+reward+'');
+  }
+  const banner=$('resultBanner');if(banner){banner.innerHTML='<div class="rb-title win">仙 界 胜 利</div><div class="rb-info">'+(ctx.bossId?'获得仙界Boss首通奖励':'获得仙界灵力与仙玉')+'</div><button class="rb-btn" id="rbOk">继 续</button>';setTimeout(()=>{const ok=$('rbOk');if(ok)ok.addEventListener('click',()=>closeBattleUI());},50);}
+ }
+ battle.immortalV2=null;saveV2();updateHUD();
+};
 /* ============================================================
    坊市商店系统
    ============================================================ */
@@ -6295,8 +6321,9 @@ function interactWorld(){
  V2.world.encounters++;startBattle({name:enemy.enemy,hp:220+V2.immortal.level*45,atk:25+V2.immortal.level*5,def:8+V2.immortal.level*2,phase:0},'random');
 }
 function startBattle(enemy,type){
- const foe=Object.assign({},enemy);if(!foe.maxHp)foe.maxHp=foe.hp;battleV2={enemy:foe,type:type,playerHp:P.hp,playerMp:P.mp,round:1,log:['遭遇 '+enemy.name+'！']};
- showBattle();
+ const foe=Object.assign({},enemy),isBoss=String(type).startsWith('immortal:'),bossId=isBoss?String(type).slice(9):null;
+ const mob={id:'immortal_'+(bossId||String(type)),name:foe.name,icon:foe.icon||'👾',lv:Math.max(1,V2.immortal.level),hp:Math.max(1,foe.hp||100),maxHp:Math.max(1,foe.hp||100),atk:Math.max(1,foe.atk||10),def:Math.max(0,foe.def||0),spd:foe.spd||12,magic:foe.atk||10,exp:0,gold:0,skills:[]};
+ battle.immortalV2={type,bossId,enemyName:foe.name};battlePrepare([mob]);
 }
 function showBattle(){
  ensureRoot();$v('v2Root').classList.add('open');$v('v2Title').textContent='仙界战斗';
