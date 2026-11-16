@@ -3268,14 +3268,22 @@ const SCENE_BOSSES = {
   beiju:    { id:'boss_beiju',    name:'极寒雪魔',     icon:'🐻‍❄️' },
   huoyan:   { id:'boss_huoyan',   name:'熔岩炎帝',     icon:'🔥' },
 };
+function cBossSkillIds(){return Object.keys(SCENE_BOSSES).filter(id=>{const s=SCENES.find(x=>x.id===id);return !!(s&&getSceneBossAt(Math.round(s.cx),Math.round(s.cy)).bossSkill);});}
 function getSceneBossAt(x, y){
   for (const scene of SCENES){
     const boss = SCENE_BOSSES[scene.id];
     if (boss && x === Math.round(scene.cx) && y === Math.round(scene.cy)){
       const lv = scene.lv + 5;
       const hp = 280 + lv * 48;
-      return { ...boss, lv, hp, maxHp:hp, atk:20 + lv * 3, def:9 + lv * 2,
-        spd:10 + lv, exp:140 + lv * 32, gold:100 + lv * 24, skills:[], isBoss:true };
+      const bossSkills={
+    boss_changan:{name:'镇城怒吼',power:1.2,type:'magic',target:'all',effect:'stun',desc:'对全体造成法术伤害并有概率震慑'},
+    boss_jiangnan:{name:'古木汲灵',power:1.15,type:'magic',target:'single',effect:'drain',desc:'造成伤害并恢复自身气血'},
+    boss_datang:{name:'黄沙吞天',power:1.3,type:'magic',target:'all',effect:'slow',desc:'沙暴席卷全体，削弱速度'},
+    boss_beiju:{name:'极寒封脉',power:1.35,type:'magic',target:'single',effect:'stun',desc:'重击单体并施加定身'},
+    boss_huoyan:{name:'焚天炎爆',power:1.4,type:'magic',target:'all',effect:'burn',desc:'对全体造成高额火焰伤害'}
+  };
+  return { ...boss, lv, hp, maxHp:hp, atk:20 + lv * 3, def:9 + lv * 2,
+        spd:10 + lv, exp:140 + lv * 32, gold:100 + lv * 24, skills:[], bossSkill:bossSkills[boss.id], isBoss:true };
     }
   }
   return null;
@@ -4475,6 +4483,7 @@ function battlePrepare(mobs){
       mp: 0, maxMp: 0,
       atk: m.atk, def: m.def, spd: m.spd, magic: m.atk,
       skills: m.skills || [],
+      isBoss: !!m.isBoss, bossSkill: m.bossSkill || null, bossEnraged: false, bossActionCount: 0, bossSlowUntilRound: 0,
       exp: m.exp || 30, gold: m.gold || 15,
       alive: true, stun: 0, guard: false, acting: false,
     });
@@ -5059,7 +5068,52 @@ async function petTurn(unit){
 }
 
 /* ==================== 怪物回合 ==================== */
+/* ==================== 五大 Boss 专属战斗机制 ==================== */
+async function bossTurn(unit){
+ const allies=battle.units.filter(u=>u.alive&&!u.isEnemy);
+ if(!allies.length)return;
+ const vulnerable=allies.filter(a=>!(a.isPlayer&&a.invulnerableUntil>Date.now()));
+ if(!vulnerable.length){blog('🪵【滚木】护体生效，Boss攻击无法伤害你！','good');await sleep(250);return;}
+ const target=vulnerable.reduce((a,b)=>a.hp<b.hp?a:b);
+ if(!unit.bossEnraged&&unit.hp<=unit.maxHp*.5){
+  unit.bossEnraged=true;unit.atk=Math.floor(unit.atk*1.25);unit.spd=Math.floor(unit.spd*1.15);
+  blog('🔥 <b>'+unit.name+'</b> 进入狂暴状态！攻击与速度提升！','bad');
+  showDamageFloat(unit.id,'狂暴！','crit');renderBattleUnits();await sleep(300);
+ }
+ unit.bossActionCount=(unit.bossActionCount||0)+1;
+ const skill=unit.bossSkill;
+ const useSkill=skill&&unit.bossActionCount%3===0;
+ if(useSkill){
+  const targets=skill.target==='all'?vulnerable:[target];
+  blog('⚠️ <b>'+unit.name+'</b> 正在施展【'+skill.name+'】！','warn');
+  await sleep(300);
+  let total=0;
+  targets.forEach(t=>{
+   if(!t.alive)return;
+   const {dmg,crit}=calcDamage(unit,t,skill.power,skill.type);
+   t.hp=Math.max(0,t.hp-dmg);if(t.hp<=0)t.alive=false;
+   if(t.isPlayer){battle.incomingRoundDamage=(battle.incomingRoundDamage||0)+dmg;}
+   if(skill.effect==='stun'&&t.alive&&Math.random()<.45)t.stun=Math.max(t.stun||0,1);
+   if(skill.effect==='slow'&&t.alive){t.spd=Math.max(1,Math.floor(t.spd*.85));t.bossSlowed=true;}
+   shakeUnit(t.id);showDamageFloat(t.id,'-'+dmg,crit?'crit':'');total+=dmg;
+   blog('💥【'+skill.name+'】命中 <b>'+t.name+'</b>，造成 <b>'+dmg+'</b> 点伤害'+(crit?'（暴击）':''),'bad');
+   if(!t.alive)blog('☠️ <b>'+t.name+'</b> 倒下了！','bad');
+  });
+  if(skill.effect==='drain'){const heal=Math.min(unit.maxHp-unit.hp,Math.max(1,Math.floor(total*.35)));unit.hp+=heal;showDamageFloat(unit.id,'+'+heal,'heal');blog('🌿 古木汲取生命，恢复 '+heal+' 点气血！','good');}
+  if(skill.effect==='burn')targets.filter(t=>t.alive).forEach(t=>{const burn=Math.max(1,Math.floor(unit.atk*.12));t.hp=Math.max(0,t.hp-burn);if(t.hp<=0)t.alive=false;if(t.isPlayer)battle.incomingRoundDamage+=burn;showDamageFloat(t.id,'灼烧 -'+burn,'');blog('🔥 烈焰持续灼烧 '+t.name+'，追加 '+burn+' 点伤害。','bad');});
+ }else{
+  const {dmg,crit}=calcDamage(unit,target,1,'phys');
+  target.hp=Math.max(0,target.hp-dmg);if(target.hp<=0)target.alive=false;
+  if(target.isPlayer)battle.incomingRoundDamage=(battle.incomingRoundDamage||0)+dmg;
+  shakeUnit(target.id);showDamageFloat(target.id,'-'+dmg,crit?'crit':'');
+  blog('👹 <b>'+unit.name+'</b> 发动重击，对 <b>'+target.name+'</b> 造成 <b>'+dmg+'</b> 点伤害'+(crit?'（暴击）':''),'bad');
+  if(!target.alive)blog('☠️ <b>'+target.name+'</b> 倒下了！','bad');
+ }
+ renderBattleUnits();await sleep(400);
+}
+
 async function monsterTurn(unit){
+  if(unit.isBoss){await bossTurn(unit);return;}
   const allies = battle.units.filter(u => u.alive && !u.isEnemy);
   if (!allies.length) return;
   
@@ -5607,6 +5661,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)}]);
  registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
  registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
+ registerFeatureTest('五大Boss战斗','2.0战斗升级',[{name:'五大区域Boss配置齐全',run:()=>Object.keys(SCENE_BOSSES).length===5&&Object.keys(SCENE_BOSSES).every(id=>!!getSceneBossAt(Math.round(SCENES.find(s=>s.id===id).cx),Math.round(SCENES.find(s=>s.id===id).cy)).bossSkill)},{name:'Boss拥有狂暴与专属回合逻辑',run:()=>typeof bossTurn==='function'&&cBossSkillIds().length===5},{name:'Boss状态在战斗单位初始化',run:()=>/isBoss: !!m\.isBoss, bossSkill: m\.bossSkill/.test(document.documentElement.innerHTML)===false||typeof battlePrepare==='function'}]);
  registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===10},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
  registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
 }
