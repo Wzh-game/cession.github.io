@@ -6521,6 +6521,56 @@ const DEV_TEST_SUITES={
  ['开发者选项入口',()=>!!document.querySelector('#bottomBar .v2-menu')&&typeof renderDeveloper==='function'],
  ['错误日志捕获',()=>typeof installDevErrorCapture==='function'&&Array.isArray(V2.developer.errors)],
  ['存档保存接口',()=>typeof saveV2==='function'&&typeof saveGame==='function']
+ ]},
+ pet:{label:'旧版召唤兽',tests:[
+  ['召唤兽商店入口',()=>typeof openPetPanel==='function'&&!!document.getElementById('petBody')],
+  ['召唤兽购买与携带数据',()=>Array.isArray(PETS)&&PETS.every(p=>p.price>=0&&p.hp>0)&&Array.isArray(P.petBox)],
+  ['当前出战召唤兽数据',()=>P.pet===null||(typeof P.pet==='object'&&Number.isFinite(P.pet.hp))],
+  ['宠物战斗回合接口',()=>typeof petTurn==='function']
+ ]},
+ inventory:{label:'旧版背包与道具',tests:[
+  ['背包数据结构',()=>P.bag&&typeof P.bag==='object'],
+  ['物品使用接口',()=>typeof useItem==='function'],
+  ['药品道具配置',()=>Object.values(ITEMS).some(x=>x.type==='potion')],
+  ['道具数量数据有效',()=>Object.values(P.bag).every(n=>Number.isFinite(Number(n))&&Number(n)>=0)]
+ ]},
+ quest:{label:'旧版任务系统',tests:[
+  ['任务面板入口',()=>typeof openTaskPanel==='function'&&!!document.getElementById('taskBody')],
+  ['任务配置与奖励',()=>QUESTS.every(q=>q.reward&&Number.isFinite(q.target)&&q.target>0)],
+  ['任务完成计数',()=>Number.isFinite(P.questDone)&&P.questDone>=0],
+  ['任务进度接口',()=>typeof getQuestProgress==='function']
+ ]},
+ skill:{label:'旧版技能系统',tests:[
+  ['技能面板入口',()=>typeof openSkillPanel==='function'],
+  ['门派技能列表',()=>typeof getSectSkills==='function'&&Array.isArray(getSectSkills())],
+  ['技能执行接口',()=>typeof applySkill==='function'],
+  ['门派技能配置完整',()=>SECTS.every(x=>x.skills.every(k=>k.id&&k.name&&Number.isFinite(k.mp)))]
+ ]},
+ mortalBoss:{label:'旧版凡间Boss',tests:[
+  ['场景Boss查找',()=>typeof getSceneBossAt==='function'],
+  ['挑战Boss入口',()=>typeof challengeSceneBoss==='function'],
+  ['Boss战斗结束处理',()=>typeof checkBattleEnd==='function'&&typeof finishBattle==='function'],
+  ['Boss击杀与掉落记录',()=>P.killStats&&P.bossDrops&&typeof P.killStats==='object'&&typeof P.bossDrops==='object']
+ ]},
+ map:{label:'旧版凡间地图',tests:[
+  ['地图渲染入口',()=>typeof renderWorld==='function'],
+  ['角色移动入口',()=>typeof tryMove==='function'],
+  ['小地图入口',()=>typeof openMiniMap==='function'],
+  ['角色场景坐标',()=>Number.isFinite(P.x)&&Number.isFinite(P.y)&&typeof P.scene==='string']
+ ]},
+ immortalWorld:{label:'2.0仙界开放世界',tests:[
+  ['仙界地图入口',()=>typeof openWorld==='function'&&typeof drawWorld==='function'],
+  ['六大区域配置',()=>REGIONS.length===6&&new Set(REGIONS.map(r=>r.id)).size===6],
+  ['区域解锁与探索记录',()=>Array.isArray(V2.world.unlocked)&&Array.isArray(V2.world.visited)],
+  ['宝箱与探索数据',()=>V2.world.chests&&typeof V2.world.chests==='object'&&Number.isFinite(V2.world.encounters)],
+  ['地图坐标边界',()=>V2.world.x>=0&&V2.world.x<=2300&&V2.world.y>=0&&V2.world.y<=1600]
+ ]},
+ immortalBoss:{label:'2.0仙界Boss与战斗',tests:[
+  ['仙界Boss数量',()=>IMMORTAL_BOSSES.length===6],
+  ['仙界Boss区域与掉落',()=>IMMORTAL_BOSSES.every(b=>REGIONS.some(r=>r.id===b.region)&&!!b.drop)],
+  ['仙界战斗入口',()=>typeof startBattle==='function'&&typeof battleAction==='function'],
+  ['仙界Boss击败记录',()=>V2.world.bossKills&&typeof V2.world.bossKills==='object'],
+  ['Boss奖励装备映射',()=>['sword_cloud','helm_star','armor_mist','boots_wind','ring_sun'].every(id=>EQUIP_BASE.some(x=>x.id===id))]
  ]}
 };
 function runDeveloperTests(suite='all'){
