@@ -6443,7 +6443,7 @@ function renderCultivationCompat(){
 }
 
 /* 永久开发者测试中心：正式版本常驻，不随正式发布删除 */
-const DEV_VERSION='2.0-devtools-1.0';
+const DEV_VERSION='2.0-devtools-1.1';
 function devEsc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function captureDevError(msg){V2.developer.errors.unshift({message:String(msg).slice(0,500),time:Date.now()});V2.developer.errors=V2.developer.errors.slice(0,40);}
 function installDevErrorCapture(){
@@ -6452,38 +6452,102 @@ function installDevErrorCapture(){
  window.addEventListener('error',e=>captureDevError((e.message||'运行时错误')+' '+(e.filename||'')+':'+(e.lineno||0)));
  window.addEventListener('unhandledrejection',e=>captureDevError('Promise异常：'+(e.reason&&e.reason.message||e.reason||'未知原因')));
 }
-function runDeveloperTests(){
- const t=[],check=(name,fn)=>{try{const v=fn();t.push({name,ok:v!==false,detail:v===true?'检查通过':String(v)});}catch(e){t.push({name,ok:false,detail:String(e)});}};
- check('玩家核心属性',()=>P&&Number.isFinite(P.lv)&&Number.isFinite(P.hp)&&Number.isFinite(P.maxHp));
- check('凡间等级范围',()=>P.lv>=1&&P.lv<=100?'当前等级：'+P.lv:false);
- check('2.0双线存档结构',()=>!!(V2.mortal&&V2.immortal&&V2.ascension&&V2.world&&V2.equipment));
- check('2.0存档JSON',()=>{const x=JSON.parse(localStorage.getItem('mhxy_v2_extension')||'null');return x&&x.schemaVersion===2?'schemaVersion=2':false;});
- check('1.7主存档JSON',()=>{const x=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return x&&typeof x==='object'?'原存档有效':false;});
- check('导出包含2.0数据',()=>{const x=getSaveData();return x&&x.ascensionV2&&x.ascensionV2.schemaVersion===2?'包含 ascensionV2':false;});
- check('六大区域配置',()=>REGIONS.length===6&&new Set(REGIONS.map(x=>x.id)).size===6?'六个区域ID唯一':false);
- check('六位仙界Boss关联',()=>IMMORTAL_BOSSES.length===6&&IMMORTAL_BOSSES.every(b=>REGIONS.some(r=>r.id===b.region))?'Boss关联有效':false);
- check('六种装备槽位',()=>['weapon','helmet','armor','shoes','accessory','artifact'].every(k=>k in V2.equipment.equipped)?'装备槽位完整':false);
- check('地图坐标有效',()=>Number.isFinite(V2.world.x)&&Number.isFinite(V2.world.y)?'坐标有效':false);
- check('飞升状态一致',()=>!V2.ascension.completed||V2.immortal.unlocked?'飞升状态匹配':false);
- check('游戏挂载点',()=>!!document.getElementById('game')&&!!document.getElementById('bottomBar')?'主界面存在':false);
- V2.developer.lastRun=Date.now();V2.developer.results=t;saveV2();return t;
+
+const DEV_TEST_SUITES={
+ legacy:{label:'1.7旧系统',tests:[
+ ['玩家基础属性',()=>P&&Number.isFinite(P.lv)&&P.maxHp>0&&P.maxMp>0],
+ ['门派与门派技能',()=>Array.isArray(SECTS)&&SECTS.length>0&&SECTS.every(x=>x.id&&x.skills.length>0)],
+ ['物品与药品',()=>ITEMS&&Object.keys(ITEMS).length>0&&Object.values(ITEMS).every(x=>x.id&&typeof x.use==='function')],
+ ['召唤兽图鉴',()=>Array.isArray(PETS)&&PETS.length>0&&PETS.every(x=>x.id&&x.hp>0)],
+ ['任务系统',()=>Array.isArray(QUESTS)&&QUESTS.length>0&&QUESTS.every(x=>x.id&&x.target>0)],
+ ['凡间Boss系统',()=>typeof getSceneBossAt==='function'&&typeof challengeSceneBoss==='function'],
+ ['背包与宠物存档字段',()=>P.bag&&Array.isArray(P.petBox)&&Array.isArray(P.cultivationBooks)],
+ ['凡间地图与移动',()=>typeof renderWorld==='function'&&typeof tryMove==='function'],
+ ['旧版战斗系统',()=>typeof battlePrepare==='function'&&typeof battleLoop==='function'&&typeof finishBattle==='function'],
+ ['门派技能执行',()=>typeof getSectSkills==='function'&&typeof applySkill==='function']
+ ]},
+ save:{label:'存档与兼容',tests:[
+ ['1.7存档导出结构',()=>{const x=getSaveData();return !!(x&&'sect'in x&&'bag'in x&&'pet'in x);}],
+ ['1.7存档应用接口',()=>typeof applySaveData==='function'],
+ ['1.7本地存档JSON',()=>{const x=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return !!(x&&typeof x==='object');}],
+ ['2.0扩展存档结构',()=>!!(V2.mortal&&V2.immortal&&V2.ascension&&V2.world&&V2.equipment)],
+ ['2.0扩展存档JSON',()=>{const x=JSON.parse(localStorage.getItem('mhxy_v2_extension')||'null');return !!(x&&x.schemaVersion===2);}],
+ ['导出包含2.0数据',()=>{const x=getSaveData();return !!(x&&x.ascensionV2&&x.ascensionV2.schemaVersion===2);}],
+ ['新旧存档保存接口',()=>typeof saveGame==='function'&&typeof saveV2==='function'],
+ ['导入导出按钮',()=>!!document.getElementById('btnExportSave')&&!!document.getElementById('btnImportSave')]
+ ]},
+ cultivation:{label:'修炼与成长',tests:[
+ ['凡间等级范围',()=>P.lv>=1&&P.lv<=100],
+ ['经验成长接口',()=>typeof gainExp==='function'&&typeof expNeed==='function'],
+ ['功法配置',()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0&&CULTIVATION_BOOKS.every(x=>x.id&&x.minutes>0)],
+ ['在线修炼计时',()=>typeof tickCultivation==='function'&&typeof renderCultivation==='function'],
+ ['功法修炼记录',()=>Array.isArray(P.cultivationBooks)&&P.flags&&typeof P.flags==='object'],
+ ['Boss功法掉落记录',()=>P.bossDrops&&typeof P.bossDrops==='object']
+ ]},
+ battle:{label:'战斗与Boss',tests:[
+ ['旧版战斗核心',()=>typeof battlePrepare==='function'&&typeof battleLoop==='function'&&typeof finishBattle==='function'],
+ ['凡间Boss挑战入口',()=>typeof challengeSceneBoss==='function'],
+ ['凡间Boss击杀与掉落记录',()=>P.killStats&&P.bossDrops&&typeof P.bossDrops==='object'],
+ ['仙界战斗流程',()=>typeof startBattle==='function'&&typeof battleAction==='function'&&typeof winBattle==='function'],
+ ['六位仙界Boss配置',()=>Array.isArray(IMMORTAL_BOSSES)&&IMMORTAL_BOSSES.length===6&&IMMORTAL_BOSSES.every(x=>x.id&&x.region&&x.drop)]
+ ]},
+ world:{label:'地图与探索',tests:[
+ ['凡间地图渲染',()=>typeof renderWorld==='function'&&!!document.getElementById('world')],
+ ['凡间移动控制',()=>typeof tryMove==='function'],
+ ['仙界六大区域',()=>Array.isArray(REGIONS)&&REGIONS.length===6&&new Set(REGIONS.map(x=>x.id)).size===6],
+ ['仙界Boss区域关联',()=>IMMORTAL_BOSSES.every(b=>REGIONS.some(r=>r.id===b.region))],
+ ['仙界地图坐标',()=>Number.isFinite(V2.world.x)&&Number.isFinite(V2.world.y)&&V2.world.x>=0&&V2.world.y>=0],
+ ['仙界地图与绘制接口',()=>typeof drawWorld==='function'&&typeof openWorld==='function'],
+ ['区域探索与宝箱记录',()=>Array.isArray(V2.world.visited)&&V2.world.chests&&typeof V2.world.chests==='object']
+ ]},
+ gear:{label:'装备与物品',tests:[
+ ['六种装备槽位',()=>['weapon','helmet','armor','shoes','accessory','artifact'].every(k=>k in V2.equipment.equipped)],
+ ['装备配置表',()=>Array.isArray(EQUIP_BASE)&&EQUIP_BASE.length>=6&&EQUIP_BASE.every(x=>x.id&&x.slot)],
+ ['装备收藏数据',()=>Array.isArray(V2.equipment.owned)],
+ ['装备穿戴与属性接口',()=>typeof equipItem==='function'&&typeof applyItemStats==='function'&&typeof grantItem==='function'],
+ ['仙界材料数据',()=>V2.materials&&typeof V2.materials==='object']
+ ]},
+ ascension:{label:'2.0飞升与双线等级',tests:[
+ ['凡间等级上限100',()=>P.lv>=1&&P.lv<=100],
+ ['双线等级结构',()=>!!(V2.mortal&&V2.immortal)],
+ ['仙界等级范围',()=>V2.immortal.level>=0&&V2.immortal.level<=V2.immortal.levelCap],
+ ['三重天劫进度',()=>Number.isFinite(V2.ascension.tribulations)&&V2.ascension.tribulations>=0&&V2.ascension.tribulations<=3],
+ ['飞升状态一致性',()=>!V2.ascension.completed||V2.immortal.unlocked],
+ ['飞升流程接口',()=>typeof ascensionReady==='function'&&typeof startTribulation==='function'&&typeof completeAscension==='function'&&typeof finishAscension==='function']
+ ]},
+ interface:{label:'界面与运行环境',tests:[
+ ['主界面与底部菜单',()=>!!document.getElementById('game')&&!!document.getElementById('bottomBar')],
+ ['2.0面板挂载',()=>typeof ensureRoot==='function'&&typeof renderPanel==='function'&&!!document.getElementById('v2Root')],
+ ['开发者选项入口',()=>!!document.querySelector('#bottomBar .v2-menu')&&typeof renderDeveloper==='function'],
+ ['错误日志捕获',()=>typeof installDevErrorCapture==='function'&&Array.isArray(V2.developer.errors)],
+ ['存档保存接口',()=>typeof saveV2==='function'&&typeof saveGame==='function']
+ ]}
+};
+function runDeveloperTests(suite='all'){
+ const keys=suite==='all'?Object.keys(DEV_TEST_SUITES):[suite],t=[];
+ keys.forEach(k=>{const g=DEV_TEST_SUITES[k];if(!g)return;g.tests.forEach(([name,fn])=>{try{const v=fn();t.push({suite:k,name,ok:v!==false,detail:v===true?'检查通过':v===false?'检查未通过':String(v)});}catch(e){t.push({suite:k,name,ok:false,detail:String(e)});}});});
+ V2.developer.lastRun=Date.now();V2.developer.lastSuite=suite;V2.developer.results=t;saveV2();return t;
 }
 function renderDeveloper(){
  const d=V2.developer||{lastRun:0,results:[],errors:[]},rs=d.results||[],es=d.errors||[];
  const pass=rs.filter(x=>x.ok).length,fail=rs.length-pass;
- const rows=rs.length?rs.map(x=>'<div class="v2-test-row"><span>'+devEsc(x.name)+'<br><small class="v2-muted">'+devEsc(x.detail)+'</small></span><b class="'+(x.ok?'v2-test-ok':'v2-test-fail')+'">'+(x.ok?'通过':'失败')+'</b></div>').join(''):'<p class="v2-muted">尚未运行。点击运行全部自检。</p>';
- const errors=es.length?es.map(x=>'['+new Date(x.time).toLocaleString()+'] '+x.message).join('\n'):'暂无捕获到运行时错误。';
- return '<section class="v2-card v2-dev-card"><h3>开发者测试中心 <span class="v2-dev-tag">正式版常驻</span></h3><p class="v2-muted">所有开发测试、回归测试和存档检查统一放在这里。自动自检只读，不会修改角色数据。</p><div class="v2-row"><span>测试模块</span><b>'+DEV_VERSION+'</b></div><div class="v2-row"><span>最近测试</span><b>'+(d.lastRun?new Date(d.lastRun).toLocaleString():'尚未运行')+'</b></div><div class="v2-row"><span>结果</span><b class="v2-test-ok">'+pass+'通过</b><b class="v2-test-fail">'+fail+'失败</b></div>'+btn('运行全部自检','dev:test','blue')+'</section>'+
- '<section class="v2-card v2-dev-card"><h3>测试明细</h3>'+rows+'</section>'+
- '<section class="v2-card v2-dev-card"><h3>开发者快捷工具</h3><p class="v2-muted">以下操作会修改当前正式存档，执行前需要确认。</p><div class="v2-dev-actions">'+btn('模拟凡间 Lv.100','dev:level100')+btn('测试解锁仙界','dev:ascend','blue')+btn('仙界材料 +999','dev:materials')+btn('气血法力回满','dev:heal')+btn('添加全套测试装备','dev:gear')+btn('生成仙界测试战斗','dev:battle','blue')+btn('立即保存存档','dev:save')+btn('重新运行自检','dev:test')+'</div></section>'+
+ const rows=rs.length?rs.map(x=>'<div class="v2-test-row"><span><b>'+devEsc(x.name)+'</b><br><small class="v2-muted">'+devEsc(x.detail)+'</small></span><b class="'+(x.ok?'v2-test-ok':'v2-test-fail')+'">'+(x.ok?'通过':'失败')+'</b></div>').join(''):'<p class="v2-muted">尚未运行测试。选择分类测试，或运行全部新旧功能测试。</p>';
+ const errors=es.length?es.map(x=>'['+new Date(x.time).toLocaleString()+'] '+x.message).join('\\n'):'暂无捕获到运行时错误。';
+ const suiteButtons=Object.keys(DEV_TEST_SUITES).map(k=>btn('测试：'+DEV_TEST_SUITES[k].label,'dev:suite:'+k)).join('');
+ return '<section class="v2-card v2-dev-card"><h3>开发者选项 <span class="v2-dev-tag">正式版常驻</span></h3><p class="v2-muted">集中测试1.7旧系统与2.0新增系统。每个分类可单独测试，也可一键完整回归。自动检查只读，不会修改角色数据。</p><div class="v2-row"><span>测试模块</span><b>'+DEV_VERSION+'</b></div><div class="v2-row"><span>最近测试</span><b>'+(d.lastRun?new Date(d.lastRun).toLocaleString():'尚未运行')+'</b></div><div class="v2-row"><span>本次结果</span><b class="v2-test-ok">'+pass+'通过</b><b class="v2-test-fail">'+fail+'失败</b></div><div class="v2-dev-actions">'+btn('运行全部新旧功能测试','dev:test','blue')+suiteButtons+'</div></section>'+
+ '<section class="v2-card v2-dev-card"><h3>测试结果明细（'+rs.length+'项）</h3>'+rows+'</section>'+
+ '<section class="v2-card v2-dev-card"><h3>开发者快捷工具</h3><p class="v2-muted">以下操作会修改当前正式存档，执行前需要确认；建议先导出备份。</p><div class="v2-dev-actions">'+btn('模拟凡间 Lv.100','dev:level100')+btn('测试解锁仙界','dev:ascend','blue')+btn('仙界材料 +999','dev:materials')+btn('气血法力回满','dev:heal')+btn('添加全套测试装备','dev:gear')+btn('生成仙界测试战斗','dev:battle','blue')+btn('立即保存存档','dev:save')+btn('重新运行全部测试','dev:test')+'</div></section>'+
  '<section class="v2-card v2-dev-card"><h3>运行时错误日志（'+es.length+'）</h3><div class="v2-dev-log">'+devEsc(errors)+'</div><div style="margin-top:8px">'+btn('清空错误日志','dev:clearlogs','red')+'</div></section>'+
- '<section class="v2-card"><h3>永久保留规则</h3><p class="v2-muted">开发者测试中心属于正式游戏功能。以后新增的测试功能统一加入此处，正式版发布、部署和整理代码时均保留，不会自动删除。</p></section>';
+ '<section class="v2-card"><h3>永久保留规则</h3><p class="v2-muted">开发者选项属于正式游戏功能。以后每个新增或修改的功能，都必须在这里添加对应测试按钮与回归检查；正式版发布时保留，不会删除。</p></section>';
 }
 function handleDeveloperAction(a){
  const ask=m=>typeof window.confirm==='function'?window.confirm(m):true;
- if(a==='test'){const r=runDeveloperTests(),n=r.filter(x=>!x.ok).length;toast(n?'自检完成，需处理 '+n+' 项':'自检完成，全部 '+r.length+' 项通过');renderPanel();return;}
- if(a==='level100'){if(!ask('将当前凡间等级设为100，经验清零？'))return;P.lv=100;P.exp=0;V2.mortal.level=100;V2.mortal.exp=0;updateHUD();saveV2();toast('测试等级已设置');renderPanel();return;}
- if(a==='ascend'){if(!ask('直接解锁仙界并标记飞升完成？这会修改当前存档。'))return;V2.ascension.started=true;V2.ascension.tribulations=3;completeAscension();updateHUD();renderPanel();return;}
+ if(a==='test'||a==='suite:all'||a.startsWith('suite:')){
+  const suite=a==='test'||a==='suite:all'?'all':a.slice(6),r=runDeveloperTests(suite),n=r.filter(x=>!x.ok).length;
+  toast(n?'测试完成，需处理 '+n+' 项':'测试完成，'+r.length+' 项全部通过');renderPanel();return;
+ }
+ if(a==='level100'){if(!ask('将当前凡间等级设为100并清零经验？建议先导出存档备份。'))return;P.lv=100;P.exp=0;V2.mortal.level=100;V2.mortal.exp=0;updateHUD();saveV2();toast('测试等级已设置');renderPanel();return;}
+ if(a==='ascend'){if(!ask('直接解锁仙界并标记飞升完成？这会修改当前存档。建议先备份。'))return;V2.ascension.started=true;V2.ascension.tribulations=3;completeAscension();updateHUD();renderPanel();return;}
  if(a==='materials'){if(!ask('给所有仙界材料增加999？'))return;Object.keys(V2.materials).forEach(k=>V2.materials[k]=(Number(V2.materials[k])||0)+999);saveV2();toast('测试材料已增加');renderPanel();return;}
  if(a==='heal'){P.hp=P.maxHp;P.mp=P.maxMp;updateHUD();saveV2();toast('状态已回满');renderPanel();return;}
  if(a==='gear'){if(!ask('把全部测试装备加入背包？'))return;EQUIP_BASE.forEach(x=>grantItem(x.id));saveV2();toast('测试装备已加入');renderPanel();return;}
@@ -6491,7 +6555,7 @@ function handleDeveloperAction(a){
  if(a==='save'){toast(saveV2()?'存档已保存':'存档保存失败');renderPanel();return;}
  if(a==='clearlogs'){if(!ask('只清空错误日志，不会删除游戏存档。继续？'))return;V2.developer.errors=[];saveV2();renderPanel();toast('日志已清空');}
 }
-window.__MHXY_DEVTOOLS__={version:DEV_VERSION,runTests:runDeveloperTests,getErrors:()=>clone(V2.developer.errors||[])};
+window.__MHXY_DEVTOOLS__={version:DEV_VERSION,runTests:runDeveloperTests,getSuites:()=>Object.keys(DEV_TEST_SUITES),getErrors:()=>clone(V2.developer.errors||[])};
 
 function init(){
  if(typeof P==='undefined'||!$v('game'))return;
