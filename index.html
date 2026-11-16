@@ -1545,9 +1545,24 @@ button{
   .duo-skill-btn{min-height:43px;padding:5px 4px;font-size:10px;}
   .duo-skill-btn small{font-size:8px;}
 }
+
+/* ================= 每次进入游戏的片头 ================= */
+#gameIntro{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;background:#000;animation:introBackdrop 7.8s ease forwards}
+#gameIntro .intro-title{position:absolute;left:0;right:0;text-align:center;opacity:0;white-space:nowrap}
+#gameIntro .intro-en{color:#fff;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,10vw,64px);font-weight:700;letter-spacing:.22em;text-indent:.22em;text-shadow:0 0 14px rgba(255,255,255,.55),0 0 35px rgba(115,175,255,.35);animation:introEnglish 7.8s ease both}
+#gameIntro .intro-cn{font-family:"STKaiti","KaiTi","Kaiti SC","华文行楷","FZKai-Z03","楷体",cursive;font-size:clamp(42px,13vw,82px);font-weight:900;letter-spacing:.12em;text-indent:.12em;background:linear-gradient(105deg,#ff4d6d,#ffb347,#fff176,#62e6a7,#59baff,#c28bff,#ff75c8);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px rgba(255,255,255,.24);filter:drop-shadow(0 3px 2px rgba(0,0,0,.8)) drop-shadow(0 0 16px rgba(255,255,255,.22));animation:introChinese 7.8s ease both,introColor 3s linear 3.6s infinite}
+@keyframes introBackdrop{0%,7%{background:rgba(0,0,0,1)}20%{background:rgba(0,0,0,.88)}38%{background:rgba(0,0,0,.72)}55%{background:rgba(0,0,0,.78)}72%{background:rgba(0,0,0,.55)}100%{background:rgba(0,0,0,0);visibility:hidden}}
+@keyframes introEnglish{0%,12%{opacity:0;transform:translateY(12px) scale(.96);filter:blur(8px)}22%,38%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}49%,100%{opacity:0;transform:translateY(-8px) scale(1.04);filter:blur(7px)}}
+@keyframes introChinese{0%,38%{opacity:0;transform:scale(.92);filter:blur(12px)}52%,72%{opacity:1;transform:scale(1);filter:drop-shadow(0 3px 2px rgba(0,0,0,.8)) drop-shadow(0 0 16px rgba(255,255,255,.22))}88%,100%{opacity:0;transform:scale(1.08);filter:blur(10px)}}
+@keyframes introColor{to{background-position:250% 50%}}
+@media(prefers-reduced-motion:reduce){#gameIntro{animation-duration:2s}#gameIntro .intro-title,#gameIntro .intro-en{animation-duration:2s}#gameIntro .intro-cn{animation-duration:2s,2s}}
 </style>
 </head>
 <body>
+<div id="gameIntro" aria-hidden="true">
+  <div class="intro-title intro-en">wzhgame</div>
+  <div class="intro-title intro-cn">梦幻西游</div>
+</div>
 <div id="game">
   
   <!-- ============ 顶部状态栏 ============ -->
@@ -5973,5 +5988,15 @@ document.addEventListener('gestureend', function(e){
 
 </script>
 </div>
+<script>
+(function(){
+  const intro=document.getElementById('gameIntro');
+  if(!intro)return;
+  intro.addEventListener('animationend',function(e){
+    if(e.target===intro&&e.animationName==='introBackdrop')intro.remove();
+  });
+  window.setTimeout(function(){if(intro.isConnected)intro.remove();},8500);
+})();
+</script>
 </body>
 </html>
