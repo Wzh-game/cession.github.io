@@ -6623,8 +6623,8 @@ function handleDeveloperAction(a){
   const suite=a==='test'||a==='suite:all'?'all':a.slice(6),r=runDeveloperTests(suite),n=r.filter(x=>!x.ok).length;
   toast(n?'测试完成，需处理 '+n+' 项':'测试完成，'+r.length+' 项全部通过');renderPanel();return;
  }
- if(a==='level100'){if(!ask('将当前凡间等级设为100并清零经验？建议先导出存档备份。'))return;P.lv=100;P.exp=0;V2.mortal.level=100;V2.mortal.exp=0;updateHUD();saveV2();toast('测试等级已设置');renderPanel();return;}
- if(a==='ascend'){if(!ask('直接解锁仙界并标记飞升完成？这会修改当前存档。建议先备份。'))return;V2.ascension.started=true;V2.ascension.tribulations=3;completeAscension();updateHUD();renderPanel();return;}
+ if(a==='level100'){toast('凡间等级测试工具已停用，保留1.7原成长规则');return;}
+ if(a==='ascend'||a==='materials'||a==='gear'||a==='battle'){toast('仙界相关开发工具已停用');return;}
  if(a==='materials'){if(!ask('给所有仙界材料增加999？'))return;Object.keys(V2.materials).forEach(k=>V2.materials[k]=(Number(V2.materials[k])||0)+999);saveV2();toast('测试材料已增加');renderPanel();return;}
  if(a==='heal'){P.hp=P.maxHp;P.mp=P.maxMp;updateHUD();saveV2();toast('状态已回满');renderPanel();return;}
  if(a==='gear'){if(!ask('把全部测试装备加入背包？'))return;EQUIP_BASE.forEach(x=>grantItem(x.id));saveV2();toast('测试装备已加入');renderPanel();return;}
@@ -6637,11 +6637,8 @@ window.__MHXY_DEVTOOLS__={version:DEV_VERSION,runTests:runDeveloperTests,getSuit
 function init(){
  if(typeof P==='undefined'||!$v('game'))return;
  loadV2();installDevErrorCapture();wrapSave();injectStyles();addMenu();ensureRoot();
- if(P.lv>100){P.lv=100;P.exp=0;}
- // 迁移时以旧存档为准；不执行门派重置逻辑。
- V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));
- if(V2.immortal.unlocked&&V2.immortal.level<1)V2.immortal.level=1;
- if(V2.immortal.unlocked&&V2.equipment.owned.length===0)grantItem('sword_cloud');
+ // 保留1.7原等级成长规则，不再施加2.0凡间等级上限或仙界装备赠送。
+ V2.mortal.level=Math.max(1,Number(P.lv)||1);V2.mortal.exp=Math.max(0,Number(P.exp)||0);
  saveV2();
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveV2();});
  window.addEventListener('beforeunload',saveV2);
