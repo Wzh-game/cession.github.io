@@ -4714,7 +4714,7 @@ function playerTurn(unit){
 /* 多邻宗快捷技能 */
 function renderLaomuSkills(unit,resolve,dock){
  dock.hidden=false;dock.innerHTML='';
- const defs=[{id:'roll',name:'🪵 滚木',detail:'Lv.1 · 10法力 · 无敌60秒 · 冷却60分钟',lv:1,mp:10},{id:'sigma',name:'👊 西格玛滚木拳',detail:'Lv.3 · 67法力 · 固定伤害67',lv:3,mp:67},{id:'eye',name:'👁️ 滚木之眼',detail:'Lv.5 · 20法力 · 上轮受伤×2',lv:5,mp:20},{id:'vanish',name:'🌲 浮木消失术',detail:'Lv.10 · 100法力 · 敌方消失1人',lv:10,mp:100}];
+ const defs=[{id:'roll',name:'🪵 滚木',detail:'Lv.1 · 10法力 · 无敌60秒 · 冷却60分钟',lv:1,mp:10},{id:'sigma',name:'👊 西格玛滚木拳',detail:'Lv.3 · 67法力 · 固定伤害67',lv:3,mp:67},{id:'eye',name:'👁️ 滚木之眼',detail:'Lv.5 · 20法力 · 上轮受伤×2',lv:5,mp:20},{id:'vanish',name:'🌲 浮木消失术',detail:'Lv.10 · 100法力 · 仅对等级不高于自身的普通敌人有效，Boss免疫',lv:10,mp:100}];
  defs.filter(s=>P.lv>=s.lv).forEach(s=>{const btn=document.createElement('button');btn.className='duo-skill-btn';const remain=Math.max(0,P.laomuCooldownUntil-Date.now());btn.innerHTML='<span>'+s.name+'</span><small>'+s.detail+(s.id==='roll'&&remain?' · 冷却 '+Math.ceil(remain/60000)+'分钟':'')+'</small>';btn.disabled=unit.mp<s.mp||(s.id==='roll'&&remain>0);btn.onclick=()=>{dock.hidden=true;dock.innerHTML='';useLaomuSkill(unit,s.id,resolve);};dock.appendChild(btn);});
 }
 function useLaomuSkill(unit,id,resolve){
@@ -4722,8 +4722,12 @@ function useLaomuSkill(unit,id,resolve){
  if(!battle.active||battle.over||!unit||!unit.alive){resolve();return;}
  if(unit.mp<cost){blog('法力不足，无法施展此技能。','bad');resolve();return;}
  if(id==='roll'&&Date.now()<P.laomuCooldownUntil){blog('【滚木】仍在冷却中。','dim');resolve();return;}
- const enemies=battle.units.filter(u=>u.alive&&u.isEnemy);if(!enemies.length){resolve();return;}
+ const allEnemies=battle.units.filter(u=>u.alive&&u.isEnemy);
+ const enemies=id==='vanish'?allEnemies.filter(u=>!u.isBoss&&Number(u.lv||1)<=Number(P.lv||1)):allEnemies;
+ if(id==='vanish'&&!enemies.length){blog('🌲【浮木消失术】只能对等级不高于自己的普通敌人使用，Boss与高等级敌人免疫。','warn');resolve();return;}
+ if(!enemies.length){resolve();return;}
  const cast=target=>{
+  if(id==='vanish'&&(target.isBoss||Number(target.lv||1)>Number(P.lv||1))){blog('目标等级过高或属于 Boss，【浮木消失术】无效！','warn');resolve();return;}
   if(!target||!target.alive){resolve();return;}
   unit.mp-=cost;if(unit.isPlayer)P.mp=unit.mp;
   if(id==='roll'){P.laomuCooldownUntil=Date.now()+3600000;unit.invulnerableUntil=Date.now()+60000;saveGame();blog('🪵【滚木】护体发动！60秒内免疫敌方伤害，冷却60分钟。','good');showDamageFloat(unit.id,'无敌60秒','crit');}
@@ -5725,6 +5729,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
  registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
  registerFeatureTest('Boss专属装备掉落','2.0稀有装备',[{name:'五大Boss各有专属装备',run:()=>Object.keys(BOSS_GEAR_DROPS).length===5&&new Set(Object.values(BOSS_GEAR_DROPS)).size===5&&Object.values(BOSS_GEAR_DROPS).every(id=>GEAR_CATALOG[id]&&GEAR_CATALOG[id].bossOnly)},{name:'品质分级包含稀有史诗传说',run:()=>['稀有','史诗','传说'].every(q=>Object.values(GEAR_CATALOG).some(g=>g.quality===q))},{name:'掉落只发放一次且保存标记',run:()=>typeof grantBossGear==='function'&&getSaveData().bossGearDrops===P.bossGearDrops},{name:'Boss装备不进入坊市出售',run:()=>renderEquipmentPanel.toString().includes('filter(([,it])=>!it.bossOnly)')}]);
+ registerFeatureTest('老牧私技能平衡','战斗平衡',[{name:'浮木消失术排除Boss',run:()=>useLaomuSkill.toString().includes('!u.isBoss')&&useLaomuSkill.toString().includes('target.isBoss')},{name:'浮木消失术排除高等级敌人',run:()=>useLaomuSkill.toString().includes('Number(u.lv||1)<=Number(P.lv||1)')&&useLaomuSkill.toString().includes('Number(target.lv||1)>Number(P.lv||1)')},{name:'无合法目标时不会消耗法力',run:()=>useLaomuSkill.toString().indexOf("if(id==='vanish'&&!enemies.length)")<useLaomuSkill.toString().indexOf('unit.mp-=cost')}]);
  registerFeatureTest('五大Boss战斗','2.0战斗升级',[{name:'五大区域Boss配置齐全',run:()=>Object.keys(SCENE_BOSSES).length===5&&Object.keys(SCENE_BOSSES).every(id=>!!getSceneBossAt(Math.round(SCENES.find(s=>s.id===id).cx),Math.round(SCENES.find(s=>s.id===id).cy)).bossSkill)},{name:'Boss拥有狂暴与专属回合逻辑',run:()=>typeof bossTurn==='function'&&cBossSkillIds().length===5},{name:'Boss状态在战斗单位初始化',run:()=>battlePrepare.toString().includes('isBoss: !!m.isBoss')&&battlePrepare.toString().includes('bossSkill: m.bossSkill')}]);
  registerFeatureTest('五方镇域套装与装备图鉴','2.0收集成长',[{name:'两件、三件、五件套效果阶梯正确',run:()=>{const a=getGearSetBonuses(1),b=getGearSetBonuses(2),d=getGearSetBonuses(3),e=getGearSetBonuses(5);return !Object.keys(a).length&&b.atk===8&&d.magic===10&&e.hp===120&&e.spd===8;}},{name:'装备图鉴覆盖全部装备并记录已拥有',run:()=>{const x=getGearCodexProgress();return x.total===Object.keys(GEAR_CATALOG).length&&x.found<=x.total&&typeof renderGearCodex==='function';}},{name:'套装与图鉴字段进入存档',run:()=>{const d=getSaveData();return d.gearCodex===P.gearCodex&&d.gearSetApplied===P.gearSetApplied;}},{name:'装备穿脱会同步套装属性',run:()=>equipGear.toString().includes('syncGearSetBonuses')&&unequipGear.toString().includes('syncGearSetBonuses')}]);
  registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位且保留基础装备',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===15&&Object.keys(GEAR_CATALOG).includes('iron_sword')},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
