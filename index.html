@@ -6188,7 +6188,7 @@ function renderWorldIntro(){
 }
 function handleAction(a){
  if(a==='ascend'){if(!V2.ascension.started){if(!ascensionReady()){toast('飞升条件尚未满足');return;}V2.ascension.started=true;V2.ascension.tribulations=0;log('开启飞升主线：登天之路');toast('飞升任务开启！');}else toast('天劫试炼已准备就绪');saveV2();renderPanel();}
- else if(a==='tribulation')startTribulation();
+ else if(a==='tribulation'){if(V2.ascension.tribulations>=3)finishAscension();else startTribulation();}
  else if(a==='world'||a==='enterWorld'){if(!V2.immortal.unlocked){toast('尚未飞升');return;}closePanel();openWorld();}
  else if(a.startsWith('equip:'))equipItem(a.slice(6));
  else if(a==='overview'){currentTab='overview';renderPanel();}
@@ -6305,7 +6305,7 @@ function interactWorld(){
  V2.world.encounters++;startBattle({name:enemy.enemy,hp:220+V2.immortal.level*45,atk:25+V2.immortal.level*5,def:8+V2.immortal.level*2,phase:0},'random');
 }
 function startBattle(enemy,type){
- battleV2={enemy:Object.assign({},enemy),type:type,playerHp:P.hp,playerMp:P.mp,round:1,log:['遭遇 '+enemy.name+'！']};
+ const foe=Object.assign({},enemy);if(!foe.maxHp)foe.maxHp=foe.hp;battleV2={enemy:foe,type:type,playerHp:P.hp,playerMp:P.mp,round:1,log:['遭遇 '+enemy.name+'！']};
  showBattle();
 }
 function showBattle(){
@@ -6318,7 +6318,7 @@ function showBattle(){
 function battleAction(a){
  if(!battleV2)return;
  const e=battleV2.enemy;
- if(a==='flee'){battleV2=null;if(worldOpen){$v('v2Tabs').style.display='none';$v('v2Body').style.padding='0';$v('v2Title').textContent='仙界 · 连通开放世界';}else{closePanel();renderPanel();}toast('已撤离战斗');return;}
+ if(a==='flee'){battleV2=null;if(worldOpen){openWorld();}else{closePanel();renderPanel();}toast('已撤离战斗');return;}
  if(a==='heal'){const heal=Math.min(P.maxHp-P.hp,Math.floor(P.maxHp*.28));if(heal<=0){toast('气血充足');return;}P.hp+=heal;battleV2.log.push('你恢复了 '+heal+' 点气血');}
  else if(a==='spell'){if(P.mp<20){toast('法力不足');return;}P.mp-=20;e.hp-=Math.max(20,Math.floor(P.magic*2.1+V2.immortal.level*14-e.def*.35));battleV2.log.push('仙术命中！');}
  else{e.hp-=Math.max(8,Math.floor(P.atk+V2.immortal.level*9-e.def*.55));battleV2.log.push('你发动攻击。');}
@@ -6330,7 +6330,7 @@ function battleAction(a){
  else P.hp=Math.max(0,P.hp-dmg);
  battleV2.log.push(e.name+'对你造成 '+dmg+' 点伤害。');battleV2.round++;
  if(P.hp<=0){P.hp=Math.max(1,Math.floor(P.maxHp*.25));battleV2.log.push('你被击退，恢复部分气血后退出战斗。');battleV2.type='defeat';}
- if(battleV2.type==='defeat'){battleV2=null;saveV2();toast('挑战失败，可以重新挑战');if(worldOpen){$v('v2Tabs').style.display='none';$v('v2Body').style.padding='0';$v('v2Title').textContent='仙界 · 连通开放世界';}else renderPanel();return;}
+ if(battleV2.type==='defeat'){battleV2=null;saveV2();toast('挑战失败，可以重新挑战');if(worldOpen){openWorld();}else renderPanel();return;}
  showBattle();saveV2();
 }
 function winBattle(){
@@ -6365,7 +6365,7 @@ function winBattle(){
   levelImmortal();
  }
  battleV2=null;P.hp=P.maxHp;P.mp=P.maxMp;saveV2();
- if(worldOpen){$v('v2Tabs').style.display='none';$v('v2Body').style.padding='0';$v('v2Title').textContent='仙界 · 连通开放世界';}
+ if(worldOpen){openWorld();}
  else{currentTab='overview';renderPanel();}
 }
 function levelImmortal(){
@@ -6406,10 +6406,20 @@ function capMortal(){
  if(typeof gainExp==='function'&&!gainExp.__v2){
   const old=gainExp;
   const wrapped=function(amount){
-   if(P.lv<100){old(Math.max(0,amount));if(P.lv>100){P.lv=100;P.exp=0;toast('凡间修为已达上限，请完成飞升任务');}}
-   else if(V2.immortal.unlocked){V2.immortal.exp+=Math.max(0,amount)*.3;levelImmortal();saveV2();}
-   else{P.exp=0;toast('凡间等级已达100，飞升后开启仙界等级');}
+   amount=Math.max(0,Number(amount)||0);
+   if(P.lv<100){
+    let toCap=-Math.max(0,Number(P.exp)||0);
+    for(let lv=P.lv;lv<100;lv++)toCap+=Math.floor(60*Math.pow(lv,1.65));
+    const mortalGain=Math.min(amount,Math.max(0,toCap));
+    if(mortalGain>0)old(mortalGain);
+    if(P.lv>100){P.lv=100;P.exp=0;}
+    const overflow=amount-mortalGain;
+    if(overflow>0&&V2.immortal.unlocked){V2.immortal.exp+=overflow*.3;levelImmortal();}
+    else if(overflow>0)toast('凡间等级已达上限，请完成飞升任务');
+   }else if(V2.immortal.unlocked){V2.immortal.exp+=amount*.3;levelImmortal();}
+   else{P.exp=0;if(amount>0)toast('凡间等级已达100，飞升后开启仙界等级');}
    if(P.lv>=100){P.lv=100;P.exp=0;}
+   V2.mortal.level=P.lv;V2.mortal.exp=P.exp;
    if(typeof updateHUD==='function')updateHUD();
   };
   wrapped.__v2=true;gainExp=wrapped;
