@@ -2078,6 +2078,12 @@ const MOBS = {
   huoya:   { id:'huoya',  name:'火鸦',   icon:'🔥', lv:25, hp:600, atk:110,def:30, spd:20, exp:650, gold:450,skills:[{name:'火羽',type:'magic',power:1.6}] },
   rongyan: { id:'rongyan',name:'熔岩兽', icon:'🌋', lv:28, hp:800, atk:130,def:45, spd:12, exp:800, gold:600,skills:[] },
   yanmo:   { id:'yanmo',  name:'炎魔',   icon:'😈', lv:32, hp:1100,atk:170,def:50, spd:16, exp:1200,gold:900,skills:[{name:'焚天',type:'magic',power:2.0}] },
+  haisha:  { id:'haisha', name:'海砂妖', icon:'🦀', lv:34, hp:1250,atk:185,def:58,spd:22,exp:1350,gold:980,skills:[] },
+  chaoxi:  { id:'chaoxi', name:'潮汐灵', icon:'🧜', lv:36, hp:1420,atk:205,def:62,spd:24,exp:1520,gold:1120,skills:[{name:'潮汐冲击',type:'magic',power:1.7}] },
+  jiaolong:{ id:'jiaolong',name:'深海蛟龙',icon:'🐉',lv:38,hp:1680,atk:225,def:70,spd:20,exp:1780,gold:1350,skills:[{name:'海龙吐息',type:'magic',power:1.9}] },
+  youlu:   { id:'youlu', name:'幽谷鹿灵', icon:'🦌', lv:42, hp:1900,atk:250,def:82,spd:28,exp:2050,gold:1550,skills:[] },
+  guteng:  { id:'guteng',name:'古藤妖', icon:'🌿', lv:44, hp:2200,atk:270,def:92,spd:18,exp:2320,gold:1780,skills:[{name:'藤缚',type:'magic',power:1.8}] },
+  guguai:  { id:'guguai',name:'幽谷守灵',icon:'👺',lv:46,hp:2550,atk:300,def:100,spd:24,exp:2650,gold:2050,skills:[{name:'幽冥震荡',type:'magic',power:2.0}] },
 };
 
 /* ============================================================
@@ -2166,7 +2172,7 @@ const P = {
   quest: null,
   questDone: 0,
   flags: {},
-  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, bossGearDrops:{}, laomuCooldownUntil:0,
+  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, bossGearDrops:{}, laomuCooldownUntil:0, discoveredRegions:['changan','jiangnan','datang','beiju','huoyan'],
 };
 
 /* 经验公式 */
@@ -3184,6 +3190,10 @@ const SCENES = [
     biome:'snow',    desc:'冰雪覆盖的极北之地' },
   { id:'huoyan',   name:'火焰山',    cx:0,   cy:95,  radius:40, lv:26, danger:9,
     biome:'volcano', desc:'烈焰熊熊，寸草不生' },
+  { id:'donghai',  name:'东海湾',    cx:105, cy:82,  radius:20, lv:34, danger:11,
+    biome:'coast',   desc:'潮声不息，深海妖物出没', hidden:true },
+  { id:'yougu',    name:'幽谷秘境',  cx:-108,cy:88,  radius:22, lv:42, danger:13,
+    biome:'forest',  desc:'古木遮天，灵气与妖气交织', hidden:true },
 ];
 
 /* ================= 地形缓存 ================= */
@@ -3280,6 +3290,16 @@ function getTile(x, y){
       if (n3 > 0.88) tile = 'lava';
       else if (n1 > 0.82) tile = 'rock';
       else tile = 'sand'; // 焦土
+    } else if (biome === 'coast'){
+      if (n3 > 0.82) tile = 'water';
+      else if (n1 > 0.88) tile = 'rock';
+      else if (n2 > 0.58) tile = 'sand';
+      else tile = 'grass';
+    } else if (biome === 'forest'){
+      if (n1 > 0.68) tile = 'tree';
+      else if (n2 > 0.91) tile = 'rock';
+      else if (n3 > 0.93) tile = 'water';
+      else tile = n2 > 0.45 ? 'grass2' : 'grass';
     }
     // 场景外圈淡出为草地
     if (edge < 1 && hash(x, y, 991) > 0.5) tile = 'grass';
@@ -3396,6 +3416,10 @@ function getMapMonster(x, y){
     pool = ['xuelang','bingpo','xuenv'];
   } else if (scene.id === 'huoyan'){
     pool = ['huoya','rongyan','yanmo'];
+  } else if (scene.id === 'donghai'){
+    pool = ['haisha','chaoxi','jiaolong'];
+  } else if (scene.id === 'yougu'){
+    pool = ['youlu','guteng','guguai'];
   } else {
     pool = ['lang'];
   }
@@ -3629,6 +3653,10 @@ function updateSceneTitle(){
   }
 }
 
+/* ================= 隐藏区域探索 ================= */
+function canEnterRegion(scene){return !scene || !scene.hidden || P.discoveredRegions.includes(scene.id) || P.lv >= scene.lv;}
+function discoverRegion(scene){if(!scene || !scene.hidden || P.discoveredRegions.includes(scene.id))return false;P.discoveredRegions.push(scene.id);showBanner('发现 '+scene.name);addLog('【探索】发现隐藏区域：'+scene.name,'good');toast('🧭 新区域已解锁：'+scene.name);saveGame();return true;}
+
 /* ================= 移动系统 ================= */
 let moveLock = false;
 
@@ -3647,6 +3675,8 @@ function tryMove(dx, dy){
   const nx = P.x + dx;
   const ny = P.y + dy;
   const targetTile = getTile(nx, ny);
+  const targetScene = getSceneAt(nx, ny);
+  if(targetScene && targetScene.hidden && !canEnterRegion(targetScene)){toast('🔒 '+targetScene.name+' 尚未开放，需要达到 Lv.'+targetScene.lv+' 才能探索');return;}
 
   // 唯一碰撞规则：水。
   // grass / grass2 / flower / tree / rock / sand / snow / lava / 建筑等全部允许通行。
@@ -3660,6 +3690,7 @@ function tryMove(dx, dy){
   P.x = nx;
   P.y = ny;
   P.steps++;
+  if(targetScene && targetScene.hidden)discoverRegion(targetScene);
   
   // 行走动画
   const pEl = $('player');
@@ -5588,7 +5619,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5600,7 +5631,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags'
+    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions'
   ];
   if(!Object.prototype.hasOwnProperty.call(data,'gearCodex'))P.gearCodex={};
   if(!Object.prototype.hasOwnProperty.call(data,'gearSetApplied'))P.gearSetApplied={};
@@ -5635,6 +5666,9 @@ function applySaveData(data){
   if(!P.gearSetApplied||typeof P.gearSetApplied!=='object')P.gearSetApplied={};
   P.gearSetApplied=Object.fromEntries(Object.entries(P.gearSetApplied).filter(([k,v])=>['atk','def','spd','magic','hp','mp'].includes(k)&&Number.isFinite(Number(v))&&Math.abs(Number(v))<=1000).map(([k,v])=>[k,Number(v)]));
   if (!Array.isArray(P.petBox)) P.petBox = [];
+  if (!Array.isArray(P.discoveredRegions)) P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan'];
+  P.discoveredRegions=Array.from(new Set(P.discoveredRegions.filter(id=>SCENES.some(scene=>scene.id===id))));
+  ['changan','jiangnan','datang','beiju','huoyan'].forEach(id=>{if(!P.discoveredRegions.includes(id))P.discoveredRegions.push(id);});
   if (!Array.isArray(P.logs)) P.logs = [];
   if (!Array.isArray(P.cultivationBooks)) P.cultivationBooks=[];
   if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
@@ -5762,6 +5796,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('五方镇域套装与装备图鉴','2.0收集成长',[{name:'两件、三件、五件套效果阶梯正确',run:()=>{const a=getGearSetBonuses(1),b=getGearSetBonuses(2),d=getGearSetBonuses(3),e=getGearSetBonuses(5);return !Object.keys(a).length&&b.atk===8&&d.magic===10&&e.hp===120&&e.spd===8;}},{name:'装备图鉴覆盖全部装备并记录已拥有',run:()=>{const x=getGearCodexProgress();return x.total===Object.keys(GEAR_CATALOG).length&&x.found<=x.total&&typeof renderGearCodex==='function';}},{name:'套装与图鉴字段进入存档',run:()=>{const d=getSaveData();return d.gearCodex===P.gearCodex&&d.gearSetApplied===P.gearSetApplied;}},{name:'装备穿脱会同步套装属性',run:()=>equipGear.toString().includes('syncGearSetBonuses')&&unequipGear.toString().includes('syncGearSetBonuses')}]);
  registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位且保留基础装备',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===15&&Object.keys(GEAR_CATALOG).includes('iron_sword')},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
  registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
+ registerFeatureTest('2.0隐藏区域探索','世界探索',[{name:'新增东海湾与幽谷秘境',run:()=>['donghai','yougu'].every(id=>SCENES.some(x=>x.id===id&&x.hidden))},{name:'区域等级门槛与首次发现逻辑有效',run:()=>typeof canEnterRegion==='function'&&typeof discoverRegion==='function'&&SCENES.filter(x=>x.hidden).every(x=>x.lv>0)},{name:'新区域拥有独立地形与怪物',run:()=>SCENES.find(x=>x.id==='donghai').biome==='coast'&&SCENES.find(x=>x.id==='yougu').biome==='forest'&&['haisha','chaoxi','jiaolong','youlu','guteng','guguai'].every(id=>!!MOBS[id])},{name:'探索进度进入存档且兼容旧档',run:()=>Array.isArray(P.discoveredRegions)&&getSaveData().discoveredRegions===P.discoveredRegions&&applySaveData.toString().includes("P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan']")}]);
 }
 registerBuiltInDeveloperTests();window.registerFeatureTest=registerFeatureTest;
 
@@ -6037,20 +6072,22 @@ document.addEventListener('gestureend', function(e){
 
     const body=$('worldMapBody');
     // 地面坐标比例 1:5：每个地面坐标单位绘制为 5px。
-    const minX=-125,maxX=125,minY=-105,maxY=140,scale=5;
+    const minX=-150,maxX=150,minY=-130,maxY=150,scale=5;
     const mapW=(maxX-minX)*scale,mapH=(maxY-minY)*scale,sx=scale,sy=scale;
     let html=`<div style="max-height:56vh;overflow:auto;border:2px solid #8a6428;border-radius:8px;background:#142719;-webkit-overflow-scrolling:touch"><div id="worldMapCanvas" style="position:relative;width:${mapW}px;height:${mapH}px;overflow:hidden;background-color:#284d30;background-image:linear-gradient(rgba(220,230,160,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(220,230,160,.09) 1px,transparent 1px),radial-gradient(ellipse at 50% 48%,#527b42 0%,#315d38 48%,#193923 100%);background-size:25px 25px,25px 25px,100% 100%"><div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 124px,rgba(240,220,150,.16) 124px 125px),repeating-linear-gradient(90deg,transparent 0 124px,rgba(240,220,150,.16) 124px 125px);pointer-events:none"></div>`;
     SCENES.forEach(s=>{
       const x=(s.cx-minX)*sx,y=(s.cy-minY)*sy,w=s.radius*2*sx,h=s.radius*2*sy;
-      const emoji=s.biome==='town'?'🏰':s.biome==='plain'?'🌾':s.biome==='desert'?'🏜️':s.biome==='snow'?'❄️':'🌋';
-      const bossInfo=SCENE_BOSSES[s.id]?getSceneBossAt(Math.round(s.cx),Math.round(s.cy)):null;
-      html+=`<div title="${s.name}" style="position:absolute;left:${x-w/2}px;top:${y-h/2}px;width:${w}px;height:${h}px;border:2px solid rgba(255,220,120,.42);border-radius:50%;background:rgba(240,200,96,.10);display:flex;align-items:center;justify-content:center"><span style="font-size:30px">${emoji}</span><span style="position:absolute;bottom:5px;white-space:nowrap;font-size:13px;color:#ffe8a0">${s.name}</span></div>`;
+      const discovered=!s.hidden||(Array.isArray(P.discoveredRegions)&&P.discoveredRegions.includes(s.id));
+      const emoji=!discovered?'❔':s.biome==='town'?'🏰':s.biome==='plain'?'🌾':s.biome==='desert'?'🏜️':s.biome==='snow'?'❄️':s.biome==='coast'?'🌊':s.biome==='forest'?'🌲':'🌋';
+      const bossInfo=discovered&&SCENE_BOSSES[s.id]?getSceneBossAt(Math.round(s.cx),Math.round(s.cy)):null;
+      const regionLabel=discovered?s.name:'未知区域';
+      html+=`<div title="${regionLabel}" style="position:absolute;left:${x-w/2}px;top:${y-h/2}px;width:${w}px;height:${h}px;border:2px solid rgba(255,220,120,.42);border-radius:50%;background:rgba(240,200,96,.10);display:flex;align-items:center;justify-content:center"><span style="font-size:30px">${emoji}</span><span style="position:absolute;bottom:5px;white-space:nowrap;font-size:13px;color:#ffe8a0">${regionLabel}</span></div>`;
       if(bossInfo){const bx=(Math.round(s.cx)-minX)*sx,by=(Math.round(s.cy)-minY)*sy;
         html+=`<div title="${bossInfo.name} 坐标 (${Math.round(s.cx)}, ${Math.round(s.cy)})" style="position:absolute;left:${bx-10}px;top:${by-10}px;width:20px;height:20px;border:2px solid #fff0a0;border-radius:50%;background:#a51e25;box-shadow:0 0 0 4px rgba(255,190,55,.35),0 0 16px #ff6b35;z-index:6;display:flex;align-items:center;justify-content:center">👑</div><div style="position:absolute;left:${bx+14}px;top:${by-13}px;padding:4px 6px;border:1px solid #ffd45c;border-radius:5px;background:rgba(45,12,8,.94);color:#fff0b0;font-size:11px;line-height:1.35;white-space:nowrap;z-index:7">${bossInfo.name} Lv.${bossInfo.lv}<br><span style="color:#9de2a6">坐标 (${Math.round(s.cx)}, ${Math.round(s.cy)})</span></div>`;
       }
     });
     const px=(P.x-minX)*sx,py=(P.y-minY)*sy;
-    html+=`<div title="玩家当前位置 (${P.x}, ${P.y})" style="position:absolute;left:${px-8}px;top:${py-8}px;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#ff5040;box-shadow:0 0 0 4px rgba(255,80,64,.3),0 0 14px #ff5040;z-index:10"></div><div style="position:absolute;left:12px;top:12px;padding:6px 9px;background:rgba(35,8,8,.92);border:1px solid #ffd45c;border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">👑 Boss 位置 · 比例 1:5</div><div style="position:absolute;left:12px;bottom:12px;padding:6px 9px;background:rgba(20,10,4,.92);border:1px solid rgba(240,200,96,.6);border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">玩家坐标 X:${P.x} · Y:${P.y}</div></div></div>`;
+    html+=`<div style="position:absolute;right:12px;top:12px;padding:6px 9px;background:rgba(20,10,4,.92);border:1px solid rgba(240,200,96,.6);border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">已探索区域：${(P.discoveredRegions||[]).length} / ${SCENES.length}</div><div title="玩家当前位置 (${P.x}, ${P.y})" style="position:absolute;left:${px-8}px;top:${py-8}px;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#ff5040;box-shadow:0 0 0 4px rgba(255,80,64,.3),0 0 14px #ff5040;z-index:10"></div><div style="position:absolute;left:12px;top:12px;padding:6px 9px;background:rgba(35,8,8,.92);border:1px solid #ffd45c;border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">👑 Boss 位置 · 比例 1:5</div><div style="position:absolute;left:12px;bottom:12px;padding:6px 9px;background:rgba(20,10,4,.92);border:1px solid rgba(240,200,96,.6);border-radius:5px;color:#ffe8a0;font-size:12px;z-index:11">玩家坐标 X:${P.x} · Y:${P.y}</div></div></div>`;
     body.innerHTML=html;modal.classList.add('show');
     const control=$('miniMapControl');if(control)control.classList.add('map-open');
     const scroller=body.firstElementChild;requestAnimationFrame(()=>{if(scroller){scroller.scrollLeft=Math.max(0,px-scroller.clientWidth/2);scroller.scrollTop=Math.max(0,py-scroller.clientHeight/2);}});
