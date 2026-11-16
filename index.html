@@ -6431,6 +6431,7 @@ function renderCultivationCompat(){
 function init(){
  if(typeof P==='undefined'||!$v('game'))return;
  loadV2();wrapSave();injectStyles();addMenu();ensureRoot();capMortal();addAscensionMenu();
+ if(P.lv>100){P.lv=100;P.exp=0;}
  // 迁移时以旧存档为准；不执行门派重置逻辑。
  V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));
  if(V2.immortal.unlocked&&V2.immortal.level<1)V2.immortal.level=1;
