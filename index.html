@@ -1558,6 +1558,19 @@ button{
 @media(prefers-reduced-motion:reduce){#gameIntro{animation-duration:2s}#gameIntro .intro-title,#gameIntro .intro-en{animation-duration:2s}#gameIntro .intro-cn{animation-duration:2s,2s}}
 </style>
 
+<style>
+#bottomBar{grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;padding-left:5px;padding-right:5px}
+#bottomBar .menu-btn{min-width:0;padding:5px 1px}#bottomBar .menu-btn .mi{font-size:17px}#bottomBar .menu-btn .mt{font-size:8px;letter-spacing:0}
+.dev-dialog{max-width:520px}.dev-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.dev-summary b,.dev-feature{padding:9px;border:1px solid rgba(240,200,96,.28);border-radius:7px;background:rgba(0,0,0,.18);font-size:11px}
+.dev-feature-list{display:grid;gap:7px}.dev-feature-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+.dev-feature-head b{display:block;color:#ffe8a0;font-size:12px}.dev-feature-head small,.dev-result small{display:block;color:#c0a870;font-size:10px;margin-top:3px}
+.dev-status{font-size:10px;padding:3px 6px;border-radius:5px;background:#333}.dev-status.ok,.ok{color:#8fe0a3}.dev-status.bad,.bad{color:#ff9999}.dev-status.pending{color:#e7d4a3}
+.dev-run-one{width:100%;padding:7px;font-size:11px}.dev-help{font-size:10px;line-height:1.6;color:#c0a870;margin:8px 0}
+.dev-section-title{font-size:12px;color:#ffe8a0;margin:14px 0 7px}.dev-result{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(240,200,96,.15);font-size:10px}
+.dev-result b{font-size:10px}.dev-code{white-space:pre-wrap;overflow-wrap:anywhere;padding:9px;background:#160e08;color:#ffe8a0;border-radius:6px;font-size:10px}
+@media(max-width:390px){#bottomBar .menu-btn .mi{font-size:15px}#bottomBar .menu-btn .mt{font-size:7px}}
+</style>
 </head>
 <body>
 <div id="gameIntro" aria-hidden="true">
@@ -1703,6 +1716,7 @@ button{
       <span class="mt">任务</span>
     </button>
     <button class="menu-btn" data-menu="cultivation"><span class="mi">📚</span><span class="mt">功法</span></button>
+<button class="menu-btn" data-menu="developer"><span class="mi">🧪</span><span class="mt">开发者</span></button>
   </footer>
   
   <!-- ============ 弹窗容器 ============ -->
@@ -1794,7 +1808,8 @@ button{
   </div>
   
   <div class="modal" id="modalCultivation"><div class="dialog"><div class="dialog-head"><div class="dialog-title">功法修炼</div><button class="dialog-close" data-close="modalCultivation">✕</button></div><div class="dialog-body" id="cultivationBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalCultivation">关闭</button></div></div></div>
-  <!-- 门派选择（初始弹窗） -->
+  <div class="modal" id="modalDeveloper"><div class="dialog dev-dialog"><div class="dialog-head"><div class="dialog-title">开发者测试中心</div><button class="dialog-close" data-close="modalDeveloper">✕</button></div><div class="dialog-body" id="developerBody"></div><div class="dialog-foot"><button class="btn" id="devRunAll">运行全部测试</button><button class="btn primary" data-close="modalDeveloper">关闭</button></div></div></div>
+<!-- 门派选择（初始弹窗） -->
   <div class="modal show" id="modalSect">
     <div class="dialog">
       <div class="dialog-head">
@@ -2500,6 +2515,7 @@ $$('.menu-btn').forEach(btn => {
     if (menu === 'pet')   openPetPanel();
     if (menu === 'task')  openTaskPanel();
     if (menu === 'cultivation'){ renderCultivation(); openModal('modalCultivation'); }
+if(menu==='developer'){renderDeveloperPanel();openModal('modalDeveloper');}
   });
 });
 
@@ -5520,6 +5536,39 @@ function initGame(){
   renderSectSelect();
   $('modalSect').classList.add('show');
 }
+
+const DEV_FEATURE_TESTS=[],DEV_TEST_HISTORY=[];
+function registerFeatureTest(name,category,checks){
+ if(!name||!Array.isArray(checks)||!checks.length)throw new Error('功能测试注册参数无效');
+ if(DEV_FEATURE_TESTS.some(x=>x.name===name))throw new Error('重复注册功能测试：'+name);
+ DEV_FEATURE_TESTS.push({name:String(name),category:String(category||'其他'),checks:checks.map((x,i)=>({name:String(x.name||('检查 '+(i+1))),run:x.run}))});
+ if(typeof renderDeveloperPanel==='function'&&$('modalDeveloper')?.classList.contains('show'))renderDeveloperPanel();
+}
+function runDeveloperFeature(feature){
+ const results=[];(feature.checks||[]).forEach(check=>{let ok=false,detail='';try{const value=check.run();ok=value!==false;detail=typeof value==='string'?value:(ok?'检查通过':'检查返回 false');}catch(err){detail=err&&err.message?err.message:String(err);}results.push({feature:feature.name,name:check.name,ok,detail,time:Date.now()});});
+ DEV_TEST_HISTORY.unshift(...results);DEV_TEST_HISTORY.splice(200);return results;
+}
+function escapeDevText(v){return String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function renderDeveloperPanel(){
+ const body=$('developerBody');if(!body)return;const total=DEV_FEATURE_TESTS.reduce((n,f)=>n+f.checks.length,0),passed=DEV_TEST_HISTORY.filter(x=>x.ok).length,failed=DEV_TEST_HISTORY.filter(x=>!x.ok).length;
+ const cards=DEV_FEATURE_TESTS.map((f,i)=>{const last=DEV_TEST_HISTORY.filter(x=>x.feature===f.name),ok=last.length&&last.every(x=>x.ok);return '<section class="dev-feature"><div class="dev-feature-head"><div><b>'+escapeDevText(f.name)+'</b><small>'+escapeDevText(f.category)+' · '+f.checks.length+' 项检查</small></div><span class="dev-status '+(last.length?(ok?'ok':'bad'):'pending')+'">'+(last.length?(ok?'通过':'需检查'):'未测试')+'</span></div><button class="btn dev-run-one" data-dev-index="'+i+'">测试此功能</button></section>';}).join('');
+ const history=DEV_TEST_HISTORY.length?DEV_TEST_HISTORY.slice(0,40).map(x=>'<div class="dev-result"><span><b>'+escapeDevText(x.feature)+' / '+escapeDevText(x.name)+'</b><small>'+escapeDevText(x.detail)+'</small></span><strong class="'+(x.ok?'ok':'bad')+'">'+(x.ok?'通过':'失败')+'</strong></div>').join(''):'<p class="dev-help">尚未运行测试。</p>';
+ body.innerHTML='<div class="dev-summary"><b>功能模块：'+DEV_FEATURE_TESTS.length+'</b><b>测试项目：'+total+'</b><b class="ok">通过：'+passed+'</b><b class="bad">失败：'+failed+'</b></div><p class="dev-help">新功能必须登记到此中心并提供只读测试。单项测试不会修改角色或存档。</p><div class="dev-feature-list">'+cards+'</div><h3 class="dev-section-title">最近测试结果</h3><div>'+history+'</div><h3 class="dev-section-title">新功能接入规范</h3><pre class="dev-code">registerFeatureTest("功能名称", "所属模块", [\n { name: "核心逻辑存在", run: () =&gt; typeof myFeature === "function" }\n]);</pre><p class="dev-help">新功能定义完成后调用 registerFeatureTest()，自动显示并加入全部测试。</p>';
+ const allBtn=$('devRunAll');if(allBtn)allBtn.onclick=()=>{let all=[];DEV_FEATURE_TESTS.forEach(f=>all.push(...runDeveloperFeature(f)));toast(all.every(x=>x.ok)?'全部 '+all.length+' 项测试通过':'测试完成：'+all.filter(x=>!x.ok).length+' 项失败');renderDeveloperPanel();};
+ body.querySelectorAll('[data-dev-index]').forEach(btn=>btn.addEventListener('click',()=>{const f=DEV_FEATURE_TESTS[Number(btn.dataset.devIndex)];if(!f)return;const res=runDeveloperFeature(f);toast(res.every(x=>x.ok)?f.name+'测试通过':f.name+'有测试失败');renderDeveloperPanel();}));
+}
+function registerBuiltInDeveloperTests(){
+ registerFeatureTest('角色与属性','基础系统',[{name:'角色数据结构完整',run:()=>!!P&&typeof P.name==='string'&&Number.isFinite(P.lv)&&Number.isFinite(P.hp)&&Number.isFinite(P.maxHp)},{name:'角色数值范围有效',run:()=>P.lv>=1&&P.hp>=0&&P.hp<=P.maxHp&&P.mp>=0&&P.mp<=P.maxMp}]);
+ registerFeatureTest('地图与移动','世界系统',[{name:'地图渲染函数存在',run:()=>typeof renderWorld==='function'},{name:'地图容器存在',run:()=>!!$('world')}]);
+ registerFeatureTest('战斗系统','战斗系统',[{name:'战斗入口存在',run:()=>typeof battlePrepare==='function'},{name:'战斗结算入口存在',run:()=>typeof finishBattle==='function'}]);
+ registerFeatureTest('门派与技能','角色成长',[{name:'门派配置有效',run:()=>Array.isArray(SECTS)&&SECTS.length>0},{name:'技能查询函数有效',run:()=>typeof getSectSkills==='function'&&Array.isArray(getSectSkills())}]);
+ registerFeatureTest('背包与物品','物品系统',[{name:'物品配置有效',run:()=>!!ITEMS&&typeof ITEMS==='object'&&Object.keys(ITEMS).length>0},{name:'背包数据有效',run:()=>!!P.bag&&typeof P.bag==='object'&&!Array.isArray(P.bag)}]);
+ registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)}]);
+ registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
+ registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
+ registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
+}
+registerBuiltInDeveloperTests();window.registerFeatureTest=registerFeatureTest;
 
 /* DOM 已经在脚本前生成，因此这里可以直接初始化 */
 initGame();
