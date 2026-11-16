@@ -2174,6 +2174,34 @@ function expNeed(){
   return Math.floor(60 * Math.pow(P.lv, 1.65));
 }
 
+/* 开发者辅助：一键提升至满级（当前版本上限 100 级） */
+const DEV_MAX_LEVEL = 100;
+function developerMaxLevel(){
+  if(!P.sect || !SECTS.some(s=>s.id===P.sect)){toast('请先选择门派，再使用一键满级');return false;}
+  if(P.lv>=DEV_MAX_LEVEL){toast('当前已经是满级 Lv.'+DEV_MAX_LEVEL);return false;}
+  if(!confirm('确定将角色直接提升至 Lv.'+DEV_MAX_LEVEL+'？此操作会立即生效并自动保存。'))return false;
+  const sect=SECTS.find(s=>s.id===P.sect);
+  const gained=DEV_MAX_LEVEL-P.lv;
+  for(let lv=P.lv+1;lv<=DEV_MAX_LEVEL;lv++){
+    P.maxHp+=Math.floor(sect.grow.hp);
+    P.maxMp+=Math.floor(sect.grow.mp);
+    P.atk+=Math.floor(sect.grow.atk);
+    P.def+=Math.floor(sect.grow.def);
+    P.spd+=Math.floor(sect.grow.spd);
+    P.magic+=Math.floor(sect.grow.magic);
+  }
+  P.lv=DEV_MAX_LEVEL;
+  P.exp=0;
+  P.hp=P.maxHp;
+  P.mp=P.maxMp;
+  updateHUD();
+  saveGame();
+  addLog('【开发者】一键满级：Lv.'+DEV_MAX_LEVEL,'good');
+  toast('🌟 已提升至满级 Lv.'+DEV_MAX_LEVEL+'！');
+  return gained;
+}
+
+
 /* 获得经验 */
 function gainExp(amount){
   P.exp += amount;
@@ -5681,11 +5709,13 @@ function renderDeveloperPanel(){
  const body=$('developerBody');if(!body)return;const total=DEV_FEATURE_TESTS.reduce((n,f)=>n+f.checks.length,0),passed=DEV_TEST_HISTORY.filter(x=>x.ok).length,failed=DEV_TEST_HISTORY.filter(x=>!x.ok).length;
  const cards=DEV_FEATURE_TESTS.map((f,i)=>{const last=DEV_TEST_HISTORY.filter(x=>x.feature===f.name),ok=last.length&&last.every(x=>x.ok);return '<section class="dev-feature"><div class="dev-feature-head"><div><b>'+escapeDevText(f.name)+'</b><small>'+escapeDevText(f.category)+' · '+f.checks.length+' 项检查</small></div><span class="dev-status '+(last.length?(ok?'ok':'bad'):'pending')+'">'+(last.length?(ok?'通过':'需检查'):'未测试')+'</span></div><button class="btn dev-run-one" data-dev-index="'+i+'">测试此功能</button></section>';}).join('');
  const history=DEV_TEST_HISTORY.length?DEV_TEST_HISTORY.slice(0,40).map(x=>'<div class="dev-result"><span><b>'+escapeDevText(x.feature)+' / '+escapeDevText(x.name)+'</b><small>'+escapeDevText(x.detail)+'</small></span><strong class="'+(x.ok?'ok':'bad')+'">'+(x.ok?'通过':'失败')+'</strong></div>').join(''):'<p class="dev-help">尚未运行测试。</p>';
- body.innerHTML='<div class="dev-summary"><b>功能模块：'+DEV_FEATURE_TESTS.length+'</b><b>测试项目：'+total+'</b><b class="ok">通过：'+passed+'</b><b class="bad">失败：'+failed+'</b></div><p class="dev-help">新功能必须登记到此中心并提供只读测试。单项测试不会修改角色或存档。</p><div class="dev-feature-list">'+cards+'</div><h3 class="dev-section-title">最近测试结果</h3><div>'+history+'</div><h3 class="dev-section-title">新功能接入规范</h3><pre class="dev-code">registerFeatureTest("功能名称", "所属模块", [\n { name: "核心逻辑存在", run: () =&gt; typeof myFeature === "function" }\n]);</pre><p class="dev-help">新功能定义完成后调用 registerFeatureTest()，自动显示并加入全部测试。</p>';
+ body.innerHTML='<div class="dev-summary"><b>功能模块：'+DEV_FEATURE_TESTS.length+'</b><b>测试项目：'+total+'</b><b class="ok">通过：'+passed+'</b><b class="bad">失败：'+failed+'</b></div><section class="dev-feature" style="border:1px solid rgba(240,200,96,.45);background:rgba(240,200,96,.07);margin:10px 0"><div class="dev-feature-head"><div><b>⚡ 一键满级</b><small>将当前角色提升至 Lv.'+DEV_MAX_LEVEL+'，同步增加门派成长属性并回满气血、法力，自动保存</small></div><span class="dev-status pending">开发工具</span></div><button class="btn primary" id="devMaxLevelBtn" style="width:100%">⚡ 立即提升至 Lv.'+DEV_MAX_LEVEL+'</button></section><p class="dev-help">新功能必须登记到此中心并提供只读测试。单项测试不会修改角色或存档。</p><div class="dev-feature-list">'+cards+'</div><h3 class="dev-section-title">最近测试结果</h3><div>'+history+'</div><h3 class="dev-section-title">新功能接入规范</h3><pre class="dev-code">registerFeatureTest("功能名称", "所属模块", [\n { name: "核心逻辑存在", run: () =&gt; typeof myFeature === "function" }\n]);</pre><p class="dev-help">新功能定义完成后调用 registerFeatureTest()，自动显示并加入全部测试。</p>';
+ const maxBtn=$('devMaxLevelBtn');if(maxBtn)maxBtn.onclick=()=>{developerMaxLevel();renderDeveloperPanel();};
  const allBtn=$('devRunAll');if(allBtn)allBtn.onclick=()=>{let all=[];DEV_FEATURE_TESTS.forEach(f=>all.push(...runDeveloperFeature(f)));toast(all.every(x=>x.ok)?'全部 '+all.length+' 项测试通过':'测试完成：'+all.filter(x=>!x.ok).length+' 项失败');renderDeveloperPanel();};
  body.querySelectorAll('[data-dev-index]').forEach(btn=>btn.addEventListener('click',()=>{const f=DEV_FEATURE_TESTS[Number(btn.dataset.devIndex)];if(!f)return;const res=runDeveloperFeature(f);toast(res.every(x=>x.ok)?f.name+'测试通过':f.name+'有测试失败');renderDeveloperPanel();}));
 }
 function registerBuiltInDeveloperTests(){
+ registerFeatureTest('开发者一键满级','开发工具',[{name:'满级上限为100级',run:()=>DEV_MAX_LEVEL===100},{name:'满级功能与存档接口存在',run:()=>typeof developerMaxLevel==='function'&&typeof saveGame==='function'},{name:'满级成长公式与经验公式一致',run:()=>typeof expNeed==='function'&&SECTS.every(s=>Object.values(s.grow).every(Number.isFinite))}]);
  registerFeatureTest('角色与属性','基础系统',[{name:'角色数据结构完整',run:()=>!!P&&typeof P.name==='string'&&Number.isFinite(P.lv)&&Number.isFinite(P.hp)&&Number.isFinite(P.maxHp)},{name:'角色数值范围有效',run:()=>P.lv>=1&&P.hp>=0&&P.hp<=P.maxHp&&P.mp>=0&&P.mp<=P.maxMp}]);
  registerFeatureTest('地图与移动','世界系统',[{name:'地图渲染函数存在',run:()=>typeof renderWorld==='function'},{name:'地图容器存在',run:()=>!!$('world')}]);
  registerFeatureTest('战斗系统','战斗系统',[{name:'战斗入口存在',run:()=>typeof battlePrepare==='function'},{name:'战斗结算入口存在',run:()=>typeof finishBattle==='function'}]);
