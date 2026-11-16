@@ -6188,6 +6188,8 @@ function loadV2(){
   const raw=localStorage.getItem('mhxy_v2_extension');
   if(raw)V2=normalizeV2(JSON.parse(raw));
   if(window.P&&P.lv){V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));V2.mortal.exp=Math.max(0,Number(P.exp)||0);}
+  const nextQuest=V2.immortal.unlocked?QUESTS_V2.find(q=>!V2.quests.completed.includes(q.id)):null;
+  V2.quests.active=nextQuest?[nextQuest.id]:[];
   syncWorldPartitions();
  }catch(e){console.warn('2.0扩展存档读取失败',e);}
 }
