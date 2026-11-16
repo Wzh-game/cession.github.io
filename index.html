@@ -6286,7 +6286,7 @@ function worldPointer(e){const r=worldCanvas.getBoundingClientRect(),w=worldCanv
 let worldNextStepAt=0,worldSteps=0;
 const IMMORTAL_MOBS={nantian:[['巡天兵卒','🛡️',110,15,5],['天庭灵鸦','🐦',90,19,3],['云阶守卫','⚔️',145,17,9]],yaochi:[['瑶池灵鹿','🦌',180,22,8],['仙桃妖精','🍑',155,25,5],['碧水灵蛇','🐍',205,24,10]],wanshan:[['山岳妖灵','🪨',260,32,14],['青岩猿将','🐒',230,38,11],['裂峰巨兽','🐗',320,35,18]],bingyu:[['极寒雪魄','❄️',350,42,18],['冰原狼妖','🐺',315,48,15],['霜晶傀儡','🧊',420,43,24]],jiuyou:[['九幽魔卒','👹',480,58,22],['幽冥鬼火','🔥',390,66,15],['噬魂夜叉','👿',540,62,27]],lingxiao:[['天宫禁卫','🗡️',680,78,32],['金阙仙将','🛡️',760,72,40],['凌霄雷灵','⚡',620,88,26]]};
 function worldMoveOne(dx,dy){
- if(battleV2||!worldOpen)return;const nx=Math.max(45,Math.min(2150,Math.round((V2.world.x+dx*32)/32)*32)),ny=Math.max(45,Math.min(1500,Math.round((V2.world.y+dy*32)/32)*32));if(nx===V2.world.x&&ny===V2.world.y)return;
+ if(battleV2||(typeof battle!=='undefined'&&battle.active)||!worldOpen)return;const nx=Math.max(45,Math.min(2150,Math.round((V2.world.x+dx*32)/32)*32)),ny=Math.max(45,Math.min(1500,Math.round((V2.world.y+dy*32)/32)*32));if(nx===V2.world.x&&ny===V2.world.y)return;
  V2.world.x=nx;V2.world.y=ny;worldSteps++;const r=regionAt(nx,ny);V2.world.region=r.id;if(!V2.world.visited.includes(r.id)){V2.world.visited.push(r.id);log('首次探索：'+r.name);toast('发现新区域：'+r.name);}
  if(worldSteps%5===0&&!(r.id==='nantian'&&nx<480&&ny<480)){const p=IMMORTAL_MOBS[r.id]||IMMORTAL_MOBS.nantian,m=p[Math.floor(Math.random()*p.length)],lv=Math.max(1,V2.immortal.level+Math.floor(Math.random()*3)-1),sc=1+lv*.12,hp=Math.floor(m[2]*sc);startBattle({name:m[0],icon:m[1],hp,maxHp:hp,atk:Math.floor(m[3]+lv*3),def:Math.floor(m[4]+lv),phase:0},'random');log('仙界遭遇：'+m[0]+'（仙阶 '+lv+'）');}
 }
@@ -6296,7 +6296,7 @@ function drawPixelMob(c,x,y,kind,boss=false){const p={nantian:['#b8a04e','#57442
 function worldTerrain(r,x,y){const h=(Math.floor(x/32)*73856093^Math.floor(y/32)*19349663)>>>0,n=h%13,p={nantian:['#b8a77a','#c5b58b','#8b9a69'],yaochi:['#6eaa79','#92c78b','#83b78d'],wanshan:['#777e58','#8d8864','#a08b68'],bingyu:['#b8e0e8','#d9f1f1','#8db9ce'],jiuyou:['#493b5e','#674b72','#79556f'],lingxiao:['#b69b5a','#d5bd76','#a88b51']}[r.id]||['#8b9a69'];return p[n%p.length];}
 function drawWorld(now){
  if(!worldOpen||!worldCtx)return;lastWorldFrame=now;
- if(!battleV2&&now>=worldNextStepAt){let dx=0,dy=0;if(worldKeys.up)dy=-1;else if(worldKeys.down)dy=1;else if(worldKeys.left)dx=-1;else if(worldKeys.right)dx=1;if(dx||dy){worldMoveOne(dx,dy);worldNextStepAt=now+145;}else if(worldTarget){const ax=worldTarget.x-V2.world.x,ay=worldTarget.y-V2.world.y;if(Math.abs(ax)>12)worldMoveOne(Math.sign(ax),0);else if(Math.abs(ay)>12)worldMoveOne(0,Math.sign(ay));else worldTarget=null;worldNextStepAt=now+145;}}
+ if(!battleV2&&!(typeof battle!=='undefined'&&battle.active)&&now>=worldNextStepAt){let dx=0,dy=0;if(worldKeys.up)dy=-1;else if(worldKeys.down)dy=1;else if(worldKeys.left)dx=-1;else if(worldKeys.right)dx=1;if(dx||dy){worldMoveOne(dx,dy);worldNextStepAt=now+145;}else if(worldTarget){const ax=worldTarget.x-V2.world.x,ay=worldTarget.y-V2.world.y;if(Math.abs(ax)>12)worldMoveOne(Math.sign(ax),0);else if(Math.abs(ay)>12)worldMoveOne(0,Math.sign(ay));else worldTarget=null;worldNextStepAt=now+145;}}
  const region=regionAt(V2.world.x,V2.world.y),w=worldCanvas.clientWidth,h=worldCanvas.clientHeight,scale=Math.max(1,Math.floor(Math.min(w/720,h/500))),c=worldCtx;V2.world.region=region.id;c.imageSmoothingEnabled=false;c.clearRect(0,0,w,h);c.save();c.translate(Math.floor(w/2-V2.world.x*scale),Math.floor(h/2-V2.world.y*scale));c.scale(scale,scale);
  const t=32,l=Math.floor((V2.world.x-w/(2*scale))/t)-1,top=Math.floor((V2.world.y-h/(2*scale))/t)-1,cols=Math.ceil(w/(t*scale))+3,rows=Math.ceil(h/(t*scale))+3;
  for(let gy=top;gy<top+rows;gy++)for(let gx=l;gx<l+cols;gx++){const x=gx*t,y=gy*t,r=regionAt(x+16,y+16),hash=(gx*73856093^gy*19349663)>>>0;pixelRect(c,x,y,t,t,worldTerrain(r,x,y));if(hash%17===0){pixelRect(c,x+7,y+7,18,15,r.id==='bingyu'?'#d9f4f7':r.id==='jiuyou'?'#392b4a':'#536c43');pixelRect(c,x+11,y+2,10,9,r.id==='bingyu'?'#f0ffff':r.id==='jiuyou'?'#80618c':'#789455');}else if(hash%19===0){pixelRect(c,x+9,y+12,14,8,'#665b4e');pixelRect(c,x+12,y+8,8,5,'#a99a7d');}}
@@ -6310,7 +6310,7 @@ function nearestBoss(){
  return best&&best.d<115?best:null;
 }
 function interactWorld(){
- if(battleV2)return;const b=nearestBoss();
+ if(battleV2||(typeof battle!=='undefined'&&battle.active))return;const b=nearestBoss();
  if(b){startBattle({name:b.boss.name,hp:b.boss.hp,atk:b.boss.atk,def:b.boss.def,phase:0},'immortal:'+b.boss.id);return;}
  const r=regionAt(V2.world.x,V2.world.y);
  if(Math.hypot(V2.world.x-(r.x+105),V2.world.y-(r.y-28))<90&&!V2.world.chests[r.id]){
@@ -6323,7 +6323,7 @@ function interactWorld(){
 function startBattle(enemy,type){
  const foe=Object.assign({},enemy),isBoss=String(type).startsWith('immortal:'),bossId=isBoss?String(type).slice(9):null;
  const mob={id:'immortal_'+(bossId||String(type)),name:foe.name,icon:foe.icon||'👾',lv:Math.max(1,V2.immortal.level),hp:Math.max(1,foe.hp||100),maxHp:Math.max(1,foe.hp||100),atk:Math.max(1,foe.atk||10),def:Math.max(0,foe.def||0),spd:foe.spd||12,magic:foe.atk||10,exp:0,gold:0,skills:[]};
- battle.immortalV2={type,bossId,enemyName:foe.name};battlePrepare([mob]);
+ battle.immortalV2={type,bossId,enemyName:foe.name};worldTarget=null;worldKeys={};battlePrepare([mob]);
 }
 function showBattle(){
  ensureRoot();$v('v2Root').classList.add('open');$v('v2Title').textContent='仙界战斗';
