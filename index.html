@@ -6134,7 +6134,7 @@ let battleV2=null;
 const log=(s)=>{V2.logs.unshift({s,t:Date.now()});V2.logs=V2.logs.slice(0,35);};
 function normalizeV2(raw){
  const v=raw&&typeof raw==='object'?raw:{};
- const merge=(base,src)=>{Object.keys(base).forEach(k=>{if(src&&Object.prototype.hasOwnProperty.call(src,k)){if(base[k]&&typeof base[k]==='object'&&!Array.isArray(base[k]))base[k]=merge(clone(base[k]),src[k]);else if(Array.isArray(base[k]))base[k]=Array.isArray(src[k])?src[k].slice():base[k];else base[k]=src[k];}});return base;};
+ const merge=(base,src)=>{const out=clone(base);if(!src||typeof src!=='object'||Array.isArray(src))return out;Object.keys(src).forEach(k=>{if(k==='__proto__'||k==='constructor'||k==='prototype')return;const bv=base&&base[k],sv=src[k];if(bv&&typeof bv==='object'&&!Array.isArray(bv)&&sv&&typeof sv==='object'&&!Array.isArray(sv))out[k]=merge(bv,sv);else if(Array.isArray(bv))out[k]=Array.isArray(sv)?sv.slice():bv.slice();else out[k]=clone(sv);});return out;};
  const out=merge(clone(V2_DEFAULT),v);
  // v1.7没有扩展存档时使用默认扩展；早期2.0的world字段迁移为仙界地图，凡间主存档不动。
  const savedImmortal=v.worlds&&v.worlds.immortal&&typeof v.worlds.immortal==='object'?v.worlds.immortal:v.world;
