@@ -1996,6 +1996,7 @@ const SECTS = [
       {id:'duo_music',name:'音乐共鸣',lv:5,mp:20,type:'magic',power:1.35,target:'all',desc:'奏响灵韵乐章，对敌方全体造成135%法术伤害，并使自身后续2回合伤害提升25%'}
     ]
   },
+  {id:'laomu',name:'老牧私',icon:'🪵',color:'#a87945',desc:'驾驭滚木之力，攻守兼备。',longDesc:'老牧私一派以滚木为本命法器，借山势、木势与神秘步法制敌。',base:{hp:135,mp:90,atk:17,def:12,spd:13,magic:17},grow:{hp:16,mp:8,atk:3,def:2,spd:1,magic:3},skills:[{id:'laomu_roll',name:'滚木',lv:1,mp:10,type:'special',desc:'自身无敌60秒；冷却60分钟。'},{id:'laomu_sigma',name:'西格玛滚木拳',lv:3,mp:67,type:'special',desc:'固定造成67点伤害。'},{id:'laomu_eye',name:'滚木之眼',lv:5,mp:20,type:'special',desc:'上一轮自身受到伤害总和×2。'},{id:'laomu_vanish',name:'浮木消失术',lv:10,mp:100,type:'special',desc:'令一名敌方单位消失。'}]},
 ];
 
 /* ============================================================
@@ -2082,7 +2083,7 @@ const P = {
   quest: null,
   questDone: 0,
   flags: {},
-  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{},
+  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, laomuCooldownUntil:0,
 };
 
 /* 经验公式 */
@@ -4106,6 +4107,7 @@ const battle = {
   token: 0,
   musicBuffUntilRound: 0,
   jiangjunStacks: 0,
+  previousRoundDamage:0, incomingRoundDamage:0,
 };
 
 /* 创建战斗界面 DOM */
@@ -4352,6 +4354,7 @@ function battlePrepare(mobs){
   battle.round = 0;
   battle.musicBuffUntilRound = 0;
   battle.jiangjunStacks = 0;
+  battle.previousRoundDamage=0; battle.incomingRoundDamage=0;
   battle.loopRunning = false;
   battle.token++;
   const battleToken = battle.token;
@@ -4439,6 +4442,7 @@ async function battleLoop(token = battle.token){
   try {
     while (battle.active && token === battle.token && !battle.over && battle.round < 30){
     battle.round++;
+    battle.previousRoundDamage=battle.incomingRoundDamage||0; battle.incomingRoundDamage=0;
     
     // 回合提示
     showTurnBanner(`第 ${battle.round} 回合`);
@@ -4543,6 +4547,8 @@ function playerTurn(unit){
       actions.appendChild(btn);
     });
 
+    if (duoDock && P.sect === 'laomu') renderLaomuSkills(unit,resolve,duoDock);
+
     // 多邻宗专属的两个战斗快捷键：只在玩家行动阶段出现。
     if (duoDock && P.sect === 'duolingo'){
       const english = document.createElement('button');
@@ -4581,6 +4587,28 @@ function playerTurn(unit){
 
 
 /* 多邻宗快捷技能 */
+function renderLaomuSkills(unit,resolve,dock){
+ dock.hidden=false;dock.innerHTML='';
+ const defs=[{id:'roll',name:'🪵 滚木',detail:'Lv.1 · 10法力 · 无敌60秒 · 冷却60分钟',lv:1,mp:10},{id:'sigma',name:'👊 西格玛滚木拳',detail:'Lv.3 · 67法力 · 固定伤害67',lv:3,mp:67},{id:'eye',name:'👁️ 滚木之眼',detail:'Lv.5 · 20法力 · 上轮受伤×2',lv:5,mp:20},{id:'vanish',name:'🌲 浮木消失术',detail:'Lv.10 · 100法力 · 敌方消失1人',lv:10,mp:100}];
+ defs.filter(s=>P.lv>=s.lv).forEach(s=>{const btn=document.createElement('button');btn.className='duo-skill-btn';const remain=Math.max(0,P.laomuCooldownUntil-Date.now());btn.innerHTML='<span>'+s.name+'</span><small>'+s.detail+(s.id==='roll'&&remain?' · 冷却 '+Math.ceil(remain/60000)+'分钟':'')+'</small>';btn.disabled=unit.mp<s.mp||(s.id==='roll'&&remain>0);btn.onclick=()=>{dock.hidden=true;dock.innerHTML='';useLaomuSkill(unit,s.id,resolve);};dock.appendChild(btn);});
+}
+function useLaomuSkill(unit,id,resolve){
+ const cost={roll:10,sigma:67,eye:20,vanish:100}[id];
+ if(!battle.active||battle.over||!unit||!unit.alive){resolve();return;}
+ if(unit.mp<cost){blog('法力不足，无法施展此技能。','bad');resolve();return;}
+ if(id==='roll'&&Date.now()<P.laomuCooldownUntil){blog('【滚木】仍在冷却中。','dim');resolve();return;}
+ const enemies=battle.units.filter(u=>u.alive&&u.isEnemy);if(!enemies.length){resolve();return;}
+ const cast=target=>{
+  if(!target||!target.alive){resolve();return;}
+  unit.mp-=cost;if(unit.isPlayer)P.mp=unit.mp;
+  if(id==='roll'){P.laomuCooldownUntil=Date.now()+3600000;unit.invulnerableUntil=Date.now()+60000;blog('🪵【滚木】护体发动！60秒内免疫敌方伤害，冷却60分钟。','good');showDamageFloat(unit.id,'无敌60秒','crit');}
+  else if(id==='sigma'){target.hp=Math.max(0,target.hp-67);if(target.hp<=0)target.alive=false;showDamageFloat(target.id,'-67','crit');blog('👊【西格玛滚木拳】造成固定67点伤害！','good');}
+  else if(id==='eye'){const dmg=Math.max(0,(battle.previousRoundDamage||0)*2);target.hp=Math.max(0,target.hp-dmg);if(target.hp<=0)target.alive=false;showDamageFloat(target.id,'-'+dmg,'crit');blog('👁️【滚木之眼】上一轮承受伤害×2，造成'+dmg+'点伤害！','good');}
+  else if(id==='vanish'){battle.units=battle.units.filter(u=>u!==target);blog('🌲【浮木消失术】使'+target.name+'消失，未计入击杀奖励。','good');}
+  renderBattleUnits();updateHUD();setTimeout(resolve,450);
+ };
+ if(id==='roll')cast(enemies[0]);else if(enemies.length===1)cast(enemies[0]);else showTargetSelect(enemies,resolve,cast);
+}
 function useDuolingoShortcut(unit, skill, resolve){
   if (!battle.active || battle.over || !unit || !unit.alive) { resolve(); return; }
 
@@ -4966,8 +4994,9 @@ async function monsterTurn(unit){
   const allies = battle.units.filter(u => u.alive && !u.isEnemy);
   if (!allies.length) return;
   
-  // 优先攻击血量低的
-  const target = allies.reduce((a, b) => a.hp < b.hp ? a : b);
+  const vulnerable=allies.filter(a=>!(a.isPlayer&&a.invulnerableUntil>Date.now()));
+  if(!vulnerable.length){blog('🪵【滚木】护体生效，敌方攻击无法伤害你！','good');await sleep(250);return;}
+  const target = vulnerable.reduce((a, b) => a.hp < b.hp ? a : b);
   
   // 怪物偶尔使用技能
   if (unit.skills && unit.skills.length && Math.random() < 0.3){
@@ -4976,6 +5005,7 @@ async function monsterTurn(unit){
     target.hp = Math.max(0, target.hp - dmg);
     if (target.hp <= 0) target.alive = false;
     
+    if(target.isPlayer) battle.incomingRoundDamage+=dmg;
     shakeUnit(target.id);
     showDamageFloat(target.id, `-${dmg}`, '');
     blog(`😈 <b>${unit.name}</b> 施展【${sk.name}】，对 <b>${target.name}</b> 造成 <b>${dmg}</b> 点伤害`, 'bad');
@@ -4984,6 +5014,7 @@ async function monsterTurn(unit){
     target.hp = Math.max(0, target.hp - dmg);
     if (target.hp <= 0) target.alive = false;
     
+    if(target.isPlayer) battle.incomingRoundDamage+=dmg;
     shakeUnit(target.id);
     showDamageFloat(target.id, `-${dmg}`, crit ? 'crit' : '');
     blog(`👹 <b>${unit.name}</b> 攻击 <b>${target.name}</b>，造成 <b>${dmg}</b> 点伤害${crit ? '（暴击！）' : ''}`, 'bad');
@@ -5352,7 +5383,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, flags:P.flags,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5364,7 +5395,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','flags'
+    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','laomuCooldownUntil','flags'
   ];
   allowed.forEach(key => {
     if (Object.prototype.hasOwnProperty.call(data, key)) P[key] = data[key];
@@ -5393,6 +5424,7 @@ function applySaveData(data){
   if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
   if (!P.flags || typeof P.flags!=='object') P.flags={};
   P.cultivationProgressMs=Math.max(0,Number(P.cultivationProgressMs)||0);
+  P.laomuCooldownUntil=Math.max(0,Number(P.laomuCooldownUntil)||0);
 
   return Boolean(P.sect);
 }
