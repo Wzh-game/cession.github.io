@@ -2596,6 +2596,18 @@ $('portrait').addEventListener('click', () => {
   openModal('modalAvatar');
 });
 
+/* 开发者测试中心访问口令：仅作为前端入口保护，不等同于服务器级安全认证 */
+const DEV_ACCESS_PASSWORD = '1¥1';
+function cDeveloperMenuGate(){return /if\(menu==='developer'\)\{openDeveloperPanelWithPassword\(\);\}/.test(document.documentElement.innerHTML);}
+function openDeveloperPanelWithPassword(){
+  const entered = prompt('请输入开发者测试中心密码：');
+  if(entered === null)return false;
+  if(entered !== DEV_ACCESS_PASSWORD){toast('密码错误，无法进入开发者测试中心');return false;}
+  renderDeveloperPanel();
+  openModal('modalDeveloper');
+  return true;
+}
+
 /* ============================================================
    底部菜单绑定
    ============================================================ */
@@ -2609,7 +2621,7 @@ $$('.menu-btn').forEach(btn => {
     if (menu === 'pet')   openPetPanel();
     if (menu === 'task')  openTaskPanel();
     if (menu === 'cultivation'){ renderCultivation(); openModal('modalCultivation'); }
-if(menu==='developer'){renderDeveloperPanel();openModal('modalDeveloper');}
+if(menu==='developer'){openDeveloperPanelWithPassword();}
   });
 });
 
@@ -5735,6 +5747,7 @@ function renderDeveloperPanel(){
 function registerBuiltInDeveloperTests(){
  registerFeatureTest('开发者一键满级','开发工具',[{name:'满级上限为100级',run:()=>DEV_MAX_LEVEL===100},{name:'满级功能与存档接口存在',run:()=>typeof developerMaxLevel==='function'&&typeof saveGame==='function'},{name:'满级成长公式与经验公式一致',run:()=>typeof expNeed==='function'&&SECTS.every(s=>Object.values(s.grow).every(Number.isFinite))}]);
  registerFeatureTest('开发者无限银两','开发工具',[{name:'银两数值处于安全整数范围',run:()=>Number.isSafeInteger(DEV_INFINITE_GOLD)&&DEV_INFINITE_GOLD>0},{name:'无限银两功能与存档接口存在',run:()=>typeof developerInfiniteGold==='function'&&typeof saveGame==='function'},{name:'银两可正常显示与保存',run:()=>typeof fmt==='function'&&typeof updateHUD==='function'&&typeof getSaveData==='function'&&getSaveData().gold===P.gold}]);
+ registerFeatureTest('开发者入口密码保护','安全与权限',[{name:'开发者入口使用密码验证函数',run:()=>typeof openDeveloperPanelWithPassword==='function'&&cDeveloperMenuGate()},{name:'密码配置非空',run:()=>typeof DEV_ACCESS_PASSWORD==='string'&&DEV_ACCESS_PASSWORD.length>0}]);
  registerFeatureTest('角色与属性','基础系统',[{name:'角色数据结构完整',run:()=>!!P&&typeof P.name==='string'&&Number.isFinite(P.lv)&&Number.isFinite(P.hp)&&Number.isFinite(P.maxHp)},{name:'角色数值范围有效',run:()=>P.lv>=1&&P.hp>=0&&P.hp<=P.maxHp&&P.mp>=0&&P.mp<=P.maxMp}]);
  registerFeatureTest('地图与移动','世界系统',[{name:'地图渲染函数存在',run:()=>typeof renderWorld==='function'},{name:'地图容器存在',run:()=>!!$('world')}]);
  registerFeatureTest('战斗系统','战斗系统',[{name:'战斗入口存在',run:()=>typeof battlePrepare==='function'},{name:'战斗结算入口存在',run:()=>typeof finishBattle==='function'}]);
