@@ -6114,7 +6114,8 @@ const EQUIP_BASE=[
  {id:'relic_emperor',name:'天帝遗印',slot:'artifact',quality:'帝品',atk:65,def:45,magic:70,maxHp:500,desc:'凌霄神殿的终极遗物'}
 ];
 const V2_DEFAULT={
- schemaVersion:2,
+ schemaVersion:3,
+ saveVersion:3,
  mortal:{level:1,exp:0,levelCap:100},
  immortal:{unlocked:false,level:1,exp:0,levelCap:100,realm:0,spiritPower:0},
  ascension:{started:false,tribulations:0,completed:false,completedAt:0},
@@ -6135,12 +6136,32 @@ function normalizeV2(raw){
  const v=raw&&typeof raw==='object'?raw:{};
  const merge=(base,src)=>{Object.keys(base).forEach(k=>{if(src&&Object.prototype.hasOwnProperty.call(src,k)){if(base[k]&&typeof base[k]==='object'&&!Array.isArray(base[k]))base[k]=merge(clone(base[k]),src[k]);else if(Array.isArray(base[k]))base[k]=Array.isArray(src[k])?src[k].slice():base[k];else base[k]=src[k];}});return base;};
  const out=merge(clone(V2_DEFAULT),v);
- // 旧版 V2.world 是仙界地图；新存档将凡界与仙界分开保存。旧存档优先迁移，不重置探索进度。
+ // v1.7没有扩展存档时使用默认扩展；早期2.0的world字段迁移为仙界地图，凡间主存档不动。
  const savedImmortal=v.worlds&&v.worlds.immortal&&typeof v.worlds.immortal==='object'?v.worlds.immortal:v.world;
  if(savedImmortal&&typeof savedImmortal==='object')out.world=merge(clone(V2_DEFAULT.world),savedImmortal);
  out.worlds=out.worlds&&typeof out.worlds==='object'?out.worlds:{mortal:clone(V2_DEFAULT.worlds.mortal),immortal:clone(out.world)};
  out.worlds.mortal=Object.assign({},V2_DEFAULT.worlds.mortal,out.worlds.mortal||{});
  out.worlds.immortal=out.world;
+ const slots=['weapon','helmet','armor','shoes','accessory','artifact'];
+ out.equipment=out.equipment&&typeof out.equipment==='object'?out.equipment:clone(V2_DEFAULT.equipment);
+ out.equipment.owned=Array.isArray(out.equipment.owned)?Array.from(new Set(out.equipment.owned.filter(x=>typeof x==='string'))):[];
+ out.equipment.equipped=out.equipment.equipped&&typeof out.equipment.equipped==='object'?out.equipment.equipped:{};
+ slots.forEach(k=>{const id=out.equipment.equipped[k];if(typeof id!=='string'||!out.equipment.owned.includes(id))out.equipment.equipped[k]=null;});
+ out.materials=out.materials&&typeof out.materials==='object'?out.materials:clone(V2_DEFAULT.materials);
+ Object.keys(V2_DEFAULT.materials).forEach(k=>{out.materials[k]=Math.max(0,Number(out.materials[k])||0);});
+ out.quests=out.quests&&typeof out.quests==='object'?out.quests:clone(V2_DEFAULT.quests);
+ ['completed','active'].forEach(k=>{if(!Array.isArray(out.quests[k]))out.quests[k]=[];});
+ if(!Array.isArray(out.achievements))out.achievements=[];
+ if(!Array.isArray(out.logs))out.logs=[];
+ out.logs=out.logs.slice(0,35);
+ out.developer=out.developer&&typeof out.developer==='object'?out.developer:clone(V2_DEFAULT.developer);
+ if(!Array.isArray(out.developer.results))out.developer.results=[];
+ if(!Array.isArray(out.developer.errors))out.developer.errors=[];
+ out.mortal.level=Math.max(1,Math.min(100,Number(out.mortal.level)||1));out.mortal.exp=Math.max(0,Number(out.mortal.exp)||0);
+ out.immortal.level=Math.max(1,Math.min(100,Number(out.immortal.level)||1));out.immortal.exp=Math.max(0,Number(out.immortal.exp)||0);
+ out.ascension.tribulations=Math.max(0,Math.min(3,Math.floor(Number(out.ascension.tribulations)||0)));
+ out.ascension.completed=!!out.ascension.completed;out.immortal.unlocked=!!out.immortal.unlocked||out.ascension.completed;
+ out.schemaVersion=3;out.saveVersion=3;
  return out;
 }
 function syncWorldPartitions(){
@@ -6166,12 +6187,12 @@ function saveV2(){
 function wrapSave(){
  if(typeof getSaveData==='function'&&!getSaveData.__v2){
   const old=getSaveData;
-  const wrapped=function(){syncWorldPartitions();const d=old();d.schemaVersion=2;d.ascensionV2=clone(V2);return d;};
+  const wrapped=function(){syncWorldPartitions();const d=old();d.schemaVersion=3;V2.schemaVersion=3;V2.saveVersion=3;d.ascensionV2=clone(V2);return d;};
   wrapped.__v2=true;getSaveData=wrapped;
  }
  if(typeof applySaveData==='function'&&!applySaveData.__v2){
   const old=applySaveData;
-  const wrapped=function(d){const ok=old(d);if(d&&d.ascensionV2)V2=normalizeV2(d.ascensionV2);syncWorldPartitions();return ok;};
+  const wrapped=function(d){const ok=old(d);V2=d&&d.ascensionV2?normalizeV2(d.ascensionV2):clone(V2_DEFAULT);syncWorldPartitions();saveV2();return ok;};
   wrapped.__v2=true;applySaveData=wrapped;
  }
 }
@@ -6424,6 +6445,7 @@ function finishAscension(){
  startBattle({name:'天劫帝君',hp:3200,atk:125,def:42,phase:0},'finalAscension');
 }
 function completeAscension(){
+ if(V2.ascension.completed){toast('飞升奖励已经领取过了');return;}
  V2.immortal.unlocked=true;V2.immortal.level=1;V2.immortal.exp=0;V2.immortal.realm=0;
  V2.ascension.completed=true;V2.ascension.completedAt=Date.now();
  V2.world.unlocked=['nantian'];V2.world.visited=['nantian'];V2.world.x=300;V2.world.y=300;
@@ -6502,6 +6524,10 @@ const DEV_TEST_SUITES={
  ['门派技能执行',()=>typeof getSectSkills==='function'&&typeof applySkill==='function']
  ]},
  save:{label:'存档与兼容',tests:[
+ ['扩展存档版本已升级到3',()=>V2.schemaVersion===3&&V2.saveVersion===3&&getSaveData().schemaVersion===3],
+ ['旧版2.0世界字段迁移不丢失',()=>{const x=normalizeV2({schemaVersion:2,world:{x:777,y:444,region:'yaochi',visited:['nantian','yaochi'],bossKills:{guardian:1}}});return x.world.x===777&&x.world.region==='yaochi'&&x.world.visited.includes('yaochi')&&x.world.bossKills.guardian===1;}],
+ ['1.7无扩展存档可安全初始化',()=>{const x=normalizeV2({});return x.saveVersion===3&&x.immortal.unlocked===false&&x.equipment.owned.length===0&&Array.isArray(x.quests.active);}],
+ ['装备槽引用必须属于已拥有装备',()=>{const x=normalizeV2({equipment:{owned:['sword_cloud'],equipped:{weapon:'missing',helmet:'sword_cloud'}}});return x.equipment.equipped.weapon===null&&x.equipment.equipped.helmet==='sword_cloud';}],
  ['1.7存档导出结构',()=>{const x=getSaveData();return !!(x&&'sect'in x&&'bag'in x&&'pet'in x);}],
  ['1.7存档应用接口',()=>typeof applySaveData==='function'],
  ['1.7本地存档JSON',()=>{const x=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return !!(x&&typeof x==='object');}],
