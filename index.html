@@ -6563,7 +6563,7 @@ const DEV_TEST_SUITES={
   ['角色场景坐标',()=>Number.isFinite(P.x)&&Number.isFinite(P.y)&&typeof P.scene==='string']
  ]},
  immortalWorld:{label:'2.0仙界开放世界',tests:[
-  ['仙界地图入口',()=>typeof openWorld==='function'&&typeof drawWorld==='function'],['独立像素地图渲染',()=>typeof worldTerrain==='function'&&typeof drawPixelHero==='function'&&typeof drawPixelMob==='function'],['仙界独立怪物图鉴',()=>Object.keys(IMMORTAL_MOBS).length===6&&Object.values(IMMORTAL_MOBS).every(p=>p.length>=3)],['网格步进与五步遭遇',()=>typeof worldMoveOne==='function'&&Number.isFinite(worldSteps)],
+  ['仙界地图入口',()=>typeof openWorld==='function'&&typeof drawWorld==='function'],['独立像素地图渲染',()=>typeof worldTerrain==='function'&&typeof drawPixelHero==='function'&&typeof drawPixelMob==='function'],['仙界独立怪物图鉴',()=>Object.keys(IMMORTAL_MOBS).length===6&&Object.values(IMMORTAL_MOBS).every(p=>p.length>=3)],['网格步进与五步遭遇',()=>typeof worldMoveOne==='function'&&Number.isFinite(worldSteps)],['战斗复用凡间核心',()=>typeof battlePrepare==='function'&&typeof finishBattle==='function'&&finishBattle!==finishBattleWithImmortal],['战斗期间地图锁定',()=>s.indexOf('battle.active')>=0&&s.indexOf('worldNextStepAt')>=0],
   ['六大区域配置',()=>REGIONS.length===6&&new Set(REGIONS.map(r=>r.id)).size===6],
   ['区域解锁与探索记录',()=>Array.isArray(V2.world.unlocked)&&Array.isArray(V2.world.visited)],
   ['宝箱与探索数据',()=>V2.world.chests&&typeof V2.world.chests==='object'&&Number.isFinite(V2.world.encounters)],
