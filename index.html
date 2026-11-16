@@ -6181,6 +6181,7 @@ function injectStyles(){
 function addMenu(){
  const bar=$v('bottomBar');if(!bar||bar.dataset.v2)return;bar.dataset.v2='1';
  const add=(id,icon,label)=>{const b=document.createElement('button');b.className='menu-btn v2-menu';b.innerHTML='<span class="mi">'+icon+'</span><span class="mt">'+label+'</span>';b.addEventListener('click',()=>openPanel(id));bar.appendChild(b);};
+ add('overview','☁️','飞升仙界');
  add('developer','🧪','开发者');
 }
 function ensureRoot(){
@@ -6192,8 +6193,10 @@ function ensureRoot(){
 }
 let currentTab='overview';
 function openPanel(tab){
- if(tab!=='developer'){toast('仙界与2.0附加玩法已移除');return;}
- ensureRoot();currentTab='developer';$v('v2Root').classList.add('open');renderPanel();
+ const allowed=['overview','gear','regions','world','records','developer'];
+ if(!allowed.includes(tab))tab='overview';
+ ensureRoot();currentTab=tab;$v('v2Root').classList.add('open');
+ $v('v2Title').textContent='梦幻西游 · 2.0';renderPanel();
 }
 function closePanel(){if(worldOpen){worldOpen=false;if(worldRAF)cancelAnimationFrame(worldRAF);worldRAF=0;}if($v('v2Root'))$v('v2Root').classList.remove('open');}
 function card(title,body){return '<section class="v2-card"><h3>'+title+'</h3>'+body+'</section>';}
@@ -6228,12 +6231,14 @@ function renderRegions(){
 }
 function renderPanel(){
  if(!$v('v2Root'))return;
- const tabs=[['developer','开发者测试']];
+ const tabs=[['overview','飞升'],['gear','仙器'],['regions','六界地图'],['world','进入仙界'],['records','历练记录'],['developer','开发者测试']];
+ if(!tabs.some(t=>t[0]===currentTab))currentTab='overview';
+ $v('v2Tabs').style.display='flex';
  $v('v2Tabs').innerHTML=tabs.map(t=>'<button class="v2-tab '+(currentTab===t[0]?'active':'')+'" data-v2-tab="'+t[0]+'">'+t[1]+'</button>').join('');
  $v('v2Tabs').querySelectorAll('[data-v2-tab]').forEach(b=>b.onclick=()=>{currentTab=b.dataset.v2Tab;renderPanel();});
- currentTab='developer';
- let html=renderDeveloper();
- $v('v2Body').innerHTML=html;
+ const views={overview:renderOverview,gear:renderGear,regions:renderRegions,world:renderWorldIntro,records:renderRecords,developer:renderDeveloper};
+ $v('v2Body').style.padding='12px';$v('v2Body').style.overflow='auto';
+ $v('v2Body').innerHTML=views[currentTab]();
  $v('v2Body').querySelectorAll('[data-v2-action]').forEach(b=>b.onclick=()=>handleAction(b.dataset.v2Action));
 }
 function renderRecords(){
@@ -6467,7 +6472,7 @@ function renderCultivationCompat(){
 }
 
 /* 永久开发者测试中心：正式版本常驻，不随正式发布删除 */
-const DEV_VERSION='1.7-devtools-1.4';
+const DEV_VERSION='2.0-devtools-2.0';
 function devEsc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function captureDevError(msg){V2.developer.errors.unshift({message:String(msg).slice(0,500),time:Date.now()});V2.developer.errors=V2.developer.errors.slice(0,40);}
 function installDevErrorCapture(){
@@ -6478,10 +6483,11 @@ function installDevErrorCapture(){
 }
 
 const DEV_TEST_SUITES={
- removedImmortal:{label:'仙界移除回归',tests:[
-  ['底部菜单不再显示仙界入口',()=>!Array.from(document.querySelectorAll('#bottomBar .v2-menu')).some(x=>x.textContent.includes('仙界'))],
-  ['2.0附加面板仅保留开发者入口',()=>{const t=document.querySelectorAll('#v2Tabs [data-v2-tab]');return t.length===1&&t[0].dataset.v2Tab==='developer';}],
-  ['飞升入口不可访问',()=>{try{openPanel('immortal');return !$v('v2Root').classList.contains('open')||currentTab==='developer';}catch(e){return false;}}]
+ ascensionAccess:{label:'2.0飞升入口回归',tests:[
+  ['底部菜单显示飞升仙界入口',()=>Array.from(document.querySelectorAll('#bottomBar .v2-menu')).some(x=>x.textContent.includes('飞升仙界'))],
+  ['飞升面板包含六个功能页签',()=>{const t=document.querySelectorAll('#v2Tabs [data-v2-tab]');return ['overview','gear','regions','world','records','developer'].every(k=>Array.from(t).some(x=>x.dataset.v2Tab===k));}],
+  ['仙界区域配置为六个区域',()=>Array.isArray(REGIONS)&&REGIONS.length===6],
+  ['旧版开发者测试入口保留',()=>!!document.querySelector('#bottomBar .v2-menu')&&typeof renderDeveloper==='function']
  ]},
  legacy:{label:'1.7旧系统',tests:[
  ['玩家基础属性',()=>P&&Number.isFinite(P.lv)&&P.maxHp>0&&P.maxMp>0],
@@ -6623,12 +6629,12 @@ function handleDeveloperAction(a){
   const suite=a==='test'||a==='suite:all'?'all':a.slice(6),r=runDeveloperTests(suite),n=r.filter(x=>!x.ok).length;
   toast(n?'测试完成，需处理 '+n+' 项':'测试完成，'+r.length+' 项全部通过');renderPanel();return;
  }
- if(a==='level100'){toast('凡间等级测试工具已停用，保留1.7原成长规则');return;}
- if(a==='ascend'||a==='materials'||a==='gear'||a==='battle'){toast('仙界相关开发工具已停用');return;}
+ if(a==='level100'){if(!ask('将凡间等级设为100并清零当前经验？建议仅用于测试。'))return;P.lv=100;P.exp=0;V2.mortal.level=100;V2.mortal.exp=0;updateHUD();saveV2();toast('测试等级已设置');renderPanel();return;}
+ if(a==='ascend'){if(!ask('直接开启飞升试炼（仅测试用途）？'))return;V2.ascension.started=true;V2.ascension.tribulations=0;saveV2();toast('飞升试炼已开启');renderPanel();return;}
  if(a==='materials'){if(!ask('给所有仙界材料增加999？'))return;Object.keys(V2.materials).forEach(k=>V2.materials[k]=(Number(V2.materials[k])||0)+999);saveV2();toast('测试材料已增加');renderPanel();return;}
  if(a==='heal'){P.hp=P.maxHp;P.mp=P.maxMp;updateHUD();saveV2();toast('状态已回满');renderPanel();return;}
  if(a==='gear'){if(!ask('把全部测试装备加入背包？'))return;EQUIP_BASE.forEach(x=>grantItem(x.id));saveV2();toast('测试装备已加入');renderPanel();return;}
- if(a==='battle'){if(!V2.immortal.unlocked&&!ask('尚未飞升，仍要生成仙界测试战斗吗？'))return;startBattle({name:'开发者测试木桩',hp:1800,atk:1,def:0,phase:0},'debug');return;}
+ if(a==='battle'){if(!ask('生成开发者测试木桩战斗？'))return;startBattle({name:'开发者测试木桩',hp:1800,atk:1,def:0,phase:0},'debug');return;}
  if(a==='save'){toast(saveV2()?'存档已保存':'存档保存失败');renderPanel();return;}
  if(a==='clearlogs'){if(!ask('只清空错误日志，不会删除游戏存档。继续？'))return;V2.developer.errors=[];saveV2();renderPanel();toast('日志已清空');}
 }
@@ -6637,14 +6643,12 @@ window.__MHXY_DEVTOOLS__={version:DEV_VERSION,runTests:runDeveloperTests,getSuit
 function init(){
  if(typeof P==='undefined'||!$v('game'))return;
  loadV2();installDevErrorCapture();wrapSave();injectStyles();addMenu();ensureRoot();
- // 保留1.7原等级成长规则，不再施加2.0凡间等级上限或仙界装备赠送。
- V2.mortal.level=Math.max(1,Number(P.lv)||1);V2.mortal.exp=Math.max(0,Number(P.exp)||0);
+ // 凡间等级封顶100；飞升后由独立仙界等级承接后续经验，不清空凡间进度。
+ capMortal();addAscensionMenu();
+ V2.mortal.level=Math.max(1,Math.min(100,Number(P.lv)||1));V2.mortal.exp=Math.max(0,Number(P.exp)||0);
  saveV2();
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveV2();});
  window.addEventListener('beforeunload',saveV2);
- // 监听原游戏经验成长后的等级变化，防止凡间超过100。
- const oldAddLog=typeof addLog==='function'?addLog:null;
- if(oldAddLog&&!oldAddLog.__v2){const w=function(){return oldAddLog.apply(this,arguments);};w.__v2=true;}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
