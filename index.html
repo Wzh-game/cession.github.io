@@ -2138,7 +2138,7 @@ function gainPetExp(amount){
  while(pet.lv<100&&pet.exp>=petExpNeed(pet.lv)){
   pet.exp-=petExpNeed(pet.lv);pet.lv++;levels++;
   const hpGain=Math.max(5,Math.floor(pet.maxHp*.035));const hpGrowth=Math.max(1,Math.floor(hpGain*pet.aptitude.hp/100));pet.maxHp+=hpGrowth;pet.hp=Math.min(pet.maxHp,pet.hp+hpGrowth);
-  pet.atk+=Math.max(1,Math.floor(pet.atk*.025*pet.aptitude.atk/100));pet.def+=Math.max(1,Math.floor(pet.def*.025*pet.aptitude.def/100));if(pet.lv%5===0)pet.spd+=Math.max(1,Math.floor(pet.aptitude.spd/100));
+  pet.atk+=Math.max(1,Math.floor(pet.atk*.025*pet.aptitude.atk/100));pet.def+=Math.max(1,Math.floor(pet.def*.025*pet.aptitude.def/100));if(pet.lv%5===0)pet.spd+=1+Math.max(0,Math.floor((pet.aptitude.spd-100)/10));
   const evo=PET_EVOLUTIONS[pet.id];
   if(evo&&pet.lv>=evo.at&&pet.stage===0){
    const ratio=pet.hp/pet.maxHp;pet.id=evo.id;pet.name=evo.name;pet.icon=evo.icon;pet.desc=evo.desc;pet.stage=1;
@@ -3137,7 +3137,7 @@ function renderPetPanel(){
     content.appendChild(tip);
     
     PETS.forEach(p => {
-      const owned = (P.pet && P.pet.id === p.id) || P.petBox.some(x=>x.id===p.id);
+      const owned = (P.pet && petBaseSpecies(P.pet) === p.id) || P.petBox.some(x=>petBaseSpecies(x)===p.id);
       const it = document.createElement('div');
       it.className = 'list-item';
       if (owned) it.classList.add('rare-3');
