@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>梦幻西游 · 1.7版本</title>
+<title>梦幻西游 · 2.0版本</title>
 <style>
 /* ============================================================
    梦幻西游 · Q版像素单机  —— 第 1 批
@@ -6113,14 +6113,21 @@ const EQUIP_BASE=[
  {id:'ring_sun',name:'曜日仙戒',slot:'accessory',quality:'金仙',atk:28,magic:35,desc:'蕴藏曜日之力'},
  {id:'relic_emperor',name:'天帝遗印',slot:'artifact',quality:'帝品',atk:65,def:45,magic:70,maxHp:500,desc:'凌霄神殿的终极遗物'}
 ];
+const QUESTS_V2=[
+ {id:'v2_yaochi_scout',name:'瑶池寻踪',desc:'初入仙界，前往瑶池仙境留下探索记录。',target:1,unit:'个区域',reward:{仙玉:150}},
+ {id:'v2_clear_mobs',name:'清剿仙界妖灵',desc:'击败三只仙界普通怪物，熟悉仙界战斗。',target:3,unit:'只妖灵',reward:{灵石:30}},
+ {id:'v2_guardian',name:'挑战区域守护',desc:'击败任意一名仙界区域Boss。',target:1,unit:'名守护者',reward:{仙玉:300,仙器碎片:2}},
+ {id:'v2_six_realms',name:'巡游六界',desc:'探索仙界全部六大区域。',target:6,unit:'个区域',reward:{仙晶:80}},
+ {id:'v2_six_bosses',name:'六界镇魔',desc:'击败全部六名仙界Boss，完成仙界初章。',target:6,unit:'名Boss',reward:{仙玉:1000,灵石:100,魔神核心:1}}
+];
 const V2_DEFAULT={
  schemaVersion:3,
  saveVersion:3,
  mortal:{level:1,exp:0,levelCap:100},
  immortal:{unlocked:false,level:1,exp:0,levelCap:100,realm:0,spiritPower:0},
  ascension:{started:false,tribulations:0,completed:false,completedAt:0},
- world:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0},
- worlds:{mortal:{scene:'',subScene:'',x:0,y:0,steps:0},immortal:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0}},
+ world:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0,mobKills:0},
+ worlds:{mortal:{scene:'',subScene:'',x:0,y:0,steps:0},immortal:{x:300,y:300,region:'nantian',visited:['nantian'],unlocked:['nantian'],bossKills:{},lootClaimed:{},chests:{},gathered:{},encounters:0,mobKills:0}},
  equipment:{owned:[],equipped:{weapon:null,helmet:null,armor:null,shoes:null,accessory:null,artifact:null},enhance:{},affixes:{} },
  materials:{仙玉:0,仙晶:0,灵石:0,仙桃:0,仙器碎片:0,极寒晶核:0,魔神核心:0},
  quests:{completed:[],active:[]},
@@ -6142,6 +6149,7 @@ function normalizeV2(raw){
  out.worlds=out.worlds&&typeof out.worlds==='object'?out.worlds:{mortal:clone(V2_DEFAULT.worlds.mortal),immortal:clone(out.world)};
  out.worlds.mortal=Object.assign({},V2_DEFAULT.worlds.mortal,out.worlds.mortal||{});
  out.worlds.immortal=out.world;
+ out.world.mobKills=Math.max(0,Math.floor(Number(out.world.mobKills)||0));
  const slots=['weapon','helmet','armor','shoes','accessory','artifact'];
  out.equipment=out.equipment&&typeof out.equipment==='object'?out.equipment:clone(V2_DEFAULT.equipment);
  out.equipment.owned=Array.isArray(out.equipment.owned)?Array.from(new Set(out.equipment.owned.filter(x=>typeof x==='string'))):[];
@@ -6257,14 +6265,47 @@ function renderGear(){
 function renderRegions(){
  return card('仙界六大区域 · 连通世界','<p class="v2-muted">区域不是六个独立菜单。所有区域位于同一张连续大地图，山脉、河流、道路、遗迹与关隘构成自然地形边界。</p><div class="v2-grid">'+REGIONS.map(r=>'<div class="v2-region"><b>'+r.name+'</b><span class="v2-muted">'+r.desc+'</span><p class="v2-muted">区域守护：'+r.boss+'</p><p class="v2-muted">首通奖励：'+r.reward+'</p></div>').join('')+'</div>');
 }
+function questProgress(q){
+ const w=V2.world;
+ if(q.id==='v2_yaochi_scout')return w.visited.includes('yaochi')?1:0;
+ if(q.id==='v2_clear_mobs')return Math.min(q.target,Number(w.mobKills)||0);
+ if(q.id==='v2_guardian')return IMMORTAL_BOSSES.some(b=>w.bossKills[b.id])?1:0;
+ if(q.id==='v2_six_realms')return REGIONS.filter(r=>w.visited.includes(r.id)).length;
+ if(q.id==='v2_six_bosses')return IMMORTAL_BOSSES.filter(b=>w.bossKills[b.id]).length;
+ return 0;
+}
+function questCanClaim(q){return !!(V2.immortal.unlocked&&q&&questProgress(q)>=q.target);}
+function renderV2Quests(){
+ if(!V2.immortal.unlocked)return card('仙界主线任务','<p class="v2-muted">完成凡间飞升后，仙界任务链将正式开启。先完成五大凡间Boss首杀，并修炼至少三本功法。</p>'+btn('查看飞升条件','overview','blue'));
+ const completed=V2.quests.completed;
+ const current=QUESTS_V2.find(q=>!completed.includes(q.id));
+ const cards=QUESTS_V2.map((q,i)=>{
+  const done=completed.includes(q.id),active=current&&current.id===q.id,progress=questProgress(q),pct=Math.min(100,Math.floor(progress/q.target*100));
+  const reward=Object.entries(q.reward).map(([k,v])=>k+' +'+v).join(' · ');
+  const action=active&&questCanClaim(q)?btn('领取任务奖励','questClaim:'+q.id,'blue'):'';
+  const status=done?'已完成':active?(questCanClaim(q)?'待领取':'进行中'):'未解锁';
+  return '<div class="v2-region"><div class="v2-row"><b>'+(i+1)+'. '+q.name+'</b><b class="'+(done?'v2-test-ok':active?'':'v2-muted')+'">'+status+'</b></div><p class="v2-muted">'+q.desc+'</p><div class="v2-row"><span>进度：'+progress+' / '+q.target+' '+q.unit+'</span><b>'+pct+'%</b></div><div class="v2-progress"><i style="width:'+pct+'%"></i></div><p class="v2-muted">奖励：'+reward+'</p>'+action+'</div>';
+ }).join('');
+ return card('仙界主线 · 五段历练','<p class="v2-muted">任务按顺序解锁。完成目标后需要手动领取奖励；奖励只会发放一次，并自动保存。</p><div class="v2-row"><span>已完成任务</span><b>'+completed.length+' / '+QUESTS_V2.length+'</b></div>')+cards;
+}
+function claimV2Quest(id){
+ const q=QUESTS_V2.find(x=>x.id===id),current=QUESTS_V2.find(x=>!V2.quests.completed.includes(x.id));
+ if(!q||!current||current.id!==id||V2.quests.completed.includes(id)||!questCanClaim(q)){toast('任务尚未完成或奖励已经领取');return;}
+ Object.entries(q.reward).forEach(([k,v])=>{V2.materials[k]=(Number(V2.materials[k])||0)+v;});
+ V2.quests.completed.push(id);
+ const next=QUESTS_V2.find(x=>!V2.quests.completed.includes(x.id));V2.quests.active=next?[next.id]:[];
+ if(id==='v2_six_bosses'&&!V2.achievements.includes('six_realms_guardian'))V2.achievements.push('six_realms_guardian');
+ log('完成仙界任务「'+q.name+'」，领取：'+Object.entries(q.reward).map(([k,v])=>k+' +'+v).join('、'));
+ saveV2();renderPanel();toast('任务奖励已领取：'+q.name);
+}
 function renderPanel(){
  if(!$v('v2Root'))return;
- const tabs=[['overview','飞升'],['gear','仙器'],['regions','六界地图'],['world','进入仙界'],['records','历练记录'],['developer','开发者测试']];
+ const tabs=[['overview','飞升'],['quests','任务'],['gear','仙器'],['regions','六界地图'],['world','进入仙界'],['records','历练记录'],['developer','开发者测试']];
  if(!tabs.some(t=>t[0]===currentTab))currentTab='overview';
  $v('v2Tabs').style.display='flex';
  $v('v2Tabs').innerHTML=tabs.map(t=>'<button class="v2-tab '+(currentTab===t[0]?'active':'')+'" data-v2-tab="'+t[0]+'">'+t[1]+'</button>').join('');
  $v('v2Tabs').querySelectorAll('[data-v2-tab]').forEach(b=>b.onclick=()=>{currentTab=b.dataset.v2Tab;renderPanel();});
- const views={overview:renderOverview,gear:renderGear,regions:renderRegions,world:renderWorldIntro,records:renderRecords,developer:renderDeveloper};
+ const views={overview:renderOverview,quests:renderV2Quests,gear:renderGear,regions:renderRegions,world:renderWorldIntro,records:renderRecords,developer:renderDeveloper};
  $v('v2Body').style.padding='12px';$v('v2Body').style.overflow='auto';
  $v('v2Body').innerHTML=views[currentTab]();
  $v('v2Body').querySelectorAll('[data-v2-action]').forEach(b=>b.onclick=()=>handleAction(b.dataset.v2Action));
@@ -6280,6 +6321,7 @@ function handleAction(a){
  if(a==='ascend'){if(!V2.ascension.started){if(!ascensionReady()){toast('飞升条件尚未满足');return;}V2.ascension.started=true;V2.ascension.tribulations=0;log('开启飞升主线：登天之路');toast('飞升任务开启！');}else toast('天劫试炼已准备就绪');saveV2();renderPanel();}
  else if(a==='tribulation'){if(V2.ascension.tribulations>=3)finishAscension();else startTribulation();}
  else if(a==='world'||a==='enterWorld'){if(!V2.immortal.unlocked){toast('尚未飞升');return;}closePanel();openWorld();}
+ else if(a.startsWith('questClaim:'))claimV2Quest(a.slice(11));
  else if(a.startsWith('equip:'))equipItem(a.slice(6));
  else if(a.startsWith('upgrade:'))upgradeItem(a.slice(8));
  else if(a.startsWith('dismantle:'))dismantleItem(a.slice(10));
@@ -6460,6 +6502,7 @@ function winBattle(){
    V2.world.unlocked.push(boss.region);
   }else{V2.materials.仙玉+=100;V2.materials.灵石+=1;toast('再次击败Boss，获得仙玉与灵石');}
  }else{
+  V2.world.mobKills=Math.max(0,Number(V2.world.mobKills)||0)+1;
   V2.materials.仙玉+=25+Math.floor(Math.random()*35);V2.immortal.exp+=80+V2.immortal.level*15;
   V2.immortal.spiritPower+=2;
   levelImmortal();
@@ -6664,11 +6707,19 @@ const DEV_TEST_SUITES={
   ['宝箱与探索数据',()=>V2.world.chests&&typeof V2.world.chests==='object'&&Number.isFinite(V2.world.encounters)],
   ['地图坐标边界',()=>V2.world.x>=0&&V2.world.x<=2300&&V2.world.y>=0&&V2.world.y<=1600]
  ]},
+ questsV2:{label:'2.0仙界任务链',tests:[
+  ['五段任务配置完整',()=>QUESTS_V2.length===5&&new Set(QUESTS_V2.map(q=>q.id)).size===5&&QUESTS_V2.every(q=>q.id&&q.name&&q.target>0)],
+  ['任务奖励字段有效',()=>QUESTS_V2.every(q=>Object.entries(q.reward).length>0&&Object.entries(q.reward).every(([k,v])=>k in V2_DEFAULT.materials&&Number.isFinite(v)&&v>0))],
+  ['探索任务进度计算',()=>Number.isFinite(questProgress(QUESTS_V2[0]))&&questProgress(QUESTS_V2[0])>=0],
+  ['任务领取条件有防重复保护',()=>typeof questCanClaim==='function'&&typeof claimV2Quest==='function'&&Array.isArray(V2.quests.completed)],
+  ['普通怪物击杀计数已接入',()=>Number.isFinite(V2.world.mobKills)&&V2.world.mobKills>=0]
+ ]},
  immortalBoss:{label:'2.0仙界Boss与战斗',tests:[
   ['仙界Boss数量',()=>IMMORTAL_BOSSES.length===6],
   ['仙界Boss区域与掉落',()=>IMMORTAL_BOSSES.every(b=>REGIONS.some(r=>r.id===b.region)&&!!b.drop)],
   ['仙界战斗入口',()=>typeof startBattle==='function'&&typeof battleAction==='function'],
   ['仙界Boss击败记录',()=>V2.world.bossKills&&typeof V2.world.bossKills==='object'],
+  ['Boss击杀计数可供任务读取',()=>typeof questProgress==='function'&&IMMORTAL_BOSSES.every(b=>b.id&&b.region)],
   ['Boss奖励装备映射',()=>['sword_cloud','helm_star','armor_mist','boots_wind','ring_sun'].every(id=>EQUIP_BASE.some(x=>x.id===id))]
  ]}
 };
