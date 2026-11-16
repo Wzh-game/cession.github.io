@@ -6589,7 +6589,7 @@ function installDevErrorCapture(){
 const DEV_TEST_SUITES={
  ascensionAccess:{label:'2.0飞升入口回归',tests:[
   ['底部菜单显示飞升仙界入口',()=>Array.from(document.querySelectorAll('#bottomBar .v2-menu')).some(x=>x.textContent.includes('飞升仙界'))],
-  ['飞升面板包含六个功能页签',()=>{const t=document.querySelectorAll('#v2Tabs [data-v2-tab]');return ['overview','gear','regions','world','records','developer'].every(k=>Array.from(t).some(x=>x.dataset.v2Tab===k));}],
+  ['飞升面板包含六个功能页签',()=>{const t=document.querySelectorAll('#v2Tabs [data-v2-tab]');return ['overview','quests','gear','regions','world','records','developer'].every(k=>Array.from(t).some(x=>x.dataset.v2Tab===k));}],
   ['仙界区域配置为六个区域',()=>Array.isArray(REGIONS)&&REGIONS.length===6],
   ['旧版开发者测试入口保留',()=>!!document.querySelector('#bottomBar .v2-menu')&&typeof renderDeveloper==='function']
  ]},
