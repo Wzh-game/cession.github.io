@@ -1,4 +1,4 @@
-# 梦幻西游 · 1.1 单机版
+# 梦幻西游 · 1.7 单机版
 
 一个基于 HTML、CSS 和 JavaScript 的浏览器单机 RPG 游戏项目。游戏入口为 `index.html`，可通过 GitHub Pages 在线访问。
 
