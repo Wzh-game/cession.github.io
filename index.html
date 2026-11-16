@@ -6429,7 +6429,7 @@ function renderCultivationCompat(){
  // 2.0只扩展独立进度，不修改1.7功法概率、在线计时和掉落规则。
 }
 function init(){
- if(!window.P||!$v('game'))return;
+ if(typeof P==='undefined'||!$v('game'))return;
  loadV2();wrapSave();injectStyles();addMenu();ensureRoot();capMortal();addAscensionMenu();
  // 迁移时以旧存档为准；不执行门派重置逻辑。
  V2.mortal.level=Math.min(100,Math.max(1,Number(P.lv)||1));
