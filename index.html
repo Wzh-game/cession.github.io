@@ -6215,7 +6215,6 @@ function injectStyles(){
 function addMenu(){
  const bar=$v('bottomBar');if(!bar||bar.dataset.v2)return;bar.dataset.v2='1';
  const add=(id,icon,label)=>{const b=document.createElement('button');b.className='menu-btn v2-menu';b.innerHTML='<span class="mi">'+icon+'</span><span class="mt">'+label+'</span>';b.addEventListener('click',()=>openPanel(id));bar.appendChild(b);};
- add('overview','☁️','飞升仙界');
  add('developer','🧪','开发者');
 }
 function ensureRoot(){
