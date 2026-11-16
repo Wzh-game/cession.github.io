@@ -2100,17 +2100,25 @@ const GEAR_CATALOG={
  swift_boots:{name:'追风靴',icon:'🥾',slot:'boots',slotName:'鞋履',price:1000,spd:8,def:3,desc:'轻盈灵巧，提升移动身法'},
  cloud_boots:{name:'踏云履',icon:'👟',slot:'boots',slotName:'鞋履',price:4600,spd:20,hp:70,desc:'踏云而行的珍稀鞋履'},
  spirit_pendant:{name:'聚灵坠',icon:'📿',slot:'accessory',slotName:'饰品',price:1300,magic:10,mp:45,desc:'凝聚天地灵气的护身坠'},
- phoenix_pendant:{name:'凤羽佩',icon:'🪶',slot:'accessory',slotName:'饰品',price:6000,atk:12,magic:25,hp:100,desc:'蕴含凤羽灵韵的珍贵饰品'}
+ phoenix_pendant:{name:'凤羽佩',icon:'🪶',slot:'accessory',slotName:'饰品',price:6000,atk:12,magic:25,hp:100,desc:'蕴含凤羽灵韵的珍贵饰品'},
+ boss_guardian_blade:{name:'镇城斩妖剑',icon:'⚔️',slot:'weapon',slotName:'武器',price:0,atk:48,magic:18,desc:'击败长安镇城妖将所得，剑锋镇邪',bossOnly:true,quality:'稀有',qualityRank:2},
+ boss_ancient_heart:{name:'古树灵心甲',icon:'🌿',slot:'armor',slotName:'护甲',price:0,def:42,hp:240,desc:'碧波树皇的生命精华凝成',bossOnly:true,quality:'史诗',qualityRank:3},
+ boss_desert_crown:{name:'黄沙王冠',icon:'👑',slot:'helmet',slotName:'头盔',price:0,hp:170,mp:85,magic:22,desc:'黄沙魔君遗留的统御之冠',bossOnly:true,quality:'史诗',qualityRank:3},
+ boss_frost_steps:{name:'霜封踏雪靴',icon:'❄️',slot:'boots',slotName:'鞋履',price:0,spd:28,def:15,hp:90,desc:'极寒雪魔的寒霜结晶所化',bossOnly:true,quality:'稀有',qualityRank:2},
+ boss_flame_soul:{name:'炎帝焚心佩',icon:'🔥',slot:'accessory',slotName:'饰品',price:0,atk:24,magic:42,hp:180,desc:'熔岩炎帝核心凝结的传世宝佩',bossOnly:true,quality:'传说',qualityRank:4}
 };
+const BOSS_GEAR_DROPS={boss_changan:'boss_guardian_blade',boss_jiangnan:'boss_ancient_heart',boss_datang:'boss_desert_crown',boss_beiju:'boss_frost_steps',boss_huoyan:'boss_flame_soul'};
 const GEAR_SLOTS=[['weapon','武器'],['armor','护甲'],['helmet','头盔'],['boots','鞋履'],['accessory','饰品']];
+function getGearQuality(item){return item&&item.quality||'普通';}
+function grantBossGear(bossId){const id=BOSS_GEAR_DROPS[bossId],item=id&&GEAR_CATALOG[id];if(!item)return null;if(!P.bossGearDrops||typeof P.bossGearDrops!=='object')P.bossGearDrops={};if(P.bossGearDrops[bossId])return null;P.bossGearDrops[bossId]=true;P.gearInventory.push({id,level:0});addLog('【Boss掉落】获得'+getGearQuality(item)+'装备 '+item.name,'good');return item;}
 function gearStats(item,level=0){const out={};['atk','def','spd','magic','hp','mp'].forEach(k=>{if(item[k])out[k]=Math.floor(item[k]*(1+level*.2));});return out;}
 function applyGearDelta(stats,sign){Object.keys(stats||{}).forEach(k=>{const key=k==='hp'?'maxHp':k==='mp'?'maxMp':k;if(Number.isFinite(P[key]))P[key]=Math.max(key==='maxHp'||key==='maxMp'?1:0,P[key]+stats[k]*sign);});P.hp=Math.min(P.hp,P.maxHp);P.mp=Math.min(P.mp,P.maxMp);}
 function getEquippedGear(slot){const id=P.equipment&&P.equipment[slot];return id?P.gearInventory.find(g=>g.id===id)||null:null;}
 function renderEquipmentPanel(){
  const body=$('equipmentBody');if(!body)return;
  const equipped=GEAR_SLOTS.map(([slot,label])=>{const g=getEquippedGear(slot),it=g&&GEAR_CATALOG[g.id];return '<div class="list-item"><div class="li-icon">'+(it?it.icon:'⬜')+'</div><div class="li-body"><div class="li-name">'+label+' · '+(it?it.name:'未装备')+'</div><div class="li-desc">'+(it?'锻造等级 +'+g.level+' · '+Object.entries(gearStats(it,g.level)).map(([k,v])=>({atk:'攻击',def:'防御',spd:'速度',magic:'法术',hp:'气血',mp:'法力'}[k])+' '+v).join(' / '):'此部位尚无装备')+'</div></div>'+(g?'<button class="li-btn" data-unequip="'+slot+'">卸下</button>':'')+'</div>';}).join('');
- const inventory=P.gearInventory.map((g,i)=>{const it=GEAR_CATALOG[g.id],isOn=P.equipment[it.slot]===g.id;return '<div class="list-item"><div class="li-icon">'+it.icon+'</div><div class="li-body"><div class="li-name">'+it.name+' <span class="li-count">+ '+g.level+'</span></div><div class="li-desc">'+it.slotName+' · '+it.desc+'</div></div><button class="li-btn" data-equip-index="'+i+'" '+(isOn?'disabled':'')+'>'+(isOn?'已装备':'装备')+'</button><button class="li-btn" data-forge-index="'+i+'">锻造</button></div>';}).join('');
- const shop=Object.entries(GEAR_CATALOG).map(([id,it])=>'<div class="list-item"><div class="li-icon">'+it.icon+'</div><div class="li-body"><div class="li-name">'+it.name+'</div><div class="li-desc">'+it.slotName+' · '+it.desc+'</div></div><div class="li-right" style="color:#ffd060">'+fmt(it.price)+'<small>两</small></div><button class="li-btn" data-buy-gear="'+id+'" '+(P.gold<it.price?'disabled':'')+'>购买</button></div>').join('');
+ const inventory=P.gearInventory.map((g,i)=>{const it=GEAR_CATALOG[g.id],isOn=P.equipment[it.slot]===g.id;return '<div class="list-item"><div class="li-icon">'+it.icon+'</div><div class="li-body"><div class="li-name" style="color:'+({普通:'#e7dfc8',稀有:'#75bfff',史诗:'#c28aff',传说:'#ffb84d'}[getGearQuality(it)]||'#e7dfc8')+'">'+it.name+' <span class="li-count">'+getGearQuality(it)+' · + '+g.level+'</span></div><div class="li-desc">'+it.slotName+' · '+it.desc+'</div></div><button class="li-btn" data-equip-index="'+i+'" '+(isOn?'disabled':'')+'>'+(isOn?'已装备':'装备')+'</button><button class="li-btn" data-forge-index="'+i+'">锻造</button></div>';}).join('');
+ const shop=Object.entries(GEAR_CATALOG).filter(([,it])=>!it.bossOnly).map(([id,it])=>'<div class="list-item"><div class="li-icon">'+it.icon+'</div><div class="li-body"><div class="li-name">'+it.name+'</div><div class="li-desc">'+it.slotName+' · '+it.desc+'</div></div><div class="li-right" style="color:#ffd060">'+fmt(it.price)+'<small>两</small></div><button class="li-btn" data-buy-gear="'+id+'" '+(P.gold<it.price?'disabled':'')+'>购买</button></div>').join('');
  body.innerHTML='<div class="dev-help">装备提供永久属性加成；每个部位只能装备一件。锻造最高 +5，每次消耗 1 颗一级宝石与银两。</div><h3 class="dev-section-title">当前装备</h3>'+equipped+'<h3 class="dev-section-title">装备背包 ('+P.gearInventory.length+')</h3>'+(inventory||'<p class="empty-tip">还没有装备，去装备商铺看看吧</p>')+'<h3 class="dev-section-title">装备商铺</h3>'+shop;
  body.querySelectorAll('[data-buy-gear]').forEach(btn=>btn.onclick=()=>buyGear(btn.dataset.buyGear));
  body.querySelectorAll('[data-equip-index]').forEach(btn=>btn.onclick=()=>equipGear(Number(btn.dataset.equipIndex)));
@@ -2150,7 +2158,7 @@ const P = {
   quest: null,
   questDone: 0,
   flags: {},
-  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, laomuCooldownUntil:0,
+  avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, bossGearDrops:{}, laomuCooldownUntil:0,
 };
 
 /* 经验公式 */
@@ -5227,10 +5235,14 @@ function finishBattle(result){
     P.battles++;
     P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
     if (!P.killStats || typeof P.killStats !== 'object') P.killStats = {};
+    const bossLoot=[];
     battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
- P.killStats[u.mobId||u.name]=(P.killStats[u.mobId||u.name]||0)+1;
- if(u.mobId&&u.mobId.startsWith('boss_')&&!P.bossDrops[u.mobId]){const b=CULTIVATION_BOOKS.find(x=>x.boss===u.mobId);if(b){P.cultivationBooks.push(b.id);P.bossDrops[u.mobId]=true;toast('Boss掉落功法：'+b.name);addLog('获得功法 '+b.name,'good');}}
-});
+      P.killStats[u.mobId||u.name]=(P.killStats[u.mobId||u.name]||0)+1;
+      if(u.mobId&&u.mobId.startsWith('boss_')){
+        if(!P.bossDrops[u.mobId]){const book=CULTIVATION_BOOKS.find(x=>x.boss===u.mobId);if(book){P.cultivationBooks.push(book.id);P.bossDrops[u.mobId]=true;bossLoot.push({type:'功法',name:book.name,icon:'📜',quality:'珍稀'});toast('Boss掉落功法：'+book.name);addLog('获得功法 '+book.name,'good');}}
+        const gear=grantBossGear(u.mobId);if(gear){bossLoot.push({type:'专属装备',name:gear.name,icon:gear.icon,quality:getGearQuality(gear)});toast('Boss掉落'+getGearQuality(gear)+'装备：'+gear.name);}
+      }
+    });
     gainExp(exp);
     
     banner.innerHTML = `
@@ -5238,6 +5250,7 @@ function finishBattle(result){
       <div class="rb-info">
         获得经验 <b>+${fmt(exp)}</b><br>
         获得银两 <b>+${fmt(gold)}</b>
+        ${bossLoot.length?'<div class="rb-loot-title">🎁 战利品</div>'+bossLoot.map(x=>'<div class="rb-loot-item"><span>'+x.icon+' '+x.name+'</span><small>'+x.quality+' '+x.type+'</small></div>').join(''):''}
       </div>
       <button class="rb-btn" id="rbOk">继 续</button>
     `;
@@ -5507,7 +5520,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5519,7 +5532,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','equipment','gearInventory','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','laomuCooldownUntil','flags'
+    'bag','pet','petBox','steps','battles','kills','killStats','bankGold','equipment','gearInventory','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags'
   ];
   allowed.forEach(key => {
     if (Object.prototype.hasOwnProperty.call(data, key)) P[key] = data[key];
@@ -5550,6 +5563,7 @@ function applySaveData(data){
   if (!Array.isArray(P.logs)) P.logs = [];
   if (!Array.isArray(P.cultivationBooks)) P.cultivationBooks=[];
   if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
+  if (!P.bossGearDrops || typeof P.bossGearDrops!=='object') P.bossGearDrops={};
   if (!P.flags || typeof P.flags!=='object') P.flags={};
   P.cultivationProgressMs=Math.max(0,Number(P.cultivationProgressMs)||0);
   P.laomuCooldownUntil=Math.max(0,Number(P.laomuCooldownUntil)||0);
@@ -5661,6 +5675,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)}]);
  registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
  registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
+ registerFeatureTest('Boss专属装备掉落','2.0稀有装备',[{name:'五大Boss各有专属装备',run:()=>Object.keys(BOSS_GEAR_DROPS).length===5&&new Set(Object.values(BOSS_GEAR_DROPS)).size===5&&Object.values(BOSS_GEAR_DROPS).every(id=>GEAR_CATALOG[id]&&GEAR_CATALOG[id].bossOnly)},{name:'品质分级包含稀有史诗传说',run:()=>['稀有','史诗','传说'].every(q=>Object.values(GEAR_CATALOG).some(g=>g.quality===q))},{name:'掉落只发放一次且保存标记',run:()=>typeof grantBossGear==='function'&&getSaveData().bossGearDrops===P.bossGearDrops},{name:'Boss装备不进入坊市出售',run:()=>renderEquipmentPanel.toString().includes('filter(([,it])=>!it.bossOnly)')}]);
  registerFeatureTest('五大Boss战斗','2.0战斗升级',[{name:'五大区域Boss配置齐全',run:()=>Object.keys(SCENE_BOSSES).length===5&&Object.keys(SCENE_BOSSES).every(id=>!!getSceneBossAt(Math.round(SCENES.find(s=>s.id===id).cx),Math.round(SCENES.find(s=>s.id===id).cy)).bossSkill)},{name:'Boss拥有狂暴与专属回合逻辑',run:()=>typeof bossTurn==='function'&&cBossSkillIds().length===5},{name:'Boss状态在战斗单位初始化',run:()=>battlePrepare.toString().includes('isBoss: !!m.isBoss')&&battlePrepare.toString().includes('bossSkill: m.bossSkill')}]);
  registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===10},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
  registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
