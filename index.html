@@ -1559,7 +1559,7 @@ button{
 @keyframes introChinese{0%,38%{opacity:0;transform:scale(.92);filter:blur(12px)}52%,72%{opacity:1;transform:scale(1);filter:drop-shadow(0 3px 2px rgba(0,0,0,.8)) drop-shadow(0 0 16px rgba(255,255,255,.22))}88%,100%{opacity:0;transform:scale(1.08);filter:blur(10px)}}
 @keyframes introColor{to{background-position:250% 50%}}
 @media(prefers-reduced-motion:reduce){#gameIntro{animation-duration:2s}#gameIntro .intro-title,#gameIntro .intro-en{animation-duration:2s}#gameIntro .intro-cn{animation-duration:2s,2s}}
-/* 2D / 3D 画质模式：透视地形、立体层级和材质光影 */
+/* 2D / 2.5D 画质模式：全游戏统一等距透视、层级与材质光影 */
 body.graphics-3d .battle-unit{transform:perspective(760px) rotateX(3deg) translateZ(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 7px 14px rgba(0,0,0,.36)}
 body.graphics-3d .battle-unit .bu-icon{filter:drop-shadow(0 7px 4px rgba(0,0,0,.52))}
 body.graphics-3d #worldMapCanvas{border-radius:10px;box-shadow:0 14px 24px rgba(0,0,0,.48),inset 0 2px 0 rgba(255,255,255,.18)}
@@ -1568,7 +1568,7 @@ body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,
 #graphicsToggle{margin-left:6px;flex:0 0 auto;min-width:54px;padding:5px 7px;border:1px solid rgba(255,225,145,.7);border-radius:7px;background:linear-gradient(180deg,#426d91,#18334d);color:#fff2c5;font:inherit;font-size:10px;font-weight:800;line-height:1.2;box-shadow:inset 0 1px 0 #ffffff55,0 2px 0 #071522;cursor:pointer;touch-action:manipulation}
 #graphicsToggle:active{transform:translateY(1px)}
 body.graphics-3d #stage{perspective:950px;perspective-origin:50% 44%;background:radial-gradient(ellipse at 50% 38%,#426e4a,#102619 78%)}
-body.graphics-3d #world{transform:rotateX(52deg) scale(1.34);transform-origin:50% 50%;transform-style:preserve-3d;overflow:visible;filter:saturate(1.13) contrast(1.04);will-change:transform}
+body.graphics-3d #world{transform:rotateX(34deg) scale(1.12);transform-origin:50% 54%;transform-style:preserve-3d;overflow:visible;filter:saturate(1.13) contrast(1.04);will-change:transform}
 body.graphics-3d .tile{border:1px solid rgba(10,24,12,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 3px 0 rgba(16,35,17,.62),0 6px 8px rgba(0,0,0,.2);transform-style:preserve-3d}
 body.graphics-3d .tile::after{content:"";position:absolute;left:2px;right:2px;bottom:-4px;height:4px;background:linear-gradient(90deg,rgba(12,31,17,.62),rgba(48,76,35,.78));transform:translateZ(-2px);pointer-events:none}
 body.graphics-3d .tile .deco,body.graphics-3d .tile .build,body.graphics-3d .tile .npc{filter:drop-shadow(0 4px 2px rgba(0,0,0,.62));transform:translateZ(9px) scale(1.08)}
@@ -1579,8 +1579,34 @@ body.graphics-3d .dialog{border:2px solid #d4a94e;box-shadow:0 16px 36px rgba(0,
 body.graphics-3d .list-item,body.graphics-3d .stat-box,body.graphics-3d .dev-feature{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 0 rgba(0,0,0,.26),0 6px 12px rgba(0,0,0,.16)}
 body.graphics-3d #bottomBar{box-shadow:0 -5px 0 rgba(0,0,0,.34),0 -10px 22px rgba(0,0,0,.42),inset 0 2px 0 rgba(255,220,140,.28)}
 body.graphics-3d .menu-btn{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 0 #140a04,0 7px 10px rgba(0,0,0,.48)}
-@media(max-width:520px){#graphicsToggle{font-size:9px;min-width:48px;padding:5px 5px;margin-left:3px}body.graphics-3d #world{transform:rotateX(48deg) scale(1.22)}}
+@media(max-width:520px){#graphicsToggle{font-size:9px;min-width:48px;padding:5px 5px;margin-left:3px}body.graphics-3d #world{transform:rotateX(30deg) scale(1.08)}}
 @media(prefers-reduced-motion:no-preference){#graphicsToggle{transition:filter .18s,transform .18s}body.graphics-3d #stage{animation:graphicsEnter .35s ease-out}@keyframes graphicsEnter{from{filter:brightness(.82)}to{filter:brightness(1)}}}
+
+/* 全游戏 2.5D 统一材质层：覆盖凡界、战斗、仙界、弹窗与各类功能面板 */
+body.graphics-3d #game{perspective:1400px;perspective-origin:50% 42%}
+body.graphics-3d #topbar,body.graphics-3d #bottomBar{position:relative;transform:translateZ(10px);transform-style:preserve-3d}
+body.graphics-3d #topbar{border-bottom-width:4px;box-shadow:0 5px 0 rgba(0,0,0,.38),0 9px 18px rgba(0,0,0,.42),inset 0 2px 0 rgba(255,235,170,.3)}
+body.graphics-3d #bottomBar{border-top:3px solid #9b7132}
+body.graphics-3d #stage,body.graphics-3d #immortalStage{isolation:isolate;box-shadow:inset 0 12px 24px rgba(0,0,0,.16),inset 0 -10px 20px rgba(0,0,0,.18)}
+body.graphics-3d #immortalStage{background-image:radial-gradient(ellipse at 50% 0%,rgba(116,170,190,.16),transparent 55%),linear-gradient(145deg,rgba(255,255,255,.025),transparent 45%)}
+body.graphics-3d .dialog,body.graphics-3d .dev-dialog{border:2px solid #d4a94e;outline:1px solid rgba(255,232,160,.22);box-shadow:0 18px 38px rgba(0,0,0,.68),inset 0 2px 0 rgba(255,255,255,.2),inset 0 -5px 12px rgba(0,0,0,.2);background-image:linear-gradient(145deg,rgba(255,238,190,.075),transparent 42%)}
+body.graphics-3d .dialog-head{box-shadow:inset 0 2px 0 rgba(255,255,255,.2),0 3px 7px rgba(0,0,0,.25)}
+body.graphics-3d .dialog-body{background-image:linear-gradient(135deg,rgba(255,255,255,.025),transparent 45%)}
+body.graphics-3d .dialog-foot{box-shadow:0 -3px 8px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,225,150,.16)}
+body.graphics-3d .list-item,body.graphics-3d .stat-box,body.graphics-3d .dev-feature,body.graphics-3d .section-title,body.graphics-3d .gear-card,body.graphics-3d .pet-card,body.graphics-3d .quest-card{position:relative;border-color:rgba(240,200,96,.42);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -2px 0 rgba(0,0,0,.16),0 3px 0 rgba(20,10,4,.38),0 7px 13px rgba(0,0,0,.2)}
+body.graphics-3d .btn,body.graphics-3d .li-btn,body.graphics-3d .dev-run-one,body.graphics-3d #dpad button,body.graphics-3d #miniMapBtn,body.graphics-3d #teleportBtn{border-top-color:rgba(255,235,175,.72);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -2px 0 rgba(0,0,0,.2),0 3px 0 rgba(12,6,2,.72),0 6px 10px rgba(0,0,0,.3)}
+body.graphics-3d .btn:active,body.graphics-3d .li-btn:active,body.graphics-3d .dev-run-one:active{transform:translateY(2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 1px 0 rgba(12,6,2,.72),0 2px 4px rgba(0,0,0,.25)}
+body.graphics-3d .menu-btn{position:relative;filter:drop-shadow(0 3px 2px rgba(0,0,0,.32))}
+body.graphics-3d #portrait,body.graphics-3d #goldBox,body.graphics-3d .sbar{filter:drop-shadow(0 3px 2px rgba(0,0,0,.28))}
+body.graphics-3d #sceneTitle,body.graphics-3d #toast,body.graphics-3d #sceneBanner,body.graphics-3d #playerCoordHud{border-width:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 7px 14px rgba(0,0,0,.42)}
+body.graphics-3d .battle-unit{transform:perspective(760px) rotateX(3deg) translateZ(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 7px 14px rgba(0,0,0,.36)}
+body.graphics-3d .battle-unit .bu-icon{filter:drop-shadow(0 7px 4px rgba(0,0,0,.52))}
+body.graphics-3d .tile{backface-visibility:hidden}
+body.graphics-3d .tile .deco,body.graphics-3d .tile .build,body.graphics-3d .tile .npc,body.graphics-3d #player,body.graphics-3d .map-monster{transform-style:preserve-3d}
+body.graphics-3d #worldMapCanvas{border:2px solid #d4a94e;border-radius:10px;box-shadow:0 14px 24px rgba(0,0,0,.48),inset 0 2px 0 rgba(255,255,255,.18)}
+body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,rgba(125,170,150,.08),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
+#graphicsToggle{min-width:62px}
+@media(max-width:520px){#graphicsToggle{min-width:58px;font-size:9px}}
 </style>
 
 <style>
@@ -1694,7 +1720,7 @@ body.graphics-3d .menu-btn{transform:translateY(-1px);box-shadow:inset 0 1px 0 r
       <div class="g-icon">💰</div>
       <div class="g-val"><span id="goldVal">100</span><small>两</small></div>
     </div>
-    <button id="graphicsToggle" type="button" aria-label="切换2D或3D画质" aria-pressed="false">🧊 2D</button>
+    <button id="graphicsToggle" type="button" aria-label="切换2D或2.5D画质" aria-pressed="false">🧊 2D</button>
   </header>
   
   <!-- ============ 主视图区 ============ -->
@@ -6255,9 +6281,11 @@ registerFeatureTest('开发者一键飞升','仙界扩展',[{name:'一键飞升�
 registerFeatureTest('世界遭遇频率与传送石碑','世界移动',[{name:'普通怪物地图显示密度已降低',run:()=>getMapMonster.toString().includes('h < 0.94')},{name:'遭遇战至少间隔14步且概率触发',run:()=>onStep.toString().includes('P.steps - (Number(P.lastEncounterStep)||0) < 14')&&onStep.toString().includes('Math.random() >= 0.14')},{name:'怪物队伍默认单只且高等级才有低概率多只',run:()=>rollEncounterMobCount(1,0.01)===1&&rollEncounterMobCount(15,0.10)===2&&rollEncounterMobCount(40,0.01)===3},{name:'全部区域都有传送石碑坐标与交互',run:()=>SCENES.every(scene=>TILE_ICON[getTile(Math.round(scene.cx),Math.round(scene.cy)+3)]?.action==='openTeleportStone')},{name:'全部区域无需激活即可传送且落点避开水域与Boss',run:()=>typeof teleportToScene==='function'&&typeof findTeleportLanding==='function'&&!teleportToScene.toString().includes('teleportStones.includes')&&typeof findTeleportLanding==='function'},{name:'传送进度和遭遇冷却写入存档',run:()=>{const d=getSaveData();return Array.isArray(d.teleportStones)&&Number.isFinite(d.lastEncounterStep);}}]);
  registerFeatureTest('2.0隐藏区域探索','世界探索',[{name:'新增东海湾与幽谷秘境',run:()=>['donghai','yougu'].every(id=>SCENES.some(x=>x.id===id&&x.hidden))},{name:'隐藏区域不设等级门槛且保留首次发现记录',run:()=>typeof canEnterRegion==='function'&&canEnterRegion({hidden:true})===true&&typeof discoverRegion==='function'&&SCENES.filter(x=>x.hidden).every(x=>x.lv>0)},{name:'新区域拥有独立地形与怪物',run:()=>SCENES.find(x=>x.id==='donghai').biome==='coast'&&SCENES.find(x=>x.id==='yougu').biome==='forest'&&['haisha','chaoxi','jiaolong','youlu','guteng','guguai'].every(id=>!!MOBS[id])},{name:'探索进度进入存档且兼容旧档',run:()=>Array.isArray(P.discoveredRegions)&&getSaveData().discoveredRegions===P.discoveredRegions&&applySaveData.toString().includes("P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan']")}]);
 }
-registerFeatureTest('2D / 3D 画质切换','画面与设置',[
- {name:'2D/3D模式切换接口存在',run:()=>typeof getGraphicsMode==='function'&&typeof setGraphicsMode==='function'&&typeof toggleGraphicsMode==='function'},
- {name:'切换按钮已加入主界面',run:()=>!!document.getElementById('graphicsToggle')},
+registerFeatureTest('2D / 2.5D 全局画质切换','画面与设置',[
+ {name:'2D/2.5D模式切换接口存在',run:()=>typeof getGraphicsMode==='function'&&typeof setGraphicsMode==='function'&&typeof toggleGraphicsMode==='function'},
+ {name:'顶部按钮已标记2.5D切换',run:()=>{const b=document.getElementById('graphicsToggle');return !!b&&b.getAttribute('aria-label')==='切换2D或2.5D画质'}},
+ {name:'全局2.5D样式覆盖地图、战斗、弹窗与仙界',run:()=>{const css=Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\\n');return ['#world','.battle-unit','.dialog','#immortalStage','#bottomBar','.list-item'].every(x=>css.includes('body.graphics-3d '+x))}},
+ {name:'切换按钮状态与文字同步',run:()=>{const b=document.getElementById('graphicsToggle');return !!b&&b.textContent.trim()===(getGraphicsMode()==='3d'?'🧊 2.5D':'🧊 2D')&&b.getAttribute('aria-pressed')===String(getGraphicsMode()==='3d')}},
  {name:'画质偏好独立保存且不写入角色存档',run:()=>GRAPHICS_MODE_KEY==='wzhgame_graphics_mode_v1'&&!Object.prototype.hasOwnProperty.call(getSaveData(),'graphicsMode')}
 ]);
 
@@ -6266,8 +6294,8 @@ const GRAPHICS_MODE_KEY='wzhgame_graphics_mode_v1';
 function getGraphicsMode(){try{return localStorage.getItem(GRAPHICS_MODE_KEY)==='3d'?'3d':'2d';}catch(_){return document.body.classList.contains('graphics-3d')?'3d':'2d';}}
 function setGraphicsMode(mode,announce=true){
  const next=mode==='3d'?'3d':'2d';document.body.classList.toggle('graphics-3d',next==='3d');document.documentElement.dataset.graphicsMode=next;
- const btn=document.getElementById('graphicsToggle');if(btn){btn.textContent=next==='3d'?'🧊 3D':'🧊 2D';btn.setAttribute('aria-pressed',String(next==='3d'));btn.title=next==='3d'?'当前3D画质，点击切换到2D':'当前2D画质，点击切换到3D';}
- try{localStorage.setItem(GRAPHICS_MODE_KEY,next);}catch(_){}if(announce&&typeof toast==='function')toast(next==='3d'?'✨ 已切换到3D立体画质':'🟩 已切换到2D经典画质');return next;
+ const btn=document.getElementById('graphicsToggle');if(btn){btn.textContent=next==='3d'?'🧊 2.5D':'🧊 2D';btn.setAttribute('aria-pressed',String(next==='3d'));btn.title=next==='3d'?'当前2.5D立体画质，点击切换到2D':'当前2D经典画质，点击切换到2.5D';}
+ try{localStorage.setItem(GRAPHICS_MODE_KEY,next);}catch(_){}if(announce&&typeof toast==='function')toast(next==='3d'?'✨ 已切换到2.5D立体画质':'🟩 已切换到2D经典画质');return next;
 }
 function toggleGraphicsMode(){return setGraphicsMode(getGraphicsMode()==='3d'?'2d':'3d');}
 function initGraphicsMode(){const btn=document.getElementById('graphicsToggle');if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.addEventListener('click',toggleGraphicsMode);}setGraphicsMode(getGraphicsMode(),false);}
