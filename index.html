@@ -547,7 +547,7 @@ html,body{
 
 /* ================= 小地图按钮 ================= */
 #miniMapControl{position:absolute;top:10px;right:10px;z-index:14;display:flex;flex-direction:column;align-items:center;gap:4px;}
-#miniMapBtn{
+#miniMapBtn,#teleportBtn{
   position:relative;top:auto;right:auto;
   z-index:14;
   width:46px;height:46px;
@@ -567,18 +567,18 @@ html,body{
   cursor:pointer;
   transition:all .08s;
 }
-#miniMapBtn:active{
+#miniMapBtn:active,#teleportBtn:active{
   transform:translateY(1px);
   box-shadow:
     inset 0 0 0 1px rgba(240,200,96,.5),
     inset 0 2px 4px rgba(0,0,0,.5),
     0 1px 3px rgba(0,0,0,.55);
 }
-#miniMapBtn .mi{
+#miniMapBtn .mi,#teleportBtn .mi{
   font-size:18px;line-height:1;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));
 }
-#miniMapBtn .mt{
+#miniMapBtn .mt,#teleportBtn .mt{
   font-size:8px;color:var(--gold-lt);
   margin-top:2px;letter-spacing:.5px;
   text-shadow:0 1px 0 #000;
@@ -1679,7 +1679,7 @@ button{
       长安城 <b>·</b> <i>中心广场</i>
     </div>
     
-    <div id="miniMapControl"><div id="miniMapBtn"><div class="mi">🗺️</div><div class="mt">地图</div></div><div id="playerCoordHud">坐标 X:0 Y:0</div></div>
+    <div id="miniMapControl"><div id="miniMapBtn"><div class="mi">🗺️</div><div class="mt">地图</div></div><div id="teleportBtn"><div class="mi">🪨</div><div class="mt">传送石碑</div></div><div id="playerCoordHud">坐标 X:0 Y:0</div></div>
     
     <div id="dpad">
       <button class="u" data-dir="up">▲</button>
@@ -1752,6 +1752,8 @@ button{
     </div>
   </div>
   
+  <!-- 传送石碑 -->
+  <div class="modal" id="modalTeleport"><div class="dialog"><div class="dialog-head"><div class="dialog-title">🪨 传送石碑</div><button class="dialog-close" data-close="modalTeleport">✕</button></div><div class="dialog-body" id="teleportBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalTeleport">关闭</button></div></div></div>
   <!-- 背包 -->
   <div class="modal" id="modalBag">
     <div class="dialog">
@@ -2296,6 +2298,8 @@ const P = {
   pet: null,
   petBox: [],
   steps: 0,
+  lastEncounterStep: -14,
+  teleportStones: ['changan','jiangnan','datang','beiju','huoyan'],
   battles: 0,
   kills: 0,
   killStats: {},
@@ -3532,6 +3536,7 @@ function getTile(x, y){
     else tile = (n2 > 0.5) ? 'grass' : 'grass2';
   }
   
+  if(SCENES.some(scene=>x===Math.round(scene.cx)&&y===Math.round(scene.cy)+3))tile='teleport-stone';
   tileCache.set(key, tile);
   if (tileCache.size > TILE_CACHE_LIMIT){
     tileCache.delete(tileCache.keys().next().value);
@@ -3541,6 +3546,7 @@ function getTile(x, y){
 
 /* ================= 建筑/NPC装饰图标 ================= */
 const TILE_ICON = {
+  'teleport-stone': { icon:'🪨', name:'传送石碑', type:'npc', action:'openTeleportStone' },
   'build-memorial': { icon:'🏛️', name:'长安石碑', type:'npc',  action:'readMemorial' },
   'build-stall':    { icon:'🏪', name:'杂货摊',   type:'shop',  action:'openShop' },
   'build-house':    { icon:'🏠', name:'民宅',     type:'build', action:null },
@@ -3620,7 +3626,7 @@ function getMapMonster(x, y){
 
   // 控制怪物密度：约每 8x8 格出现一个显示点
   const h = hash(x, y, 701);
-  if (h < 0.84) return null;
+  if (h < 0.94) return null;
 
   const scene = getSceneAt(x, y);
   let pool;
@@ -3724,7 +3730,7 @@ function renderWorld(){
 
       // 区域中心 Boss 优先显示；其他位置继续显示原有普通怪物。
       const bossMob = getSceneBossAt(wx, wy);
-      const mapMob = bossMob || getMapMonster(wx, wy);
+      const mapMob = bossMob || (tile==='teleport-stone'?null:getMapMonster(wx, wy));
       if (mapMob && (bossMob || !(wx === P.x && wy === P.y))){
         const mobEl = document.createElement('div');
         mobEl.className = bossMob ? 'map-monster map-boss' : 'map-monster';
@@ -3874,6 +3880,11 @@ function updateSceneTitle(){
 /* ================= 隐藏区域探索 ================= */
 function canEnterRegion(scene){return !scene || !scene.hidden || P.discoveredRegions.includes(scene.id) || P.lv >= scene.lv;}
 function discoverRegion(scene){if(!scene || !scene.hidden || P.discoveredRegions.includes(scene.id))return false;P.discoveredRegions.push(scene.id);showBanner('发现 '+scene.name);addLog('【探索】发现隐藏区域：'+scene.name,'good');toast('🧭 新区域已解锁：'+scene.name);saveGame();return true;}
+function unlockTeleportStone(scene){if(!scene||!SCENES.some(x=>x.id===scene.id))return false;if(!Array.isArray(P.teleportStones))P.teleportStones=[];if(P.teleportStones.includes(scene.id))return false;P.teleportStones.push(scene.id);saveGame();toast('🪨 已激活 '+scene.name+' 的传送石碑');addLog('【传送】激活 '+scene.name+' 传送石碑','good');return true;}
+function findTeleportLanding(scene){if(!scene)return null;const candidates=[];for(let r=1;r<=6;r++){for(let dy=-r;dy<=r;dy++){for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const x=Math.round(scene.cx)+dx,y=Math.round(scene.cy)+dy;if(getSceneAt(x,y)!==scene||getTile(x,y)==='water'||getTile(x,y)==='teleport-stone'||getSceneBossAt(x,y))continue;candidates.push({x,y,d:Math.hypot(dx,dy)});}}if(candidates.length)break;}candidates.sort((a,b)=>a.d-b.d);return candidates[0]||null;}
+function renderTeleportPanel(){const body=$('teleportBody');if(!body)return;const active=new Set(Array.isArray(P.teleportStones)?P.teleportStones:[]);body.innerHTML='<p style="color:#cbb58c;font-size:12px;margin:0 0 10px">已激活的石碑可以免费传送。首次进入区域会自动激活当地石碑；也可以靠近石碑点击激活。</p>'+SCENES.map(scene=>{const unlocked=active.has(scene.id),current=getSceneAt(P.x,P.y)===scene||scene.id==='changan'&&isTown(P.x,P.y);return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px;margin:6px 0;border:1px solid '+(unlocked?'rgba(220,180,90,.5)':'rgba(130,110,90,.25)')+';border-radius:7px;background:'+(unlocked?'rgba(90,60,25,.2)':'rgba(0,0,0,.12)')+'"><div><b style="color:'+(unlocked?'#ffe3a0':'#888')+'">'+(unlocked?'🪨 ':'🔒 ')+scene.name+'</b><div style="font-size:10px;color:#a99a86;margin-top:3px">'+(unlocked?'石碑已激活 · 推荐等级 Lv.'+scene.lv:'尚未激活 · 先亲自前往该区域')+'</div></div><button class="btn '+(unlocked?'primary':'')+'" data-teleport-scene="'+scene.id+'" '+(!unlocked||current?'disabled':'')+'>'+(current?'当前位置':unlocked?'传送':'未解锁')+'</button></div>';}).join('');body.querySelectorAll('[data-teleport-scene]').forEach(btn=>btn.addEventListener('click',()=>teleportToScene(btn.dataset.teleportScene)));}
+function openTeleportPanel(){if(battle&&battle.active){toast('战斗中无法传送');return;}renderTeleportPanel();openModal('modalTeleport');}
+function teleportToScene(sceneId){if(battle&&battle.active)return false;const scene=SCENES.find(x=>x.id===sceneId);if(!scene||!Array.isArray(P.teleportStones)||!P.teleportStones.includes(sceneId)){toast('该区域的传送石碑尚未激活');return false;}const landing=findTeleportLanding(scene);if(!landing){toast('暂时找不到安全的传送落点');return false;}P.x=landing.x;P.y=landing.y;syncLocationState();renderWorld();updateHUD();saveGame();closeModal('modalTeleport');showBanner('传送至 '+scene.name);addLog('【传送】抵达 '+scene.name,'good');return true;}
 
 /* ================= 移动系统 ================= */
 let moveLock = false;
@@ -3924,6 +3935,7 @@ function tryMove(dx, dy){
   // 检查场景切换
   const curScene = getSceneAt(P.x, P.y);
   if (curScene && curScene !== prevScene){
+    unlockTeleportStone(curScene);
     showBanner(curScene.name);
     addLog(`【场景】进入 ${curScene.name}（Lv.${curScene.lv}）`, 'dim');
     toast(`📍 ${curScene.name} · ${curScene.desc}`);
@@ -3950,19 +3962,17 @@ function onStep(x, y){
     updateHUD();
   }
   
-  // 每走五步固定刷新一次怪物，不再使用随机遭遇概率。
-  if (P.steps % 5 !== 0) return;
-
-  // 刷新值：当前月份 + 日期，除以 2 后乘当前等级，再乘 10。
-  const now = new Date();
-  const refreshValue = ((now.getMonth() + 1 + now.getDate()) / 2) * P.lv * 10;
-
-  // 触发战斗
-  startEncounter(scene, refreshValue);
+  // 遭遇战改为低频随机触发：至少间隔 14 步，每一步 14% 概率。
+  if (P.steps - (Number(P.lastEncounterStep)||0) < 14) return;
+  if (Math.random() >= 0.14) return;
+  P.lastEncounterStep=P.steps;
+  saveGame();
+  startEncounter(scene);
 }
 
 /* ================= 触发遭遇战 ================= */
-function startEncounter(scene, refreshValue = 10){
+function rollEncounterMobCount(level,randomValue){const roll=Number.isFinite(randomValue)?randomValue:Math.random();return Number(level)>=30&&roll<0.06?3:Number(level)>=10&&roll<0.24?2:1;}
+function startEncounter(scene){
   // 选择怪物
   let pool;
   if (!scene){
@@ -3979,8 +3989,8 @@ function startEncounter(scene, refreshValue = 10){
     pool = ['lang'];
   }
   
-  // 刷新值每达到 100 增加一个怪物，最多同时刷新 3 个。
-  const count = clamp(Math.floor(refreshValue / 100), 1, 3);
+  // 默认单只怪物；中高等级区域才有较低概率出现双怪或三怪。
+  const count = rollEncounterMobCount(P.lv);
   const mobs = [];
   for (let i = 0; i < count; i++){
     const id = pool[Math.floor(Math.random() * pool.length)];
@@ -4021,6 +4031,9 @@ function onTileClick(wx, wy, tile){
     addLog('【石碑】三界同心，共御妖魔', 'dim');
   } else if (info.action === 'openShop'){
     openShopPanel();
+  } else if(info.action==='openTeleportStone'){
+    const scene=getSceneAt(wx,wy);
+    if(scene){unlockTeleportStone(scene);openTeleportPanel();}
   }
 }
 
@@ -4106,6 +4119,7 @@ stage.addEventListener('touchend', e => {
 $('miniMapBtn').addEventListener('click', () => {
   openMiniMap();
 });
+$('teleportBtn').addEventListener('click',openTeleportPanel);
 
 function openMiniMap(){
   // 简单方式：在 toast 里显示当前场景位置
@@ -5859,7 +5873,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, petCaptureOffer:P.petCaptureOffer, petGearInventory:P.petGearInventory, petGearEquipped:P.petGearEquipped, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, petCaptureOffer:P.petCaptureOffer, petGearInventory:P.petGearInventory, petGearEquipped:P.petGearEquipped, steps:P.steps, lastEncounterStep:P.lastEncounterStep, teleportStones:P.teleportStones, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5871,7 +5885,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions'
+    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','lastEncounterStep','teleportStones','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions'
   ];
   if(!Object.prototype.hasOwnProperty.call(data,'gearCodex'))P.gearCodex={};
   if(!Object.prototype.hasOwnProperty.call(data,'gearSetApplied'))P.gearSetApplied={};
@@ -5891,6 +5905,7 @@ function applySaveData(data){
   P.x = Number.isFinite(Number(P.x)) ? Number(P.x) : 0;
   P.y = Number.isFinite(Number(P.y)) ? Number(P.y) : 0;
   P.steps = Math.max(0, Number(P.steps) || 0);
+  P.lastEncounterStep=Number.isFinite(Number(P.lastEncounterStep))?Math.max(0,Math.floor(Number(P.lastEncounterStep))):Math.max(0,P.steps-14);
   P.battles = Math.max(0, Number(P.battles) || 0);
   P.kills = Math.max(0, Number(P.kills) || 0);
   P.bankGold = Math.max(0, Number(P.bankGold) || 0);
@@ -5914,6 +5929,9 @@ function applySaveData(data){
   if(P.petCaptureOffer&&(!PETS.some(x=>x.id===P.petCaptureOffer.id)||!Number.isFinite(Number(P.petCaptureOffer.enemyLv))))P.petCaptureOffer=null;
   if (!Array.isArray(P.discoveredRegions)) P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan'];
   P.discoveredRegions=Array.from(new Set(P.discoveredRegions.filter(id=>SCENES.some(scene=>scene.id===id))));
+  if(!Array.isArray(P.teleportStones))P.teleportStones=P.discoveredRegions.slice();
+  P.teleportStones=Array.from(new Set(P.teleportStones.filter(id=>SCENES.some(scene=>scene.id===id))));
+  const currentScene=getSceneAt(P.x,P.y);if(currentScene&&!P.teleportStones.includes(currentScene.id))P.teleportStones.push(currentScene.id);
   ['changan','jiangnan','datang','beiju','huoyan'].forEach(id=>{if(!P.discoveredRegions.includes(id))P.discoveredRegions.push(id);});
   if (!Array.isArray(P.logs)) P.logs = [];
   if (!Array.isArray(P.cultivationBooks)) P.cultivationBooks=[];
@@ -6043,6 +6061,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('五方镇域套装与装备图鉴','2.0收集成长',[{name:'两件、三件、五件套效果阶梯正确',run:()=>{const a=getGearSetBonuses(1),b=getGearSetBonuses(2),d=getGearSetBonuses(3),e=getGearSetBonuses(5);return !Object.keys(a).length&&b.atk===8&&d.magic===10&&e.hp===120&&e.spd===8;}},{name:'装备图鉴覆盖全部装备并记录已拥有',run:()=>{const x=getGearCodexProgress();return x.total===Object.keys(GEAR_CATALOG).length&&x.found<=x.total&&typeof renderGearCodex==='function';}},{name:'套装与图鉴字段进入存档',run:()=>{const d=getSaveData();return d.gearCodex===P.gearCodex&&d.gearSetApplied===P.gearSetApplied;}},{name:'装备穿脱会同步套装属性',run:()=>equipGear.toString().includes('syncGearSetBonuses')&&unequipGear.toString().includes('syncGearSetBonuses')}]);
  registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位且保留基础装备',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===15&&Object.keys(GEAR_CATALOG).includes('iron_sword')},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
  registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
+ registerFeatureTest('世界遭遇频率与传送石碑','世界移动',[{name:'普通怪物地图显示密度已降低',run:()=>getMapMonster.toString().includes('h < 0.94')},{name:'遭遇战至少间隔14步且概率触发',run:()=>onStep.toString().includes('P.steps - (Number(P.lastEncounterStep)||0) < 14')&&onStep.toString().includes('Math.random() >= 0.14')},{name:'怪物队伍默认单只且高等级才有低概率多只',run:()=>rollEncounterMobCount(1,0.01)===1&&rollEncounterMobCount(15,0.10)===2&&rollEncounterMobCount(40,0.01)===3},{name:'全部区域都有传送石碑坐标与交互',run:()=>SCENES.every(scene=>TILE_ICON[getTile(Math.round(scene.cx),Math.round(scene.cy)+3)]?.action==='openTeleportStone')},{name:'传送只允许已激活区域且落点避开水域与Boss',run:()=>typeof teleportToScene==='function'&&typeof findTeleportLanding==='function'&&teleportToScene.toString().includes('teleportStones.includes')},{name:'传送进度和遭遇冷却写入存档',run:()=>{const d=getSaveData();return Array.isArray(d.teleportStones)&&Number.isFinite(d.lastEncounterStep);}}]);
  registerFeatureTest('2.0隐藏区域探索','世界探索',[{name:'新增东海湾与幽谷秘境',run:()=>['donghai','yougu'].every(id=>SCENES.some(x=>x.id===id&&x.hidden))},{name:'区域等级门槛与首次发现逻辑有效',run:()=>typeof canEnterRegion==='function'&&typeof discoverRegion==='function'&&SCENES.filter(x=>x.hidden).every(x=>x.lv>0)},{name:'新区域拥有独立地形与怪物',run:()=>SCENES.find(x=>x.id==='donghai').biome==='coast'&&SCENES.find(x=>x.id==='yougu').biome==='forest'&&['haisha','chaoxi','jiaolong','youlu','guteng','guguai'].every(id=>!!MOBS[id])},{name:'探索进度进入存档且兼容旧档',run:()=>Array.isArray(P.discoveredRegions)&&getSaveData().discoveredRegions===P.discoveredRegions&&applySaveData.toString().includes("P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan']")}]);
 }
 registerBuiltInDeveloperTests();window.registerFeatureTest=registerFeatureTest;
