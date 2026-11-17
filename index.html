@@ -2302,7 +2302,7 @@ const P = {
   petBox: [],
   steps: 0,
   lastEncounterStep: 0,
-  teleportStones: ['changan','jiangnan','datang','beiju','huoyan'],
+  teleportStones: ['changan'],
   battles: 0,
   kills: 0,
   killStats: {},
@@ -3627,7 +3627,7 @@ function getMapMonster(x, y){
   if (isTown(x, y)) return null;
   if (getTile(x, y) === 'water') return null;
 
-  // 控制怪物密度：约每 8x8 格出现一个显示点
+  // 降低野外普通怪物的地图显示密度
   const h = hash(x, y, 701);
   if (h < 0.94) return null;
 
