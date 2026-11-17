@@ -6473,6 +6473,7 @@ document.addEventListener('gestureend', function(e){
     }
 
     P.petBox.forEach((pet, index) => {
+      normalizePetRecord(pet);
       const row = document.createElement('div');
       row.className = 'list-item';
       row.style.marginTop = '6px';
@@ -6500,6 +6501,16 @@ document.addEventListener('gestureend', function(e){
         renderPetPanel();
       };
       row.appendChild(out);
+      const petSkill=PET_SKILLS[petBaseSpecies(pet)];
+      if(petSkill){
+        const study=document.createElement('button');
+        study.className='li-btn';
+        study.style.marginLeft='4px';
+        study.textContent=(pet.skillRank||1)>=3?'技能满级':'研习';
+        study.disabled=(pet.skillRank||1)>=3||P.gold<500;
+        study.onclick=()=>studyPetSkill(pet);
+        row.appendChild(study);
+      }
       list.appendChild(row);
     });
 
