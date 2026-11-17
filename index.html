@@ -5932,7 +5932,7 @@ function applySaveData(data){
   if(P.petCaptureOffer&&(!PETS.some(x=>x.id===P.petCaptureOffer.id)||!Number.isFinite(Number(P.petCaptureOffer.enemyLv))))P.petCaptureOffer=null;
   if (!Array.isArray(P.discoveredRegions)) P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan'];
   P.discoveredRegions=Array.from(new Set(P.discoveredRegions.filter(id=>SCENES.some(scene=>scene.id===id))));
-  if(!Array.isArray(P.teleportStones))P.teleportStones=P.discoveredRegions.slice();
+  if(!Array.isArray(data.teleportStones))P.teleportStones=P.discoveredRegions.slice();
   P.teleportStones=Array.from(new Set(P.teleportStones.filter(id=>SCENES.some(scene=>scene.id===id))));
   const currentScene=getSceneAt(P.x,P.y);if(currentScene&&!P.teleportStones.includes(currentScene.id))P.teleportStones.push(currentScene.id);
   ['changan','jiangnan','datang','beiju','huoyan'].forEach(id=>{if(!P.discoveredRegions.includes(id))P.discoveredRegions.push(id);});
