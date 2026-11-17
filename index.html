@@ -2098,6 +2098,56 @@ const PETS = [
 ];
 
 
+/* ================= 2.0 召唤兽装备系统 ================= */
+const PET_GEAR_CATALOG={
+ pet_claw:{name:'灵兽利爪',icon:'🐾',slot:'weapon',slotName:'灵爪',price:800,atk:8,def:0,hp:0,spd:0,desc:'锋利灵爪，提升召唤兽攻击'},
+ pet_fang:{name:'玄铁獠牙',icon:'🦷',slot:'weapon',slotName:'灵爪',price:2600,atk:18,def:0,hp:0,spd:2,desc:'玄铁淬炼的獠牙'},
+ pet_armor:{name:'藤纹护甲',icon:'🛡️',slot:'armor',slotName:'护甲',price:900,atk:0,def:8,hp:40,spd:0,desc:'柔韧藤甲，增强防护'},
+ pet_scale:{name:'龙鳞战甲',icon:'🐉',slot:'armor',slotName:'护甲',price:3200,atk:2,def:18,hp:100,spd:0,desc:'坚固龙鳞打造的战甲'},
+ pet_bell:{name:'清心铃',icon:'🔔',slot:'charm',slotName:'灵饰',price:1200,atk:0,def:4,hp:30,spd:5,desc:'清音护心，提升身法'},
+ pet_orb:{name:'聚灵宝珠',icon:'🔮',slot:'charm',slotName:'灵饰',price:3800,atk:12,def:8,hp:70,spd:8,desc:'汇聚灵气的珍贵宝珠'}
+};
+function normalizePetGear(){
+ if(!Array.isArray(P.petGearInventory))P.petGearInventory=[];
+ P.petGearInventory=P.petGearInventory.filter(g=>g&&PET_GEAR_CATALOG[g.id]&&Number.isFinite(Number(g.level))).map(g=>({id:g.id,level:Math.max(0,Math.min(3,Math.floor(Number(g.level)||0)))}));
+ if(!P.petGearEquipped||typeof P.petGearEquipped!=='object')P.petGearEquipped={weapon:null,armor:null,charm:null};
+ ['weapon','armor','charm'].forEach(slot=>{const id=P.petGearEquipped[slot];if(!id||!PET_GEAR_CATALOG[id]||PET_GEAR_CATALOG[id].slot!==slot||!P.petGearInventory.some(g=>g.id===id))P.petGearEquipped[slot]=null;});
+}
+function petGearStats(){
+ normalizePetGear();const total={atk:0,def:0,hp:0,spd:0};
+ ['weapon','armor','charm'].forEach(slot=>{const id=P.petGearEquipped[slot],item=PET_GEAR_CATALOG[id];if(!item)return;const inv=P.petGearInventory.find(g=>g.id===id),mul=1+(inv.level||0)*.25;['atk','def','hp','spd'].forEach(k=>total[k]+=Math.floor((item[k]||0)*mul));});
+ return total;
+}
+function buyPetGear(id){
+ normalizePetGear();const item=PET_GEAR_CATALOG[id];
+ if(!item||P.petGearInventory.some(g=>g.id===id)||P.gold<item.price)return false;
+ P.gold-=item.price;P.petGearInventory.push({id,level:0});saveGame();updateHUD();renderPetPanel();toast('🎁 获得召唤兽装备：'+item.name);return true;
+}
+function equipPetGear(id){
+ normalizePetGear();const inv=P.petGearInventory.find(g=>g.id===id),item=PET_GEAR_CATALOG[id];if(!inv||!item||!P.pet)return false;
+ const old=P.petGearEquipped[item.slot];P.petGearEquipped[item.slot]=id;
+ saveGame();renderPetPanel();toast('🐾 已为 '+P.pet.name+' 装备 '+item.name+(old?'，原装备已收回背包':''));return true;
+}
+function unequipPetGear(slot){
+ normalizePetGear();if(!['weapon','armor','charm'].includes(slot)||!P.petGearEquipped[slot])return false;
+ P.petGearEquipped[slot]=null;saveGame();renderPetPanel();toast('已卸下召唤兽装备');return true;
+}
+function upgradePetGear(id){
+ normalizePetGear();const inv=P.petGearInventory.find(g=>g.id===id);if(!inv||inv.level>=3)return false;
+ const cost=500*(inv.level+1);if(P.gold<cost){toast('银两不足，需要 '+cost+' 两');return false;}
+ P.gold-=cost;inv.level++;saveGame();updateHUD();renderPetPanel();toast('✨ 装备强化至 +'+inv.level);return true;
+}
+function rollPetGearDrop(){
+ if(!P.pet||Math.random()>.12)return null;
+ normalizePetGear();const available=Object.keys(PET_GEAR_CATALOG).filter(id=>!P.petGearInventory.some(g=>g.id===id));
+ if(!available.length)return null;
+ const defeated=battle.units.filter(u=>u.isEnemy&&!u.isBoss&&!u.alive);if(!defeated.length)return null;
+ const maxLv=Math.max(...defeated.map(u=>Number(u.lv)||1));
+ const pool=available.filter(id=>PET_GEAR_CATALOG[id].price<=(maxLv>=25?4000:maxLv>=10?3000:1500));
+ const choices=pool.length?pool:available;const id=choices[Math.floor(Math.random()*choices.length)];
+ P.petGearInventory.push({id,level:0});saveGame();return PET_GEAR_CATALOG[id];
+}
+
 /* ================= 2.0 召唤兽捕捉、成长与进化 ================= */
 const PET_SKILLS={
  huahua:{id:'flower_heal',name:'花灵回春',type:'heal',power:0.24,desc:'每三次行动恢复自身最大气血的24%'},
@@ -3105,6 +3155,35 @@ function renderPetPanel(){
         toast('📘 '+petSkill.name+' 提升至 '+p.skillRank+' 级！');renderPetPanel();
       };
       skillBox.appendChild(skillBtn);content.appendChild(skillBox);
+      normalizePetGear();
+      const gearBox=document.createElement('div');gearBox.style.cssText='margin-top:10px;padding:10px;border:1px solid rgba(120,180,230,.35);border-radius:7px;background:rgba(20,60,100,.12)';
+      const gs=petGearStats();
+      gearBox.innerHTML='<b style="color:#a8d8ff">🛡️ 召唤兽装备</b><div style="font-size:10.5px;color:#b8c8d8;margin:4px 0 8px">装备加成：攻击 +'+gs.atk+' · 防御 +'+gs.def+' · 气血 +'+gs.hp+' · 速度 +'+gs.spd+'</div>';
+      [['weapon','灵爪'],['armor','护甲'],['charm','灵饰']].forEach(([slot,label])=>{
+        const id=P.petGearEquipped[slot],it=id&&PET_GEAR_CATALOG[id];
+        const line=document.createElement('div');line.style.cssText='display:flex;align-items:center;gap:6px;margin:5px 0;font-size:11px';
+        const name=document.createElement('span');name.style.flex='1';name.textContent=label+'：'+(it?it.icon+' '+it.name+' +'+(P.petGearInventory.find(g=>g.id===id)||{}).level:'未装备');line.appendChild(name);
+        if(it){const b=document.createElement('button');b.className='btn small';b.textContent='卸下';b.onclick=()=>unequipPetGear(slot);line.appendChild(b);}
+        gearBox.appendChild(line);
+      });
+      const gearTitle=document.createElement('div');gearTitle.style.cssText='margin-top:9px;color:#ffe0a0;font-size:11px';gearTitle.textContent='装备背包与灵兽锻造（最高 +3）';gearBox.appendChild(gearTitle);
+      P.petGearInventory.forEach(g=>{
+        const it=PET_GEAR_CATALOG[g.id];if(!it)return;
+        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px';
+        const label=document.createElement('span');label.style.flex='1';label.textContent=it.icon+' '+it.name+' +'+g.level+'（攻'+it.atk+' 防'+it.def+' 血'+it.hp+' 速'+it.spd+'）';row.appendChild(label);
+        const equip=document.createElement('button');equip.className='btn small';equip.textContent=P.petGearEquipped[it.slot]===g.id?'已装备':'穿戴';equip.disabled=P.petGearEquipped[it.slot]===g.id;equip.onclick=()=>equipPetGear(g.id);row.appendChild(equip);
+        const up=document.createElement('button');up.className='btn small';up.textContent=g.level>=3?'满级':'强化';up.disabled=g.level>=3||P.gold<500*(g.level+1);up.onclick=()=>upgradePetGear(g.id);row.appendChild(up);
+        gearBox.appendChild(row);
+      });
+      content.appendChild(gearBox);
+      const gearShop=document.createElement('div');gearShop.style.cssText='margin-top:8px;padding:9px;border:1px solid rgba(240,200,96,.25);border-radius:6px';
+      gearShop.innerHTML='<b style="color:#ffe0a0;font-size:11px">🛒 灵兽装备坊</b>';
+      Object.entries(PET_GEAR_CATALOG).forEach(([id,it])=>{
+        const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px';
+        const label=document.createElement('span');label.style.flex='1';label.textContent=it.icon+' '+it.name+' · '+it.slotName+' · '+it.price+'两';row.appendChild(label);
+        const buy=document.createElement('button');buy.className='btn small';buy.textContent=P.petGearInventory.some(g=>g.id===id)?'已拥有':'购买';buy.disabled=P.petGearInventory.some(g=>g.id===id)||P.gold<it.price;buy.onclick=()=>buyPetGear(id);row.appendChild(buy);gearShop.appendChild(row);
+      });
+      content.appendChild(gearShop);
       content.appendChild(btns);
       
       // 战斗参数说明
@@ -4677,9 +4756,9 @@ function battlePrepare(mobs){
       icon: P.pet.icon,
       petId: P.pet.id,
       isPet: true,
-      hp: P.pet.hp, maxHp: P.pet.maxHp,
+      hp: Math.min(P.pet.hp+petGearStats().hp,P.pet.maxHp+petGearStats().hp), maxHp: P.pet.maxHp+petGearStats().hp,
       mp: 0, maxMp: 0,
-      atk: P.pet.atk, def: P.pet.def, spd: P.pet.spd,
+      atk: P.pet.atk+petGearStats().atk, def: P.pet.def+petGearStats().def, spd: P.pet.spd+petGearStats().spd,
       petSkill:PET_SKILLS[petBaseSpecies(P.pet)]||null,petSkillRank:P.pet.skillRank||1,petActionCount:0,
       alive: true, stun: 0, guard: false, acting: false,
     });
@@ -5475,6 +5554,7 @@ function finishBattle(result){
     gainExp(exp);
     if(P.pet)gainPetExp(Math.max(10,Math.floor(exp*.35)));
     rollPetCaptureOffer();
+    const petGearLoot=rollPetGearDrop();if(petGearLoot)toast('🐾 召唤兽装备掉落：'+petGearLoot.name+'！');
     
     banner.innerHTML = `
       <div class="rb-title win">胜 利</div>
@@ -5751,7 +5831,7 @@ function getSaveData(){
     hp:P.hp, maxHp:P.maxHp, mp:P.mp, maxMp:P.maxMp,
     atk:P.atk, def:P.def, spd:P.spd, magic:P.magic,
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
-    bag:P.bag, pet:P.pet, petBox:P.petBox, petCaptureOffer:P.petCaptureOffer, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
+    bag:P.bag, pet:P.pet, petBox:P.petBox, petCaptureOffer:P.petCaptureOffer, petGearInventory:P.petGearInventory, petGearEquipped:P.petGearEquipped, steps:P.steps, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -5763,7 +5843,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','petCaptureOffer','steps','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions'
+    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions'
   ];
   if(!Object.prototype.hasOwnProperty.call(data,'gearCodex'))P.gearCodex={};
   if(!Object.prototype.hasOwnProperty.call(data,'gearSetApplied'))P.gearSetApplied={};
@@ -5800,6 +5880,7 @@ function applySaveData(data){
   if (!Array.isArray(P.petBox)) P.petBox = [];
   P.pet=normalizePetRecord(P.pet);
   P.petBox=P.petBox.map(normalizePetRecord).filter(Boolean).slice(0,6);
+  normalizePetGear();
   if(!P.bag||typeof P.bag!=='object')P.bag={};
   P.bag.petSeal=Math.max(0,Math.floor(Number(P.bag.petSeal)||0));
   if(P.petCaptureOffer&&(!PETS.some(x=>x.id===P.petCaptureOffer.id)||!Number.isFinite(Number(P.petCaptureOffer.enemyLv))))P.petCaptureOffer=null;
