@@ -3048,6 +3048,38 @@ function openPetPanel(){
   openModal('modalPet');
 }
 
+function petAptitudeGrade(value){
+  const n=Math.max(80,Math.min(120,Math.floor(Number(value)||100)));
+  return n>=115?'卓越':n>=108?'优秀':n>=100?'良好':n>=92?'普通':'偏低';
+}
+function renderPetAptitudeDetails(pet){
+  normalizePetRecord(pet);
+  const fields=[['hp','气血','❤️'],['atk','攻击','⚔️'],['def','防御','🛡️'],['spd','速度','👟']];
+  return '<div style="margin-top:8px;padding:8px;border:1px solid rgba(210,170,255,.28);border-radius:6px;background:rgba(80,40,120,.10)"><b style="color:#e0c0ff">🎯 资质详情</b><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px">'+fields.map(([key,label,icon])=>{const value=pet.aptitude[key],pct=Math.max(0,Math.min(100,(value-80)/40*100));return '<div style="font-size:10px"><div style="display:flex;justify-content:space-between;color:#e8d8ff"><span>'+icon+' '+label+'</span><b>'+value+' · '+petAptitudeGrade(value)+'</b></div><div style="height:5px;margin-top:3px;border-radius:5px;background:#24172e;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#8050b0,#d0a0ff)"></div></div></div>';}).join('')+'</div><div style="margin-top:6px;color:#a98fbe;font-size:9.5px">资质范围 80–120；数值越高，对应属性升级成长越好。</div></div>';
+}
+function petSkillEffectText(skill,rank){
+  if(!skill)return '暂无专属技能';
+  if(skill.type==='heal')return '当前效果：每三次行动恢复最大气血的 '+Math.round(skill.power*rank*100)+'%';
+  const multiplier=skill.power+(rank-1)*.18;
+  let text='当前效果：每三次行动造成 '+multiplier.toFixed(2)+' 倍'+(skill.type==='magic'?'法术':'攻击')+'伤害';
+  if(skill.effect==='stun')text+='；另有 20% 概率定身';
+  if(skill.effect==='burn')text+='；追加灼烧伤害随技能等级提升';
+  return text;
+}
+function studyPetSkill(pet){
+  if(!pet||!(P.pet===pet||(Array.isArray(P.petBox)&&P.petBox.includes(pet))))return false;
+  normalizePetRecord(pet);
+  const skill=PET_SKILLS[pet.speciesId],rank=pet.skillRank||1,cost=500;
+  if(!skill){toast('该召唤兽没有可研习的专属技能');return false;}
+  if(rank>=3){toast('专属技能已经满级');return false;}
+  if(!Number.isFinite(P.gold)||P.gold<cost){toast('银两不足，需要 500 两');return false;}
+  P.gold-=cost;pet.skillRank=rank+1;
+  saveGame();updateHUD();
+  toast('📘 '+skill.name+' 提升至 '+pet.skillRank+' 级！');
+  renderPetPanel();
+  return true;
+}
+
 function renderPetPanel(){
   const body = $('petBody');
   
@@ -3097,7 +3129,7 @@ function renderPetPanel(){
             <div style="color:#a0ffd0">👟 速度 ${p.spd}</div>
             <div style="color:#d8b0ff">⭐ 等级 Lv.${p.lv||1} · 经验 ${p.exp||0}/${petExpNeed(p.lv||1)}</div>
             <div style="color:#ffd080">✨ ${p.stage?'已进化':'待觉醒：'+(PET_EVOLUTIONS[p.speciesId]?'Lv.'+PET_EVOLUTIONS[p.speciesId].at:'暂无进化')}</div>
-            <div style="color:#e0c0ff">🎯 资质 HP ${p.aptitude.hp} · 攻 ${p.aptitude.atk} · 防 ${p.aptitude.def} · 速 ${p.aptitude.spd}</div>
+            ${renderPetAptitudeDetails(p)}
             <div style="color:#ffe8a0">✨ 专属技能：${(PET_SKILLS[p.speciesId]||{}).name||'无'} · 等级 ${p.skillRank||1}/3</div>
           </div>
         </div>
@@ -3144,16 +3176,12 @@ function renderPetPanel(){
       const skillBox=document.createElement('div');
       skillBox.style.cssText='margin-top:9px;padding:9px;border:1px solid rgba(180,130,230,.35);border-radius:6px;background:rgba(80,40,120,.12);font-size:10.5px;line-height:1.6';
       const petSkill=PET_SKILLS[p.speciesId]||null;
-      skillBox.innerHTML=petSkill?'<b style="color:#e0c0ff">✨ '+petSkill.name+'（技能 '+(p.skillRank||1)+'/3）</b><div style="color:#c0a8d8;margin:3px 0">'+petSkill.desc+'</div><div style="color:#ffe8a0">每三次召唤兽行动自动施放；研习可提升技能威力。</div>':'尚无专属技能';
+      skillBox.innerHTML=petSkill?'<b style="color:#e0c0ff">✨ '+petSkill.name+'（技能 '+(p.skillRank||1)+'/3）</b><div style="color:#c0a8d8;margin:3px 0">'+petSkill.desc+'</div><div style="color:#ffe8a0">'+petSkillEffectText(petSkill,p.skillRank||1)+'</div><div style="color:#a98fbe">每三次召唤兽行动自动施放；每次研习消耗 500 两，最高 3 级。</div>':'尚无专属技能';
       const skillBtn=document.createElement('button');
       skillBtn.className='btn small';skillBtn.style.width='100%';skillBtn.style.marginTop='6px';
       skillBtn.textContent=(p.skillRank||1)>=3?'专属技能已满级':'📘 研习专属技能（500两）';
       skillBtn.disabled=!petSkill||(p.skillRank||1)>=3||P.gold<500;
-      skillBtn.onclick=()=>{
-        if(!petSkill||(p.skillRank||1)>=3||P.gold<500)return;
-        P.gold-=500;p.skillRank=(p.skillRank||1)+1;saveGame();updateHUD();
-        toast('📘 '+petSkill.name+' 提升至 '+p.skillRank+' 级！');renderPetPanel();
-      };
+      skillBtn.onclick=()=>studyPetSkill(p);
       skillBox.appendChild(skillBtn);content.appendChild(skillBox);
       normalizePetGear();
       const gearBox=document.createElement('div');gearBox.style.cssText='margin-top:10px;padding:10px;border:1px solid rgba(120,180,230,.35);border-radius:7px;background:rgba(20,60,100,.12)';
@@ -6005,7 +6033,7 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('战斗系统','战斗系统',[{name:'战斗入口存在',run:()=>typeof battlePrepare==='function'},{name:'战斗结算入口存在',run:()=>typeof finishBattle==='function'}]);
  registerFeatureTest('门派与技能','角色成长',[{name:'门派配置有效',run:()=>Array.isArray(SECTS)&&SECTS.length>0},{name:'技能查询函数有效',run:()=>typeof getSectSkills==='function'&&Array.isArray(getSectSkills())}]);
  registerFeatureTest('背包与物品','物品系统',[{name:'物品配置有效',run:()=>!!ITEMS&&typeof ITEMS==='object'&&Object.keys(ITEMS).length>0},{name:'背包数据有效',run:()=>!!P.bag&&typeof P.bag==='object'&&!Array.isArray(P.bag)}]);
- registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)},{name:'捕捉与捕灵符接口存在',run:()=>typeof capturePet==='function'&&typeof buyPetSeal==='function'&&typeof rollPetCaptureOffer==='function'},{name:'召唤兽成长与五条进化配置完整',run:()=>typeof gainPetExp==='function'&&typeof petExpNeed==='function'&&Object.keys(PET_EVOLUTIONS).length===5},{name:'捕捉踪迹和成长字段纳入存档',run:()=>getSaveData().petCaptureOffer===P.petCaptureOffer&&applySaveData.toString().includes('normalizePetRecord')},{name:'五种召唤兽拥有独立专属技能',run:()=>Object.keys(PET_SKILLS).length===5&&Object.keys(PET_SKILLS).every(id=>PET_SKILLS[id].name&&PET_SKILLS[id].power>0)},{name:'资质范围与技能等级受到限制',run:()=>typeof petAptitudeRoll==='function'&&normalizePetRecord.toString().includes('pet.skillRank')},{name:'战斗回合会自动触发专属技能',run:()=>petTurn.toString().includes('unit.petActionCount%3===0')&&petTurn.toString().includes('skill.effect')},{name:'面板支持技能研习与资质展示',run:()=>renderPetPanel.toString().includes('研习专属技能')&&renderPetPanel.toString().includes('p.aptitude')}]);
+ registerFeatureTest('召唤兽系统','养成系统',[{name:'召唤兽面板存在',run:()=>typeof renderPetPanel==='function'},{name:'召唤兽仓库数据有效',run:()=>Array.isArray(P.petBox)},{name:'捕捉与捕灵符接口存在',run:()=>typeof capturePet==='function'&&typeof buyPetSeal==='function'&&typeof rollPetCaptureOffer==='function'},{name:'召唤兽成长与五条进化配置完整',run:()=>typeof gainPetExp==='function'&&typeof petExpNeed==='function'&&Object.keys(PET_EVOLUTIONS).length===5},{name:'捕捉踪迹和成长字段纳入存档',run:()=>getSaveData().petCaptureOffer===P.petCaptureOffer&&applySaveData.toString().includes('normalizePetRecord')},{name:'五种召唤兽拥有独立专属技能',run:()=>Object.keys(PET_SKILLS).length===5&&Object.keys(PET_SKILLS).every(id=>PET_SKILLS[id].name&&PET_SKILLS[id].power>0)},{name:'资质范围与技能等级受到限制',run:()=>typeof petAptitudeRoll==='function'&&normalizePetRecord.toString().includes('pet.skillRank')},{name:'战斗回合会自动触发专属技能',run:()=>petTurn.toString().includes('unit.petActionCount%3===0')&&petTurn.toString().includes('skill.effect')},{name:'面板支持技能研习与资质展示',run:()=>typeof renderPetAptitudeDetails==='function'&&typeof petSkillEffectText==='function'&&typeof studyPetSkill==='function'&&studyPetSkill.toString().includes('pet.skillRank')&&renderPetAptitudeDetails.toString().includes('资质详情')}]);
  registerFeatureTest('召唤兽装备系统','宠物养成',[{name:'装备目录覆盖三个部位',run:()=>Object.keys(PET_GEAR_CATALOG).length===6&&['weapon','armor','charm'].every(slot=>Object.values(PET_GEAR_CATALOG).some(g=>g.slot===slot))},{name:'装备背包与穿戴槽可初始化',run:()=>typeof normalizePetGear==='function'&&typeof petGearStats==='function'},{name:'装备购买穿戴卸下与强化接口存在',run:()=>typeof buyPetGear==='function'&&typeof equipPetGear==='function'&&typeof unequipPetGear==='function'&&typeof upgradePetGear==='function'},{name:'装备强化等级限制为三级',run:()=>upgradePetGear.toString().includes('inv.level>=3')&&normalizePetGear.toString().includes('Math.min(3')},{name:'战斗属性应用装备加成',run:()=>battlePrepare.toString().includes('petGearStats().atk')&&battlePrepare.toString().includes('petGearStats().hp')},{name:'普通怪物胜利可触发装备掉落',run:()=>typeof rollPetGearDrop==='function'&&finishBattle.toString().includes('rollPetGearDrop()')},{name:'装备字段写入存档并兼容旧档',run:()=>getSaveData().petGearInventory===P.petGearInventory&&applySaveData.toString().includes('normalizePetGear()')}]);
  registerFeatureTest('任务系统','成长系统',[{name:'任务面板存在',run:()=>typeof renderTaskPanel==='function'},{name:'任务状态字段有效',run:()=>P.quest===null||typeof P.quest==='object'}]);
  registerFeatureTest('功法修炼','成长系统',[{name:'功法配置有效',run:()=>Array.isArray(CULTIVATION_BOOKS)&&CULTIVATION_BOOKS.length>0},{name:'功法面板存在',run:()=>typeof renderCultivation==='function'},{name:'功法存档字段有效',run:()=>Array.isArray(P.cultivationBooks)}]);
@@ -6452,7 +6480,7 @@ document.addEventListener('gestureend', function(e){
         <div class="li-icon" style="font-size:24px">${pet.icon}</div>
         <div class="li-body">
           <div class="li-name">${pet.name}</div>
-          <div class="li-desc">❤️${Math.ceil(pet.hp)}/${pet.maxHp} · 🗡️${pet.atk} · 🛡️${pet.def}</div>
+          <div class="li-desc">❤️${Math.ceil(pet.hp)}/${pet.maxHp} · 🗡️${pet.atk} · 🛡️${pet.def} · 🎯资质 ${pet.aptitude?.hp||100}/${pet.aptitude?.atk||100}/${pet.aptitude?.def||100}/${pet.aptitude?.spd||100} · 技能 Lv.${pet.skillRank||1}</div>
         </div>
       `;
       const out = document.createElement('button');
