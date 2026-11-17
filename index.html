@@ -1721,6 +1721,10 @@ button{
     </button>
     <button class="menu-btn" data-menu="cultivation"><span class="mi">📚</span><span class="mt">功法</span></button>
 <button class="menu-btn" data-menu="developer"><span class="mi">🧪</span><span class="mt">开发者</span></button>
+    <button class="menu-btn" data-menu="realmSwitch" style="display:none"><span class="mi">🌌</span><span class="mt">仙界</span></button>
+    <button class="menu-btn" data-menu="immortalMansion" style="display:none"><span class="mi">🏯</span><span class="mt">仙府</span></button>
+    <button class="menu-btn" data-menu="immortalSect" style="display:none"><span class="mi">🏛️</span><span class="mt">仙宗</span></button>
+    <button class="menu-btn" data-menu="immortalTravel" style="display:none"><span class="mi">🌌</span><span class="mt">游历仙界</span></button>
   </footer>
   
   <!-- ============ 弹窗容器 ============ -->
@@ -1815,6 +1819,7 @@ button{
     </div>
   </div>
   
+  <main id="immortalStage" style="display:none;flex:1;flex-direction:column;overflow:auto;padding:8px;background:#0a1a08;-webkit-overflow-scrolling:touch"></main>
   <div class="modal" id="modalCultivation"><div class="dialog"><div class="dialog-head"><div class="dialog-title">功法修炼</div><button class="dialog-close" data-close="modalCultivation">✕</button></div><div class="dialog-body" id="cultivationBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalCultivation">关闭</button></div></div></div>
   <div class="modal" id="modalDeveloper"><div class="dialog dev-dialog"><div class="dialog-head"><div class="dialog-title">开发者测试中心</div><button class="dialog-close" data-close="modalDeveloper">✕</button></div><div class="dialog-body" id="developerBody"></div><div class="dialog-foot"><button class="btn" id="devRunAll">运行全部测试</button><button class="btn primary" data-close="modalDeveloper">关闭</button></div></div></div>
 <!-- 门派选择（初始弹窗） -->
@@ -2314,6 +2319,7 @@ const P = {
   questDone: 0,
   flags: {},
   avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, bossGearDrops:{}, laomuCooldownUntil:0, discoveredRegions:['changan','jiangnan','datang','beiju','huoyan'],
+  immortalRealm:{unlocked:false,stageIndex:0,dao:0,qi:0,jade:0,body:100,spirit:100,trialStep:0,onlineSeconds:0,notice:'仙界尚未开启',activeTab:'mansion',view:'mortal',sect:null,techniques:[],artifacts:[],materials:{starSand:0,swordShard:0,chaosShard:0,voidCrystal:0,immortalHerb:0},mansion:{arrayLevel:0,fieldLevel:0,puppetLevel:0,fieldPlanted:false,fieldProgress:0,herbs:0}},
 };
 
 /* 经验公式 */
@@ -2566,6 +2572,7 @@ function updateHUD(){
   
   $('goldVal').textContent = fmt(P.gold);
   const coordHud=$('playerCoordHud');if(coordHud)coordHud.textContent=`坐标 X:${P.x} Y:${P.y}`;
+  if(typeof syncImmortalNavigation==='function')syncImmortalNavigation();
 }
 
 /* ============================================================
@@ -2769,6 +2776,10 @@ $$('.menu-btn').forEach(btn => {
     if (menu === 'task')  openTaskPanel();
     if (menu === 'cultivation'){ renderCultivation(); openModal('modalCultivation'); }
 if(menu==='developer'){openDeveloperPanelWithPassword();}
+    if(menu==='realmSwitch'){setImmortalView(P.immortalRealm.view==='immortal'?'mortal':'immortal');}
+    if(menu==='immortalMansion'){renderImmortalRealm('mansion');}
+    if(menu==='immortalSect'){renderImmortalRealm('sect');}
+    if(menu==='immortalTravel'){renderImmortalRealm('travel');}
   });
 });
 
@@ -5845,7 +5856,8 @@ function renderCultivation(){
  let h='<p style="font-size:11px;color:#d9c38d">在线且页面处于前台时累计修炼；离线或切到后台不计时。每本功法修成概率为50%。</p>';
  if(active){h+='<div class="list-item"><div class="li-body"><b>正在修炼：'+active.name+'</b><div class="li-desc">'+Math.floor(P.cultivationProgressMs/60000)+' / '+active.minutes+' 分钟</div><div style="height:7px;background:#21160c"><div style="height:7px;width:'+Math.min(100,P.cultivationProgressMs/(active.minutes*60000)*100)+'%;background:#e6b84c"></div></div></div><button class="li-btn" id="cultivationCancel">停止</button></div>';}
  CULTIVATION_BOOKS.forEach((b,i)=>{const owned=P.cultivationBooks.includes(b.id),done=P.flags['cult_done_'+b.id];h+='<div class="list-item"><div class="li-icon">📖</div><div class="li-body"><div class="li-name">'+(i+1)+'. '+b.name+(done?' ✓已修成':owned?'':' · 未获得')+'</div><div class="li-desc">'+b.minutes+'分钟 · '+b.desc+'</div></div>'+(owned&&!done&&!active?'<button class="li-btn" data-cultivate="'+b.id+'">开始</button>':'<span style="font-size:10px">'+(done?'已完成':owned?'修炼中':'未解锁')+'</span>')+'</div>';});
- body.innerHTML=h;const cancel=$('cultivationCancel');if(cancel)cancel.onclick=()=>{P.cultivationActive=null;P.cultivationProgressMs=0;saveGame();renderCultivation();};
+ h+=renderAscensionSection();
+ body.innerHTML=h;renderAscensionNavigation();const cancel=$('cultivationCancel');if(cancel)cancel.onclick=()=>{P.cultivationActive=null;P.cultivationProgressMs=0;saveGame();renderCultivation();};
  body.querySelectorAll('[data-cultivate]').forEach(x=>x.onclick=()=>{P.cultivationActive=x.dataset.cultivate;P.cultivationProgressMs=0;saveGame();renderCultivation();toast('开始在线修炼');});
 }
 function tickCultivation(){if(!P.cultivationActive||document.visibilityState!=='visible')return;const b=CULTIVATION_BOOKS.find(x=>x.id===P.cultivationActive);if(!b){P.cultivationActive=null;return;}P.cultivationProgressMs+=1000;if(P.cultivationProgressMs>=b.minutes*60000){P.cultivationActive=null;P.cultivationProgressMs=0;if(Math.random()<.5){P.flags['cult_done_'+b.id]=true;applyCultivationEffect(b);toast('修炼成功：'+b.name);addLog('修成 '+b.name,'good');}else{toast('修炼失败，功法已消耗');addLog('修炼失败：'+b.name,'bad');}saveGame();renderCultivation();updateHUD();}else if($('modalCultivation')?.classList.contains('show'))renderCultivation();}
@@ -5856,7 +5868,7 @@ function tickCultivation(){if(!P.cultivationActive||document.visibilityState!=='
 
 const SAVE_KEY = 'mhxy_single_player_save_v1';
 let gameLoopTimer = null;
-let cultivationTimer=null;
+let cultivationTimer=null,immortalTimer=null;
 
 /* 保存游戏 */
 function saveGame(){
@@ -5878,6 +5890,7 @@ function getSaveData(){
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
     bag:P.bag, pet:P.pet, petBox:P.petBox, petCaptureOffer:P.petCaptureOffer, petGearInventory:P.petGearInventory, petGearEquipped:P.petGearEquipped, steps:P.steps, lastEncounterStep:P.lastEncounterStep, teleportStones:P.teleportStones, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
+    immortalRealm:serializeImmortalRealm(),
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
 }
@@ -5888,7 +5901,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','lastEncounterStep','teleportStones','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions'
+    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','lastEncounterStep','teleportStones','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions','immortalRealm'
   ];
   if(!Object.prototype.hasOwnProperty.call(data,'gearCodex'))P.gearCodex={};
   if(!Object.prototype.hasOwnProperty.call(data,'gearSetApplied'))P.gearSetApplied={};
@@ -5941,6 +5954,7 @@ function applySaveData(data){
   if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
   if (!P.bossGearDrops || typeof P.bossGearDrops!=='object') P.bossGearDrops={};
   if (!P.flags || typeof P.flags!=='object') P.flags={};
+  P.immortalRealm=normalizeImmortalRealm(data.immortalRealm);
   P.cultivationProgressMs=Math.max(0,Number(P.cultivationProgressMs)||0);
   P.laomuCooldownUntil=Math.max(0,Number(P.laomuCooldownUntil)||0);
   syncGearSetBonuses();
@@ -5975,7 +5989,7 @@ function clearSave(){
 /* 游戏主循环：负责定时刷新 HUD，并自动保存 */
 function startGameLoop(){
   if (gameLoopTimer) clearInterval(gameLoopTimer);
-  if(cultivationTimer)clearInterval(cultivationTimer);cultivationTimer=setInterval(tickCultivation,1000);
+  if(cultivationTimer)clearInterval(cultivationTimer);cultivationTimer=setInterval(tickCultivation,1000);if(immortalTimer)clearInterval(immortalTimer);immortalTimer=setInterval(tickImmortalRealm,1000);
 
   updateHUD();
   renderWorld();
@@ -6045,6 +6059,88 @@ function renderDeveloperPanel(){
  const allBtn=$('devRunAll');if(allBtn)allBtn.onclick=()=>{let all=[];DEV_FEATURE_TESTS.forEach(f=>all.push(...runDeveloperFeature(f)));toast(all.every(x=>x.ok)?'全部 '+all.length+' 项测试通过':'测试完成：'+all.filter(x=>!x.ok).length+' 项失败');renderDeveloperPanel();};
  body.querySelectorAll('[data-dev-index]').forEach(btn=>btn.addEventListener('click',()=>{const f=DEV_FEATURE_TESTS[Number(btn.dataset.devIndex)];if(!f)return;const res=runDeveloperFeature(f);toast(res.every(x=>x.ok)?f.name+'测试通过':f.name+'有测试失败');renderDeveloperPanel();}));
 }
+
+const IMMORTAL_STAGES=['人仙','地仙','天仙','真仙','金仙','太乙金仙','大罗金仙','混元大罗金仙（仙帝）','道祖'];
+const IMMORTAL_BOSS_IDS=['boss_changan','boss_jiangnan','boss_datang','boss_beiju','boss_huoyan'];
+const IMMORTAL_SECTS=[{id:'tianji',name:'天机仙宗',icon:'☯️',desc:'推演天机，擅长元神与法则'},{id:'jianxian',name:'万剑仙宗',icon:'⚔️',desc:'剑意通玄，擅长仙体与攻伐'},{id:'zixiao',name:'紫霄仙宗',icon:'⚡',desc:'掌御雷霆，擅长仙气与爆发'}];
+const IMMORTAL_TECHNIQUES=[
+{id:'taixu',sect:'tianji',name:'太虚观想经',desc:'元神修炼法，提升元神上限',cost:80,spirit:120},{id:'zhouyan',sect:'tianji',name:'周天演法',desc:'洞察法则，提升道行',cost:140,dao:80},{id:'wanjian',sect:'jianxian',name:'万剑归宗诀',desc:'剑气淬体，提升仙体上限',cost:80,body:150},{id:'qinglian',sect:'jianxian',name:'青莲剑典',desc:'剑意凝练，提升道行',cost:150,dao:100},{id:'zixiao_thunder',sect:'zixiao',name:'紫霄神雷法',desc:'雷法炼神，提升元神上限',cost:100,spirit:180},{id:'leiyin',sect:'zixiao',name:'九霄雷音诀',desc:'引雷淬体，提升仙体上限',cost:160,body:220}
+];
+const IMMORTAL_ARTIFACTS=[{id:'xianjian',name:'斩仙古剑',desc:'仙器·攻击法则凝于剑锋',cost:180,material:'chaosShard',body:80},{id:'xianyi',name:'九天云衣',desc:'仙器·云纹护体，元神清明',cost:160,material:'starSand',spirit:120},{id:'ding',name:'镇界玄鼎',desc:'仙器·镇压混沌，仙体稳固',cost:260,material:'voidCrystal',body:220}];
+const IMMORTAL_MAPS=[{id:'jiutian',name:'九天十地',desc:'仙灵汇聚之地，可采集星砂与仙草',req:0,cost:12,material:'starSand',materialName:'星辰砂'},{id:'zhuxian',name:'诛仙台',desc:'古战场遗迹，残留凌厉剑意',req:2,cost:30,material:'swordShard',materialName:'诛仙剑片'},{id:'chaos',name:'混沌虚空',desc:'天地未分之境，蕴藏混沌晶核',req:5,cost:80,material:'chaosShard',materialName:'混沌碎片'}];
+function createImmortalRealmState(){return {unlocked:false,stageIndex:0,dao:0,qi:0,jade:0,body:100,spirit:100,trialStep:0,onlineSeconds:0,notice:'仙界尚未开启',activeTab:'mansion',view:'mortal',sect:null,techniques:[],artifacts:[],materials:{starSand:0,swordShard:0,chaosShard:0,voidCrystal:0,immortalHerb:0},mansion:{arrayLevel:0,fieldLevel:0,puppetLevel:0,fieldPlanted:false,fieldProgress:0,herbs:0}};}
+function normalizeImmortalRealm(data){
+ const d=data&&typeof data==='object'&&!Array.isArray(data)?data:{},base=createImmortalRealmState(),m=d.mansion&&typeof d.mansion==='object'?d.mansion:{},mat=d.materials&&typeof d.materials==='object'?d.materials:{};
+ const num=(v,def,min,max)=>{const n=Number(v);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):def;};
+ return {unlocked:d.unlocked===true,stageIndex:Math.floor(num(d.stageIndex,0,0,8)),dao:num(d.dao,0,0,1e12),qi:num(d.qi,0,0,1e12),jade:num(d.jade,0,0,1e12),body:num(d.body,100,1,1e9),spirit:num(d.spirit,100,1,1e9),trialStep:Math.floor(num(d.trialStep,0,0,3)),onlineSeconds:Math.floor(num(d.onlineSeconds,0,0,1e12)),notice:typeof d.notice==='string'?d.notice.slice(0,180):base.notice,activeTab:['mansion','sect','travel'].includes(d.activeTab)?d.activeTab:'mansion',view:'mortal',sect:IMMORTAL_SECTS.some(x=>x.id===d.sect)?d.sect:null,techniques:Array.isArray(d.techniques)?d.techniques.filter(id=>IMMORTAL_TECHNIQUES.some(x=>x.id===id)).slice(0,30):[],artifacts:Array.isArray(d.artifacts)?d.artifacts.filter(id=>IMMORTAL_ARTIFACTS.some(x=>x.id===id)).slice(0,30):[],materials:{starSand:num(mat.starSand,0,0,1e9),swordShard:num(mat.swordShard,0,0,1e9),chaosShard:num(mat.chaosShard,0,0,1e9),voidCrystal:num(mat.voidCrystal,0,0,1e9),immortalHerb:num(mat.immortalHerb,0,0,1e9)},mansion:{arrayLevel:Math.floor(num(m.arrayLevel,0,0,10)),fieldLevel:Math.floor(num(m.fieldLevel,0,0,10)),puppetLevel:Math.floor(num(m.puppetLevel,0,0,10)),fieldPlanted:m.fieldPlanted===true,fieldProgress:Math.floor(num(m.fieldProgress,0,0,60)),herbs:Math.floor(num(m.herbs,0,0,1e9))}};
+}
+function serializeImmortalRealm(){const r=normalizeImmortalRealm(P.immortalRealm);r.view='mortal';return r;}
+function immortalMessage(message){P.immortalRealm.notice=String(message);addLog('【仙界】'+message,'good');}
+function immortalStageName(){return IMMORTAL_STAGES[P.immortalRealm.stageIndex]||IMMORTAL_STAGES[0];}
+function immortalBreakthroughCost(){const n=P.immortalRealm.stageIndex;return {dao:100*Math.pow(2,n),qi:60*Math.pow(2,n)};}
+function breakthroughImmortalStage(){const r=P.immortalRealm;if(!r.unlocked||r.stageIndex>=8)return false;const cost=immortalBreakthroughCost();if(r.dao<cost.dao||r.qi<cost.qi){immortalMessage('突破所需道行 '+cost.dao+'、仙灵之气 '+cost.qi+' 尚未满足');return false;}r.dao-=cost.dao;r.qi-=cost.qi;r.stageIndex++;r.body+=Math.floor(30*Math.pow(1.8,r.stageIndex));r.spirit+=Math.floor(25*Math.pow(1.8,r.stageIndex));immortalMessage('境界突破成功，晋升 '+immortalStageName()+'！');saveGame();renderImmortalRealm('mansion');return true;}
+function hasAllMortalBossProofs(){return IMMORTAL_BOSS_IDS.every(id=>{const gearId=BOSS_GEAR_DROPS[id];return !!(P.bossGearDrops&&P.bossGearDrops[id])||!!(P.bossDrops&&P.bossDrops[id])||!!(gearId&&P.gearInventory.some(g=>g.id===gearId));});}
+function canAscendToImmortal(){return Number(P.lv)>=DEV_MAX_LEVEL&&hasAllMortalBossProofs();}
+function getAscensionMissing(){const missing=[];if(Number(P.lv)<DEV_MAX_LEVEL)missing.push('凡界等级达到 Lv.'+DEV_MAX_LEVEL);IMMORTAL_BOSS_IDS.forEach(id=>{const gearId=BOSS_GEAR_DROPS[id],ok=!!(P.bossGearDrops&&P.bossGearDrops[id])||!!(P.bossDrops&&P.bossDrops[id])||!!(gearId&&P.gearInventory.some(g=>g.id===gearId));if(!ok){const scene=Object.keys(SCENE_BOSSES).find(k=>SCENE_BOSSES[k].id===id);missing.push('击败 '+(scene&&SCENE_BOSSES[scene]?SCENE_BOSSES[scene].name:id));}});return missing;}
+function advanceAscensionTrial(){
+ const r=P.immortalRealm;if(r.unlocked){setImmortalView('immortal');return true;}const missing=getAscensionMissing();if(missing.length){toast('飞升条件未满足：'+missing[0]);return false;}
+ const scenes=['心魔幻境','九霄天雷','破碎虚空'],text=scenes[r.trialStep]||scenes[2];r.trialStep++;
+ if(r.trialStep<3){immortalMessage('渡劫考验：'+text+' 已通过，继续迎接下一重天劫。');saveGame();renderCultivation();return true;}
+ r.unlocked=true;r.qi=100;r.jade=50;r.dao=0;r.body=100;r.spirit=100;r.stageIndex=0;r.view='mortal';immortalMessage('三重天劫尽破！你已飞升仙界，踏入人仙之境。仙界资源与凡界完全独立。');saveGame();setImmortalView('immortal');return true;
+}
+function renderAscensionSection(){
+ const r=P.immortalRealm;if(r.unlocked)return '<div class="list-item"><div class="li-icon">🌌</div><div class="li-body"><div class="li-name">飞升仙界</div><div class="li-desc">仙界已开启 · 当前境界：'+immortalStageName()+'</div></div><button class="li-btn" data-ascension-action="enter">进入仙界</button></div>';
+ const missing=getAscensionMissing();let html='<div class="section-title">🌌 破碎虚空 · 飞升仙界</div><div class="dev-help">飞升条件：凡界满级，并击败五大区域 Boss。满足后依次通过心魔、天雷与碎虚空三重考验。</div>';
+ if(missing.length)html+='<div class="list-item"><div class="li-icon">🔒</div><div class="li-body"><div class="li-name">飞升条件尚未完成</div><div class="li-desc">'+missing.join(' · ')+'</div></div></div>';
+ else html+='<div class="list-item"><div class="li-icon">⚡</div><div class="li-body"><div class="li-name">三重天劫 · 第 '+(r.trialStep+1)+' / 3 重</div><div class="li-desc">依次击破心魔、九霄天雷，最终破碎虚空。</div></div><button class="li-btn" data-ascension-action="trial">'+(r.trialStep===0?'迎战心魔':r.trialStep===1?'抵御天雷':'破碎虚空')+'</button></div>';
+ return html;
+}
+function immortalResourcePanel(){const r=P.immortalRealm;return '<div class="stat-grid"><div class="stat-box gold"><span class="sk">☯️ 仙灵之气</span><span class="sv">'+Math.floor(r.qi)+'</span></div><div class="stat-box gold"><span class="sk">💎 仙玉</span><span class="sv">'+Math.floor(r.jade)+'</span></div><div class="stat-box"><span class="sk">📜 道行</span><span class="sv">'+Math.floor(r.dao)+'</span></div><div class="stat-box"><span class="sk">🧘 仙体 / 元神</span><span class="sv">'+Math.floor(r.body)+' / '+Math.floor(r.spirit)+'</span></div></div>';}
+function renderImmortalMansion(){
+ const r=P.immortalRealm,m=r.mansion,arrayCost=40*Math.pow(m.arrayLevel+1,2),fieldCost=30*Math.pow(m.fieldLevel+1,2),puppetCost=50*Math.pow(m.puppetLevel+1,2);
+ let h='<div class="section-title">🏯 聚仙阵</div><div class="list-item"><div class="li-icon">🌀</div><div class="li-body"><div class="li-name">聚仙阵 · Lv.'+m.arrayLevel+'</div><div class="li-desc">每秒凝聚 '+(m.arrayLevel*.2).toFixed(1)+' 点仙灵之气。升级消耗 '+arrayCost+' 仙玉。</div></div><button class="li-btn" data-immortal-action="array">升级</button></div>';
+ h+='<div class="section-title">🌱 仙田</div><div class="list-item"><div class="li-icon">🌿</div><div class="li-body"><div class="li-name">仙田 · Lv.'+m.fieldLevel+'</div><div class="li-desc">仙草库存 '+m.herbs+' · '+(m.fieldPlanted?'生长中 '+m.fieldProgress+'/60 秒':'种植后在线生长 60 秒')+'。升级消耗 '+fieldCost+' 仙玉。</div></div><button class="li-btn" data-immortal-action="field-up">升级</button><button class="li-btn" data-immortal-action="plant" '+(!m.fieldLevel||m.fieldPlanted||r.qi<10||r.jade<5?'disabled':'')+'>种植</button></div>';
+ h+='<div class="section-title">🤖 仙傀</div><div class="list-item"><div class="li-icon">🗿</div><div class="li-body"><div class="li-name">仙傀 · Lv.'+m.puppetLevel+'</div><div class="li-desc">每 30 秒自动收集 '+m.puppetLevel+' 仙玉。升级消耗 '+puppetCost+' 仙玉。</div></div><button class="li-btn" data-immortal-action="puppet">升级</button></div>';
+ h+='<div class="section-title">🧺 仙草收获</div><div class="list-item"><div class="li-icon">🌸</div><div class="li-body"><div class="li-name">仙草 × '+m.herbs+'</div><div class="li-desc">种植需要 10 仙灵之气与 5 仙玉；成熟后在线自动收获。</div></div></div>';return h;
+}
+function renderImmortalSect(){
+ const r=P.immortalRealm;if(!r.sect)return '<div class="section-title">🏛️ 选择仙宗</div>'+IMMORTAL_SECTS.map(s=>'<div class="list-item"><div class="li-icon">'+s.icon+'</div><div class="li-body"><div class="li-name">'+s.name+'</div><div class="li-desc">'+s.desc+' · 入宗需 100 仙玉</div></div><button class="li-btn" data-immortal-action="join" data-value="'+s.id+'" '+(r.jade<100?'disabled':'')+'>加入</button></div>').join('');
+ const sect=IMMORTAL_SECTS.find(s=>s.id===r.sect);let h='<div class="list-item"><div class="li-icon">'+sect.icon+'</div><div class="li-body"><div class="li-name">'+sect.name+'</div><div class="li-desc">'+sect.desc+' · 已加入仙宗</div></div></div><div class="section-title">📖 仙法传承</div>';
+ h+=IMMORTAL_TECHNIQUES.filter(t=>t.sect===r.sect).map(t=>'<div class="list-item"><div class="li-icon">📜</div><div class="li-body"><div class="li-name">'+t.name+(r.techniques.includes(t.id)?' ✓已参悟':'')+'</div><div class="li-desc">'+t.desc+' · '+t.cost+' 仙玉'+(t.body?' · 仙体 +'+t.body:'')+(t.spirit?' · 元神 +'+t.spirit:'')+(t.dao?' · 道行 +'+t.dao:'')+'</div></div><button class="li-btn" data-immortal-action="technique" data-value="'+t.id+'" '+(r.techniques.includes(t.id)||r.jade<t.cost?'disabled':'')+'>'+(r.techniques.includes(t.id)?'已掌握':'兑换')+'</button></div>').join('');
+ h+='<div class="section-title">⚔️ 仙器兑换</div>'+IMMORTAL_ARTIFACTS.map(a=>'<div class="list-item"><div class="li-icon">✨</div><div class="li-body"><div class="li-name">'+a.name+(r.artifacts.includes(a.id)?' ✓已获得':'')+'</div><div class="li-desc">'+a.desc+' · '+a.cost+' 仙玉 · '+({starSand:'星辰砂',swordShard:'诛仙剑片',chaosShard:'混沌碎片',voidCrystal:'虚空晶石'}[a.material]||a.material)+' ×1</div></div><button class="li-btn" data-immortal-action="artifact" data-value="'+a.id+'" '+(r.artifacts.includes(a.id)||r.jade<a.cost||r.materials[a.material]<1?'disabled':'')+'>'+(r.artifacts.includes(a.id)?'已获得':'兑换')+'</button></div>').join('');return h;
+}
+function renderImmortalTravel(){
+ const r=P.immortalRealm;let h='<div class="dev-help">游历消耗仙灵之气，可获得仙玉、道行与仙界专属材料。地图开放由仙界境界决定，与凡界等级无关。</div>';
+ h+=IMMORTAL_MAPS.map(m=>{const locked=r.stageIndex<m.req;return '<div class="list-item"><div class="li-icon">'+(m.id==='jiutian'?'🌤️':m.id==='zhuxian'?'🗡️':'🌌')+'</div><div class="li-body"><div class="li-name">'+m.name+'</div><div class="li-desc">'+m.desc+' · 消耗 '+m.cost+' 仙灵之气 · '+m.materialName+'</div></div><button class="li-btn" data-immortal-action="explore" data-value="'+m.id+'" '+(locked||r.qi<m.cost?'disabled':'')+'>'+(locked?'需'+IMMORTAL_STAGES[m.req]:'游历')+'</button></div>';}).join('');
+ h+='<div class="section-title">🎒 仙界材料</div>'+Object.entries(r.materials).map(([id,n])=>'<div class="list-item"><div class="li-body"><div class="li-name">'+({starSand:'星辰砂',swordShard:'诛仙剑片',chaosShard:'混沌碎片',voidCrystal:'虚空晶石',immortalHerb:'仙草'}[id]||id)+'</div></div><span class="li-count">× '+n+'</span></div>').join('');return h;
+}
+function renderImmortalRealm(tab){
+ const r=P.immortalRealm;if(!r.unlocked)return false;if(['mansion','sect','travel'].includes(tab))r.activeTab=tab;else tab=r.activeTab;
+ const stage=$('immortalStage');if(!stage)return false;const title=tab==='mansion'?'仙府':tab==='sect'?'仙宗':'游历仙界',content=tab==='mansion'?renderImmortalMansion():tab==='sect'?renderImmortalSect():renderImmortalTravel(),cost=immortalBreakthroughCost(),canBreak=r.stageIndex<8&&r.dao>=cost.dao&&r.qi>=cost.qi;
+ stage.innerHTML='<div class="dialog" style="width:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;flex:1;min-height:0"><div class="dialog-head"><div class="dialog-title">🌌 仙界 · '+title+'</div><span style="font-size:10px;color:#ffe8a0">'+immortalStageName()+'</span></div><div class="dialog-body" style="flex:1;overflow-y:auto"><div class="list-item"><div class="li-icon">🌌</div><div class="li-body"><div class="li-name">仙界境界：'+immortalStageName()+'</div><div class="li-desc">独立修行体系 · 在线生产资源 · 当前在线 '+r.onlineSeconds+' 秒</div></div><button class="li-btn" data-immortal-action="breakthrough" '+(!canBreak?'disabled':'')+'>'+(r.stageIndex>=8?'已达道祖':'突破')+'</button></div>'+immortalResourcePanel()+'<div class="dev-help">仙界资源与凡界银两、背包、功法和装备完全独立，不会自动兑换或互通。</div>'+content+'<div class="dev-help">仙界动态：'+escapeDevText(r.notice)+'</div></div><div class="dialog-foot"><button class="btn" data-immortal-action="back">返回凡界</button></div></div>';
+ stage.querySelectorAll('[data-immortal-action]').forEach(btn=>btn.addEventListener('click',()=>handleImmortalAction(btn.dataset.immortalAction,btn.dataset.value)));return true;
+}
+function setImmortalView(view){const r=P.immortalRealm;if(view==='immortal'&&!r.unlocked)return false;r.view=view==='immortal'?'immortal':'mortal';syncImmortalNavigation();if(r.view==='immortal')renderImmortalRealm(r.activeTab);saveGame();return true;}
+function syncImmortalNavigation(){
+ const r=P.immortalRealm||createImmortalRealmState(),inside=!!(r.unlocked&&r.view==='immortal'),top=$('topbar'),mortal=$('stage'),immortal=$('immortalStage');
+ if(top)top.style.display=inside?'none':'';if(mortal)mortal.style.display=inside?'none':'';if(immortal)immortal.style.display=inside?'flex':'none';
+ const mortalMenus=['char','bag','equipment','skill','pet','task','cultivation'];
+ document.querySelectorAll('#bottomBar [data-menu]').forEach(btn=>{const key=btn.dataset.menu;let show=true;if(mortalMenus.includes(key))show=!inside;else if(['immortalMansion','immortalSect','immortalTravel'].includes(key))show=inside;else if(key==='realmSwitch')show=r.unlocked;btn.style.display=show?'flex':'none';});
+ const sw=$('#bottomBar [data-menu="realmSwitch"]');if(sw){sw.querySelector('.mi').textContent=inside?'🏞️':'🌌';sw.querySelector('.mt').textContent=inside?'凡界':'仙界';}
+}
+function upgradeImmortalFacility(type){
+ const r=P.immortalRealm,m=r.mansion,keys={array:'arrayLevel',field:'fieldLevel',puppet:'puppetLevel'},key=keys[type];if(!key)return false;const level=m[key];if(level>=10)return false;
+ const cost=(type==='array'?40:type==='field'?30:50)*Math.pow(level+1,2);if(r.jade<cost){immortalMessage('仙玉不足，需要 '+cost+' 仙玉');return false;}r.jade-=cost;m[key]++;immortalMessage(({array:'聚仙阵',field:'仙田',puppet:'仙傀'})[type]+'提升至 Lv.'+m[key]);saveGame();renderImmortalRealm('mansion');return true;
+}
+function plantImmortalField(){const r=P.immortalRealm,m=r.mansion;if(!m.fieldLevel||m.fieldPlanted||r.qi<10||r.jade<5)return false;r.qi-=10;r.jade-=5;m.fieldPlanted=true;m.fieldProgress=0;immortalMessage('仙田已播下仙种，在线生长 60 秒后自动收获。');saveGame();renderImmortalRealm('mansion');return true;}
+function joinImmortalSect(id){const r=P.immortalRealm,sect=IMMORTAL_SECTS.find(x=>x.id===id);if(!sect||r.sect||r.jade<100)return false;r.jade-=100;r.sect=id;immortalMessage('正式加入 '+sect.name+'，获得仙宗传承资格。');saveGame();renderImmortalRealm('sect');return true;}
+function buyImmortalTechnique(id){const r=P.immortalRealm,t=IMMORTAL_TECHNIQUES.find(x=>x.id===id);if(!t||t.sect!==r.sect||r.techniques.includes(id)||r.jade<t.cost)return false;r.jade-=t.cost;r.techniques.push(id);r.body+=t.body||0;r.spirit+=t.spirit||0;r.dao+=t.dao||0;immortalMessage('参悟仙法：'+t.name+'。仙界属性已提升。');saveGame();renderImmortalRealm('sect');return true;}
+function buyImmortalArtifact(id){const r=P.immortalRealm,a=IMMORTAL_ARTIFACTS.find(x=>x.id===id);if(!a||r.artifacts.includes(id)||r.jade<a.cost||r.materials[a.material]<1)return false;r.jade-=a.cost;r.materials[a.material]--;r.artifacts.push(id);r.body+=a.body||0;r.spirit+=a.spirit||0;immortalMessage('兑换仙器：'+a.name+'。仙器已收入仙界宝库。');saveGame();renderImmortalRealm('sect');return true;}
+function immortalExplore(mapId,randomValue){const r=P.immortalRealm,m=IMMORTAL_MAPS.find(x=>x.id===mapId);if(!m||r.stageIndex<m.req||r.qi<m.cost)return false;const roll=Number.isFinite(randomValue)?Math.max(0,Math.min(.999999,randomValue)):Math.random();r.qi-=m.cost;r.jade+=5+Math.floor(roll*9);r.dao+=12+Math.floor(roll*19);r.materials[m.material]++;if(roll>.72)r.materials.voidCrystal++;if(roll<.18)r.materials.immortalHerb++;immortalMessage('游历 '+m.name+' 完成：获得仙玉、道行与 '+m.materialName+'。');saveGame();renderImmortalRealm('travel');return true;}
+function handleImmortalAction(action,value){if(action==='back'){setImmortalView('mortal');return;}if(action==='breakthrough'){breakthroughImmortalStage();return;}if(action==='array'||action==='field-up'||action==='puppet'){upgradeImmortalFacility(action==='field-up'?'field':action);return;}if(action==='plant'){plantImmortalField();return;}if(action==='join'){joinImmortalSect(value);return;}if(action==='technique'){buyImmortalTechnique(value);return;}if(action==='artifact'){buyImmortalArtifact(value);return;}if(action==='explore'){immortalExplore(value);return;}}
+function tickImmortalRealm(){const r=P.immortalRealm;if(!r||!r.unlocked||document.visibilityState!=='visible')return;r.onlineSeconds++;if(r.mansion.arrayLevel)r.qi+=r.mansion.arrayLevel*.2;if(r.mansion.puppetLevel&&r.onlineSeconds%30===0)r.jade+=r.mansion.puppetLevel;if(r.mansion.fieldPlanted){r.mansion.fieldProgress++;if(r.mansion.fieldProgress>=60){r.mansion.fieldPlanted=false;r.mansion.fieldProgress=0;r.mansion.herbs++;r.materials.immortalHerb++;immortalMessage('仙田仙草成熟，已自动收获。');}}if(r.view==='immortal'&&r.onlineSeconds%5===0)renderImmortalRealm(r.activeTab);}
+function renderAscensionNavigation(){const b=$('cultivationBody');if(!b)return;b.querySelectorAll('[data-ascension-action]').forEach(x=>x.addEventListener('click',()=>{if(x.dataset.ascensionAction==='trial')advanceAscensionTrial();else setImmortalView('immortal');}));}
+
 function registerBuiltInDeveloperTests(){
  registerFeatureTest('开发者一键满级','开发工具',[{name:'满级上限为100级',run:()=>DEV_MAX_LEVEL===100},{name:'满级功能与存档接口存在',run:()=>typeof developerMaxLevel==='function'&&typeof saveGame==='function'},{name:'满级成长公式与经验公式一致',run:()=>typeof expNeed==='function'&&SECTS.every(s=>Object.values(s.grow).every(Number.isFinite))}]);
  registerFeatureTest('开发者无限银两','开发工具',[{name:'银两数值处于安全整数范围',run:()=>Number.isSafeInteger(DEV_INFINITE_GOLD)&&DEV_INFINITE_GOLD>0},{name:'无限银两功能与存档接口存在',run:()=>typeof developerInfiniteGold==='function'&&typeof saveGame==='function'},{name:'银两可正常显示与保存',run:()=>typeof fmt==='function'&&typeof updateHUD==='function'&&typeof getSaveData==='function'&&getSaveData().gold===P.gold}]);
@@ -6064,7 +6160,8 @@ function registerBuiltInDeveloperTests(){
  registerFeatureTest('五方镇域套装与装备图鉴','2.0收集成长',[{name:'两件、三件、五件套效果阶梯正确',run:()=>{const a=getGearSetBonuses(1),b=getGearSetBonuses(2),d=getGearSetBonuses(3),e=getGearSetBonuses(5);return !Object.keys(a).length&&b.atk===8&&d.magic===10&&e.hp===120&&e.spd===8;}},{name:'装备图鉴覆盖全部装备并记录已拥有',run:()=>{const x=getGearCodexProgress();return x.total===Object.keys(GEAR_CATALOG).length&&x.found<=x.total&&typeof renderGearCodex==='function';}},{name:'套装与图鉴字段进入存档',run:()=>{const d=getSaveData();return d.gearCodex===P.gearCodex&&d.gearSetApplied===P.gearSetApplied;}},{name:'装备穿脱会同步套装属性',run:()=>equipGear.toString().includes('syncGearSetBonuses')&&unequipGear.toString().includes('syncGearSetBonuses')}]);
  registerFeatureTest('装备与锻造','2.0装备成长',[{name:'装备目录包含五个部位且保留基础装备',run:()=>GEAR_SLOTS.length===5&&Object.keys(GEAR_CATALOG).length===15&&Object.keys(GEAR_CATALOG).includes('iron_sword')},{name:'装备背包与穿戴槽数据有效',run:()=>Array.isArray(P.gearInventory)&&P.equipment&&GEAR_SLOTS.every(([s])=>Object.prototype.hasOwnProperty.call(P.equipment,s))},{name:'购买、穿戴、卸下与锻造入口存在',run:()=>typeof buyGear==='function'&&typeof equipGear==='function'&&typeof unequipGear==='function'&&typeof forgeGear==='function'},{name:'装备数据包含存档字段',run:()=>{const d=getSaveData();return !!d&&!!d.equipment&&Array.isArray(d.gearInventory);}}]);
  registerFeatureTest('存档系统','数据安全',[{name:'保存与读取函数存在',run:()=>typeof saveGame==='function'&&typeof loadGame==='function'},{name:'存档结构可生成',run:()=>{const d=getSaveData();return !!d&&d.name===P.name&&d.lv===P.lv&&!!d.bag;}}]);
- registerFeatureTest('世界遭遇频率与传送石碑','世界移动',[{name:'普通怪物地图显示密度已降低',run:()=>getMapMonster.toString().includes('h < 0.94')},{name:'遭遇战至少间隔14步且概率触发',run:()=>onStep.toString().includes('P.steps - (Number(P.lastEncounterStep)||0) < 14')&&onStep.toString().includes('Math.random() >= 0.14')},{name:'怪物队伍默认单只且高等级才有低概率多只',run:()=>rollEncounterMobCount(1,0.01)===1&&rollEncounterMobCount(15,0.10)===2&&rollEncounterMobCount(40,0.01)===3},{name:'全部区域都有传送石碑坐标与交互',run:()=>SCENES.every(scene=>TILE_ICON[getTile(Math.round(scene.cx),Math.round(scene.cy)+3)]?.action==='openTeleportStone')},{name:'传送只允许已激活区域且落点避开水域与Boss',run:()=>typeof teleportToScene==='function'&&typeof findTeleportLanding==='function'&&teleportToScene.toString().includes('teleportStones.includes')},{name:'传送进度和遭遇冷却写入存档',run:()=>{const d=getSaveData();return Array.isArray(d.teleportStones)&&Number.isFinite(d.lastEncounterStep);}}]);
+ registerFeatureTest('飞升仙界独立系统','仙界扩展',[{name:'九重仙界境界顺序完整',run:()=>IMMORTAL_STAGES.join('|')==='人仙|地仙|天仙|真仙|金仙|太乙金仙|大罗金仙|混元大罗金仙（仙帝）|道祖'},{name:'仙界资源与凡界数据独立',run:()=>P.immortalRealm&&P.immortalRealm.materials!==P.bag&&P.immortalRealm.qi!==P.gold&&P.immortalRealm.jade!==P.gold},{name:'仙界独立数据进入存档且旧档可初始化',run:()=>!!getSaveData().immortalRealm&&normalizeImmortalRealm(null).unlocked===false&&applySaveData.toString().includes('normalizeImmortalRealm(data.immortalRealm)')},{name:'飞升要求凡界满级及五大Boss证明',run:()=>canAscendToImmortal.toString().includes('DEV_MAX_LEVEL')&&IMMORTAL_BOSS_IDS.length===5},{name:'仙府、仙宗、游历功能函数齐全',run:()=>typeof upgradeImmortalFacility==='function'&&typeof plantImmortalField==='function'&&typeof joinImmortalSect==='function'&&typeof buyImmortalTechnique==='function'&&typeof buyImmortalArtifact==='function'&&typeof immortalExplore==='function'&&typeof breakthroughImmortalStage==='function'},{name:'界域导航仅在飞升后开放',run:()=>syncImmortalNavigation.toString().includes('r.unlocked')&&typeof setImmortalView==='function'}]);
+registerFeatureTest('世界遭遇频率与传送石碑','世界移动',[{name:'普通怪物地图显示密度已降低',run:()=>getMapMonster.toString().includes('h < 0.94')},{name:'遭遇战至少间隔14步且概率触发',run:()=>onStep.toString().includes('P.steps - (Number(P.lastEncounterStep)||0) < 14')&&onStep.toString().includes('Math.random() >= 0.14')},{name:'怪物队伍默认单只且高等级才有低概率多只',run:()=>rollEncounterMobCount(1,0.01)===1&&rollEncounterMobCount(15,0.10)===2&&rollEncounterMobCount(40,0.01)===3},{name:'全部区域都有传送石碑坐标与交互',run:()=>SCENES.every(scene=>TILE_ICON[getTile(Math.round(scene.cx),Math.round(scene.cy)+3)]?.action==='openTeleportStone')},{name:'传送只允许已激活区域且落点避开水域与Boss',run:()=>typeof teleportToScene==='function'&&typeof findTeleportLanding==='function'&&teleportToScene.toString().includes('teleportStones.includes')},{name:'传送进度和遭遇冷却写入存档',run:()=>{const d=getSaveData();return Array.isArray(d.teleportStones)&&Number.isFinite(d.lastEncounterStep);}}]);
  registerFeatureTest('2.0隐藏区域探索','世界探索',[{name:'新增东海湾与幽谷秘境',run:()=>['donghai','yougu'].every(id=>SCENES.some(x=>x.id===id&&x.hidden))},{name:'区域等级门槛与首次发现逻辑有效',run:()=>typeof canEnterRegion==='function'&&typeof discoverRegion==='function'&&SCENES.filter(x=>x.hidden).every(x=>x.lv>0)},{name:'新区域拥有独立地形与怪物',run:()=>SCENES.find(x=>x.id==='donghai').biome==='coast'&&SCENES.find(x=>x.id==='yougu').biome==='forest'&&['haisha','chaoxi','jiaolong','youlu','guteng','guguai'].every(id=>!!MOBS[id])},{name:'探索进度进入存档且兼容旧档',run:()=>Array.isArray(P.discoveredRegions)&&getSaveData().discoveredRegions===P.discoveredRegions&&applySaveData.toString().includes("P.discoveredRegions=['changan','jiangnan','datang','beiju','huoyan']")}]);
 }
 registerBuiltInDeveloperTests();window.registerFeatureTest=registerFeatureTest;
