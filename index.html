@@ -1565,7 +1565,7 @@ body.graphics-3d .battle-unit .bu-icon{filter:drop-shadow(0 7px 4px rgba(0,0,0,.
 body.graphics-3d #worldMapCanvas{border-radius:10px;box-shadow:0 14px 24px rgba(0,0,0,.48),inset 0 2px 0 rgba(255,255,255,.18)}
 body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,rgba(125,170,150,.08),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
 
-#graphicsToggle{margin-left:6px;flex:0 0 auto;min-width:54px;padding:5px 7px;border:1px solid rgba(255,225,145,.7);border-radius:7px;background:linear-gradient(180deg,#426d91,#18334d);color:#fff2c5;font:inherit;font-size:10px;font-weight:800;line-height:1.2;box-shadow:inset 0 1px 0 #ffffff55,0 2px 0 #071522;cursor:pointer;touch-action:manipulation}
+#graphicsToggle{position:relative;z-index:100;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;margin-left:6px;flex:0 0 auto;min-width:54px;padding:5px 7px;border:1px solid rgba(255,225,145,.7);border-radius:7px;background:linear-gradient(180deg,#426d91,#18334d);color:#fff2c5;font:inherit;font-size:10px;font-weight:800;line-height:1.2;box-shadow:inset 0 1px 0 #ffffff55,0 2px 0 #071522;cursor:pointer;touch-action:manipulation}
 #graphicsToggle:active{transform:translateY(1px)}
 body.graphics-3d #stage{perspective:950px;perspective-origin:50% 44%;background:radial-gradient(ellipse at 50% 38%,#426e4a,#102619 78%)}
 body.graphics-3d #world{transform:rotateX(34deg) scale(1.12);transform-origin:50% 54%;transform-style:preserve-3d;overflow:visible;filter:saturate(1.13) contrast(1.04);will-change:transform}
@@ -1720,7 +1720,7 @@ body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,
       <div class="g-icon">💰</div>
       <div class="g-val"><span id="goldVal">100</span><small>两</small></div>
     </div>
-    <button id="graphicsToggle" type="button" aria-label="切换2D或2.5D画质" aria-pressed="false">🧊 2D</button>
+    <button id="graphicsToggle" type="button" aria-label="切换2D或2.5D画质" aria-pressed="false" onclick="toggleGraphicsMode();return false;">🧊 2D</button>
   </header>
   
   <!-- ============ 主视图区 ============ -->
@@ -6298,13 +6298,14 @@ function setGraphicsMode(mode,announce=true){
  try{localStorage.setItem(GRAPHICS_MODE_KEY,next);}catch(_){}if(announce&&typeof toast==='function')toast(next==='3d'?'✨ 已切换到2.5D立体画质':'🟩 已切换到2D经典画质');return next;
 }
 function toggleGraphicsMode(){return setGraphicsMode(getGraphicsMode()==='3d'?'2d':'3d');}
-function initGraphicsMode(){const btn=document.getElementById('graphicsToggle');if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.addEventListener('click',toggleGraphicsMode);}setGraphicsMode(getGraphicsMode(),false);}
+function initGraphicsMode(){const btn=document.getElementById('graphicsToggle');if(btn){btn.onclick=toggleGraphicsMode;btn.disabled=false;btn.style.pointerEvents='auto';}setGraphicsMode(getGraphicsMode(),false);}
 
 registerBuiltInDeveloperTests();window.registerFeatureTest=registerFeatureTest;
 
+/* 画质按钮先初始化，避免游戏初始化异常时按钮失效 */
+initGraphicsMode();
 /* DOM 已经在脚本前生成，因此这里可以直接初始化 */
 initGame();
-initGraphicsMode();
 
 
 
