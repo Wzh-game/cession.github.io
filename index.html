@@ -822,6 +822,7 @@ html,body{
   opacity:1;pointer-events:auto;
 }
 
+.updates-timeline{position:relative;padding-left:5px}.update-date{position:sticky;top:0;z-index:2;padding:8px 10px;margin:10px 0;color:#ffe8a0;font-weight:bold;background:linear-gradient(90deg,#3b2611,#211608);border-left:3px solid #d6a64c;border-radius:5px;font-size:12px}.update-date.future-date{color:#a8d3ff;border-color:#76a9ee;background:linear-gradient(90deg,#162d4a,#101b2c)}
 .update-entry{padding:10px;margin:0 0 8px;border:1px solid rgba(240,200,96,.3);border-radius:7px;background:rgba(0,0,0,.2);line-height:1.65}.update-entry b{display:block;color:#ffe8a0;font-size:12px}.update-entry small{display:block;color:#c5a66b;margin:2px 0 5px}.update-entry p{color:#f0e0b8;font-size:11px}.update-entry.future{border-color:rgba(120,180,255,.4);background:rgba(20,40,70,.25)}
 
 /* ================= 通用弹窗容器 ================= */
@@ -1784,7 +1785,28 @@ body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,
   
   <!-- ============ 更新日志 ============ -->
   <div class="modal" id="modalUpdates"><div class="dialog"><div class="dialog-head"><div class="dialog-title">📖 更新日志</div><button class="dialog-close" data-close="modalUpdates">✕</button></div><div class="dialog-body" id="updatesBody" style="overflow:auto;max-height:70vh">
-    <div style="padding:8px;color:#ffe8a0;text-align:center">从游戏初版到未来更新计划</div>
+    <div class="updates-timeline">
+    <div class="update-date">📅 早期版本 · 日期未记录</div>
+    <div class="update-entry"><b>🌟 初版 · 梦幻西游网页 RPG</b><small>游戏基础框架</small><p>建立像素风单机 RPG：角色移动、地图探索、人物属性、银两、气血/法力、战斗、任务、门派与基础存档。</p></div>
+    <div class="update-date">📅 后续版本 · 日期未记录</div>
+    <div class="update-entry"><b>🗺️ 世界与探索扩展</b><small>地图更新</small><p>扩展长安城及多个野外区域，加入地形、怪物、Boss 挑战、区域探索、坐标 HUD、小地图和传送石碑。</p></div>
+    <div class="update-entry"><b>⚔️ 战斗与 Boss 更新</b><small>战斗系统</small><p>加入区域 Boss、专属技能、狂暴机制、首次击败奖励、功法与装备战利品。</p></div>
+    <div class="update-entry"><b>📚 功法修炼</b><small>成长系统</small><p>新增功法入口与在线修炼进度，功法按 Boss 难度递增，支持进度保存。</p></div>
+    <div class="update-entry"><b>🛡️ 装备成长与锻造</b><small>装备系统</small><p>新增角色装备、锻造强化、Boss 专属装备、套装与装备图鉴。</p></div>
+    <div class="update-entry"><b>🌌 隐藏区域与世界扩展</b><small>探索更新</small><p>加入东海湾、幽谷秘境及区域专属怪物、地貌和发现记录；调整遭遇频率并完善传送。</p></div>
+    <div class="update-date">📅 2026-11-15</div>
+    <div class="update-entry"><b>🐾 召唤兽系统扩展</b><small>宠物成长</small><p>更新召唤兽捕捉、成长、进化、专属技能、资质、技能研习、仓库管理、装备与培养功能。</p></div>
+    <div class="update-date">📅 2026-11-16</div>
+    <div class="update-entry"><b>☯️ 飞升仙界 · 仙界玩法</b><small>2.0 阶段更新</small><p>新增仙界独立进度、九重境界、仙府、仙宗、仙法、仙器、游历、仙界 Boss 与遭遇战。</p></div>
+    <div class="update-date">📅 2026-11-17</div>
+    <div class="update-entry"><b>💎 仙界每日签到</b><small>日常玩法</small><p>加入每日签到和连续签到奖励，修复日期记录问题，防止刷新重复领取。</p></div>
+    <div class="update-entry"><b>✨ 仙玉自动生成</b><small>资源系统</small><p>解锁仙界后，每秒自动产生 0.5 仙玉。</p></div>
+    <div class="update-date">📅 2026-11-18</div>
+    <div class="update-entry"><b>🎨 画质切换</b><small>视觉更新</small><p>加入经典 2D 与 CSS 透视立体 2.5D 画质切换，偏好独立保存。当前 2.5D 并非真正 WebGL 3D。</p></div>
+    <div class="update-entry"><b>📖 游戏内更新日志</b><small>体验优化</small><p>新增按日期查看的更新记录页面，玩家可在游戏中了解版本变化。</p></div>
+    <div class="update-date future-date">🔮 未来更新计划</div>
+    <div class="update-entry future"><b>持续开发</b><small>计划内容不代表已实现</small><p>继续扩展剧情任务、地图与隐藏玩法；丰富装备、召唤兽和仙界成长；优化移动端操作、界面与战斗表现。具体内容将随开发调整。</p></div>
+  </div>
     <div class="update-entry"><b>🌟 初版 · 梦幻西游网页 RPG</b><small>游戏基础框架</small><p>建立像素风单机 RPG：角色移动、地图探索、人物属性、银两、气血/法力、战斗、任务、门派与基础存档。</p></div>
     <div class="update-entry"><b>🗺️ 世界与探索扩展</b><small>地图更新</small><p>扩展长安城及多个野外区域，加入地形、怪物、Boss 挑战、区域探索、坐标 HUD、小地图和传送石碑。</p></div>
     <div class="update-entry"><b>⚔️ 战斗与 Boss 更新</b><small>战斗系统</small><p>加入五大区域 Boss、专属技能、狂暴机制、首次击败奖励、功法与装备战利品。</p></div>
