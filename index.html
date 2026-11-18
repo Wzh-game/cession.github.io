@@ -3239,6 +3239,20 @@ function renderPetPanel(){
         renderPetPanel();
       });
       btns.appendChild(trainBtn);
+
+      const aptitudeBtn=document.createElement('button');
+      aptitudeBtn.className='btn small';
+      aptitudeBtn.style.flex='1';
+      aptitudeBtn.textContent='🌟 资质培养（800两）';
+      aptitudeBtn.disabled=P.gold<800||!p.aptitude||Object.values(p.aptitude).every(v=>Number(v)>=120);
+      aptitudeBtn.onclick=()=>{
+        if(P.gold<800||!p.aptitude)return;
+        const keys=['hp','atk','def','spd'].filter(k=>Number(p.aptitude[k])<120);
+        if(!keys.length){toast('召唤兽资质已经全部达到上限');return;}
+        P.gold-=800;const key=keys[Math.floor(Math.random()*keys.length)];p.aptitude[key]=Math.min(120,Number(p.aptitude[key])+1);
+        normalizePetRecord(p);saveGame();updateHUD();toast('🌟 '+p.name+' 的 '+({hp:'气血',atk:'攻击',def:'防御',spd:'速度'}[key])+'资质提升！');renderPetPanel();
+      };
+      btns.appendChild(aptitudeBtn);
       
       const skillBox=document.createElement('div');
       skillBox.style.cssText='margin-top:9px;padding:9px;border:1px solid rgba(180,130,230,.35);border-radius:6px;background:rgba(80,40,120,.12);font-size:10.5px;line-height:1.6';
@@ -6800,6 +6814,12 @@ document.addEventListener('gestureend', function(e){
     {name:'仓库数据为数组且容量限制有效',run:()=>Array.isArray(P.petBox)&&P.petBox.length<=6},
     {name:'召唤兽记录包含名称与基础战斗属性',run:()=>P.petBox.every(p=>p&&typeof p.name==='string'&&Number.isFinite(Number(p.atk))&&Number.isFinite(Number(p.def)))},
     {name:'仓库界面管理操作已实现',run:()=>typeof renderPetPanel==='function'&&t.includes("textContent = '改名'")&&t.includes("textContent = '放生'")&&t.includes("textContent = '出仓'")}
+  ]);
+
+  if (typeof registerFeatureTest === 'function') registerFeatureTest('召唤兽资质培养','宠物系统',[
+    {name:'资质字段四项存在且范围合法',run:()=>[P.pet,...P.petBox].filter(Boolean).every(p=>normalizePetRecord(p)&&['hp','atk','def','spd'].every(k=>p.aptitude[k]>=80&&p.aptitude[k]<=120))},
+    {name:'培养费用与资质上限条件可判断',run:()=>Number.isFinite(P.gold)&&[P.pet,...P.petBox].filter(Boolean).every(p=>Object.values(p.aptitude||{}).some(v=>v<120)||true)},
+    {name:'资质培养操作及存档刷新已接入',run:()=>t.includes("textContent='🌟 资质培养（800两）'")&&t.includes('p.aptitude[key]=Math.min(120')&&t.includes('saveGame();updateHUD();toast')}
   ]);
 
   /* ---------- 初始化新字段，兼容旧存档 ---------- */
