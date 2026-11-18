@@ -822,6 +822,8 @@ html,body{
   opacity:1;pointer-events:auto;
 }
 
+.update-entry{padding:10px;margin:0 0 8px;border:1px solid rgba(240,200,96,.3);border-radius:7px;background:rgba(0,0,0,.2);line-height:1.65}.update-entry b{display:block;color:#ffe8a0;font-size:12px}.update-entry small{display:block;color:#c5a66b;margin:2px 0 5px}.update-entry p{color:#f0e0b8;font-size:11px}.update-entry.future{border-color:rgba(120,180,255,.4);background:rgba(20,40,70,.25)}
+
 /* ================= 通用弹窗容器 ================= */
 .dialog{
   width:100%;max-width:440px;
@@ -1772,6 +1774,7 @@ body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,
     </button>
     <button class="menu-btn" data-menu="cultivation"><span class="mi">📚</span><span class="mt">功法</span></button>
 <button class="menu-btn" data-menu="developer"><span class="mi">🧪</span><span class="mt">开发者</span></button>
+    <button class="menu-btn" data-menu="updates"><span class="mi">📖</span><span class="mt">更新日志</span></button>
     <button class="menu-btn" data-menu="realmSwitch" style="display:none"><span class="mi">🌌</span><span class="mt">仙界</span></button>
     <button class="menu-btn" data-menu="immortalMansion" style="display:none"><span class="mi">🏯</span><span class="mt">仙府</span></button>
     <button class="menu-btn" data-menu="immortalSect" style="display:none"><span class="mi">🏛️</span><span class="mt">仙宗</span></button>
@@ -1779,6 +1782,21 @@ body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,
     <a class="menu-btn repo-link" href="https://github.com/wzh131213-dev/cession.github.io/tree/add-save-import-export" target="_blank" rel="noopener noreferrer" aria-label="打开GitHub项目仓库"><span class="mi">🐙</span><span class="mt">GitHub</span></a>
   </footer>
   
+  <!-- ============ 更新日志 ============ -->
+  <div class="modal" id="modalUpdates"><div class="dialog"><div class="dialog-head"><div class="dialog-title">📖 更新日志</div><button class="dialog-close" data-close="modalUpdates">✕</button></div><div class="dialog-body" id="updatesBody" style="overflow:auto;max-height:70vh">
+    <div style="padding:8px;color:#ffe8a0;text-align:center">从游戏初版到未来更新计划</div>
+    <div class="update-entry"><b>🌟 初版 · 梦幻西游网页 RPG</b><small>游戏基础框架</small><p>建立像素风单机 RPG：角色移动、地图探索、人物属性、银两、气血/法力、战斗、任务、门派与基础存档。</p></div>
+    <div class="update-entry"><b>🗺️ 世界与探索扩展</b><small>地图更新</small><p>扩展长安城及多个野外区域，加入地形、怪物、Boss 挑战、区域探索、坐标 HUD、小地图和传送石碑。</p></div>
+    <div class="update-entry"><b>⚔️ 战斗与 Boss 更新</b><small>战斗系统</small><p>加入五大区域 Boss、专属技能、狂暴机制、首次击败奖励、功法与装备战利品。</p></div>
+    <div class="update-entry"><b>📚 功法修炼</b><small>成长系统</small><p>新增功法入口与在线修炼进度，功法按 Boss 难度递增，支持成功/失败、进度保存与离线暂停。</p></div>
+    <div class="update-entry"><b>🐾 召唤兽 2.0</b><small>宠物系统</small><p>新增捕捉、成长、进化、专属技能、资质、技能研习、仓库管理、装备和资质培养。</p></div>
+    <div class="update-entry"><b>🛡️ 装备成长与锻造</b><small>装备系统</small><p>新增五部位角色装备、锻造强化、Boss 专属装备、五方镇域套装与装备图鉴。</p></div>
+    <div class="update-entry"><b>🌌 隐藏区域与世界扩展</b><small>探索更新</small><p>加入东海湾、幽谷秘境及区域专属怪物、地貌和发现记录；调整遭遇频率并完善传送。</p></div>
+    <div class="update-entry"><b>☯️ 飞升仙界</b><small>2.0 第二阶段</small><p>新增独立仙界进度、九重境界、仙府、仙宗、仙法、仙器、游历、仙界 Boss 与普通遭遇战。</p></div>
+    <div class="update-entry"><b>💎 仙界日常与资源</b><small>近期更新</small><p>仙界每日签到、连续签到奖励、仙玉自动产出（解锁仙界后每秒 +0.5）、仙府设施与资源成长。</p></div>
+    <div class="update-entry"><b>🎨 画质切换</b><small>视觉更新</small><p>加入经典 2D 与 CSS 透视立体 2.5D 画质切换，偏好独立保存。当前 2.5D 并非真正 WebGL 3D。</p></div>
+    <div class="update-entry future"><b>🔮 未来更新计划</b><small>持续开发 · 计划内容不代表已实现</small><p>继续扩展剧情任务、地图与隐藏玩法；丰富装备、召唤兽和仙界成长；优化移动端操作、界面与战斗表现。具体内容将随开发调整。</p></div>
+  </div><div class="dialog-foot"><button class="btn primary" data-close="modalUpdates">关闭</button></div></div></div>
   <!-- ============ 弹窗容器 ============ -->
   
   <!-- 人物面板 -->
@@ -2830,6 +2848,7 @@ function openDeveloperPanelWithPassword(){
 $$('.menu-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const menu = btn.dataset.menu;
+    if (menu === 'updates'){openModal('modalUpdates');return;}
     if (menu === 'char')  openCharPanel();
     if (menu === 'bag')   openBagPanel();
     if (menu === 'equipment'){renderEquipmentPanel();openModal('modalEquipment');}
