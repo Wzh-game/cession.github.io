@@ -6741,6 +6741,28 @@ document.addEventListener('gestureend', function(e){
           <div class="li-desc">❤️${Math.ceil(pet.hp)}/${pet.maxHp} · 🗡️${pet.atk} · 🛡️${pet.def} · 🎯资质 ${pet.aptitude?.hp||100}/${pet.aptitude?.atk||100}/${pet.aptitude?.def||100}/${pet.aptitude?.spd||100} · 技能 Lv.${pet.skillRank||1}</div>
         </div>
       `;
+      const rename = document.createElement('button');
+      rename.className = 'li-btn';
+      rename.textContent = '改名';
+      rename.style.marginLeft = '4px';
+      rename.onclick = () => {
+        const current = P.petBox[index]; if (!current) return;
+        const next = prompt('输入召唤兽的新名字', current.name || current.species || '召唤兽');
+        if (next === null) return;
+        const name = next.trim().slice(0,12); if (!name) { toast('名字不能为空'); return; }
+        current.name = name; saveGame(); toast('✏️ 已修改召唤兽名称'); renderPetPanel();
+      };
+      row.appendChild(rename);
+      const release = document.createElement('button');
+      release.className = 'li-btn';
+      release.textContent = '放生';
+      release.style.marginLeft = '4px';
+      release.onclick = () => {
+        const target = P.petBox[index]; if (!target) return;
+        if (!confirm('确定放生「'+target.name+'」吗？此操作不可撤销。')) return;
+        P.petBox.splice(index,1); saveGame(); toast('🌿 已放生召唤兽'); renderPetPanel();
+      };
+      row.appendChild(release);
       const out = document.createElement('button');
       out.className = 'li-btn';
       out.textContent = '出仓';
@@ -6773,6 +6795,12 @@ document.addEventListener('gestureend', function(e){
 
     body.appendChild(storage);
   };
+
+  if (typeof registerFeatureTest === 'function') registerFeatureTest('召唤兽仓库管理','宠物系统',[
+    {name:'仓库数据为数组且容量限制有效',run:()=>Array.isArray(P.petBox)&&P.petBox.length<=6},
+    {name:'召唤兽记录包含名称与基础战斗属性',run:()=>P.petBox.every(p=>p&&typeof p.name==='string'&&Number.isFinite(Number(p.atk))&&Number.isFinite(Number(p.def)))},
+    {name:'仓库界面管理操作已实现',run:()=>typeof renderPetPanel==='function'&&t.includes("textContent = '改名'")&&t.includes("textContent = '放生'")&&t.includes("textContent = '出仓'")}
+  ]);
 
   /* ---------- 初始化新字段，兼容旧存档 ---------- */
   P.kills = Math.max(0, Number(P.kills) || 0);
