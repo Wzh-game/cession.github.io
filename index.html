@@ -6813,7 +6813,8 @@ document.addEventListener('gestureend', function(e){
     body.appendChild(storage);
   };
 
-  if (typeof registerFeatureTest === 'function') registerFeatureTest('仙玉自动产出','仙界系统',[{name:'每秒产出配置为0.5仙玉',run:()=>IMMORTAL_JADE_PER_SECOND===0.5},{name:'仙界在线计时器自动增加仙玉',run:()=>typeof tickImmortalRealm==='function'&&tickImmortalRealm.toString().includes('r.jade+=IMMORTAL_JADE_PER_SECOND')},{name:'产出逻辑仅在仙界解锁且页面可见时执行',run:()=>tickImmortalRealm.toString().includes('!r.unlocked')&&tickImmortalRealm.toString().includes("document.visibilityState!=='visible'")}]);\n  if (typeof registerFeatureTest === 'function') registerFeatureTest('仙界每日签到','仙界系统',[{name:'本地日期格式有效',run:()=>/^\\d{4}-\\d{2}-\\d{2}$/.test(immortalDailyDate())},{name:'签到函数与日期字段存在',run:()=>typeof claimImmortalDaily==='function'&&typeof immortalDailyDate==='function'},{name:'连续奖励递增并封顶7天',run:()=>20+5*6===50&&50+10*6===110}]);
+  if (typeof registerFeatureTest === 'function') registerFeatureTest('仙玉自动产出','仙界系统',[{name:'每秒产出配置为0.5仙玉',run:()=>IMMORTAL_JADE_PER_SECOND===0.5},{name:'仙界在线计时器自动增加仙玉',run:()=>typeof tickImmortalRealm==='function'&&tickImmortalRealm.toString().includes('r.jade+=IMMORTAL_JADE_PER_SECOND')},{name:'产出逻辑仅在仙界解锁且页面可见时执行',run:()=>tickImmortalRealm.toString().includes('!r.unlocked')&&tickImmortalRealm.toString().includes("document.visibilityState!=='visible'")}]);
+  if (typeof registerFeatureTest === 'function') registerFeatureTest('仙界每日签到','仙界系统',[{name:'本地日期格式有效',run:()=>/^\\d{4}-\\d{2}-\\d{2}$/.test(immortalDailyDate())},{name:'签到函数与日期字段存在',run:()=>typeof claimImmortalDaily==='function'&&typeof immortalDailyDate==='function'},{name:'连续奖励递增并封顶7天',run:()=>20+5*6===50&&50+10*6===110}]);
 
   if (typeof registerFeatureTest === 'function') registerFeatureTest('召唤兽仓库管理','宠物系统',[
     {name:'仓库数据为数组且容量限制有效',run:()=>Array.isArray(P.petBox)&&P.petBox.length<=6},
