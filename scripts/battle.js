@@ -689,6 +689,7 @@ function battlePrepare(mobs){
   $('battleLog').innerHTML = '';
   $('battleActions').innerHTML = '';
   $('resultBanner').classList.remove('show');
+       document.getElementById('stage')?.classList.remove('battle-active');
   
   renderBattleUnits();
   
