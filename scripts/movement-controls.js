@@ -9,10 +9,10 @@
   function findDirectionButton(event) {
     const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
     for (const node of path) {
-      if (node && node.matches && node.matches('#dpad button[data-dir]')) return node;
+      if (node && node.matches && node.matches('#dpad button[data-dir], #immortalDpad button[data-dir]')) return node;
     }
     const target = event.target;
-    return target && target.closest ? target.closest('#dpad button[data-dir]') : null;
+    return target && target.closest ? target.closest('#dpad button[data-dir], #immortalDpad button[data-dir]') : null;
   }
 
   function stop() {
@@ -23,11 +23,12 @@
 
   function move(dir, force) {
     const delta = directions[dir];
-    if (!delta || typeof window.tryMove !== 'function') return false;
+    if (!delta) return false;
     const now = Date.now();
     if (!force && now - lastMoveAt < 120) return false;
     lastMoveAt = now;
-    window.tryMove(delta[0], delta[1]);
+    if(window.isImmortalOpenWorldActive?.())window.moveImmortalOpenWorld?.(delta[0],delta[1]);
+    else if(typeof window.tryMove==='function')window.tryMove(delta[0],delta[1]);else return false;
     return true;
   }
 
@@ -96,6 +97,6 @@
     const delta = map[event.key];
     if (!delta) return;
     event.preventDefault();
-    if (typeof window.tryMove === 'function') window.tryMove(delta[0],delta[1]);
+    if(window.isImmortalOpenWorldActive?.())window.moveImmortalOpenWorld?.(delta[0],delta[1]);else if(typeof window.tryMove==='function')window.tryMove(delta[0],delta[1]);
   }, {capture:true});
 })();
