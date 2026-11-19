@@ -51,3 +51,6 @@
 
 /* 左侧功能栏与方向键留出独立触控区域 */
 @media(max-width:520px){#bottomBar{left:4px;right:auto}#dpad{left:68px;right:auto}}
+
+/* 战斗界面覆盖地图时隐藏探索方向键，避免战斗中误触移动。 */
+#stage.battle-active #dpad{display:none!important;}
