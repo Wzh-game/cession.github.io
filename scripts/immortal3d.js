@@ -54,7 +54,7 @@ function rebuild(){
  lastX=s.x;lastY=s.y;lastQuality=q;
  if(worldGroup){scene.remove(worldGroup);worldGroup.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
  worldGroup=new THREE.Group();scene.add(worldGroup);hits.length=0;
- const radius=q==='low'?8:q==='high'?10:12;
+ const radius=q==='low'?6:q==='high'?8:10;
  for(let dz=-radius;dz<=radius;dz++)for(let dx=-radius;dx<=radius;dx++){
   const info=window.getImmortal3DInfo?.(s.x+dx,s.y+dz)||{};buildTile(worldGroup,dx,dz,info);
  }
