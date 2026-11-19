@@ -1,7 +1,6 @@
 import {createMaterialFactory,createMeshAdder} from './three-shared.js';
-let THREE,mat,add,renderer,scene,camera,worldGroup,hero,clock,host,resizeObserver,ray,pointer,lastX=NaN,lastY=NaN,lastQuality='';
+let THREE,mat,add,renderer,scene,camera,worldGroup,hero,clock,host=null,resizeObserver=null,stageObserver=null,ray,pointer,lastX=NaN,lastY=NaN,lastQuality='';
 const hits=[];
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function makePixelSprite(kind,icon){
  const c=document.createElement('canvas');c.width=64;c.height=80;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
  if(kind==='hero'){
@@ -39,7 +38,7 @@ function landmark(parent,x,z,kind){
 }
 function buildTile(parent,dx,dz,info){
  const color=info.water?0x285b82:info.blocked?0x59677d:info.region==='chaos'?0x51415e:info.region==='zhuxian'?0x89705c:info.region==='yaochi'?0x5a9b9a:info.region==='forest'?0x376e45:info.region==='jiutian'?0x68964e:0x648a5a;
- const base=add(parent,new THREE.BoxGeometry(.98,.18,.98),mat(color),dx,-.11,dz,false,true);base.userData={dx,dz,info};
+ const base=add(parent,new THREE.BoxGeometry(.98,.18,.98),mat(color),dx,-.11,dz,false,true);base.userData={dx,dz,info};hits.push(base);
  if(info.water){const w=add(parent,new THREE.PlaneGeometry(.94,.94),new THREE.MeshStandardMaterial({color:0x54b7d0,transparent:true,opacity:.62,roughness:.2}),dx,-.012,dz,false,false);w.rotation.x=-Math.PI/2;}
  if(info.landmark)landmark(parent,dx,dz,info.landmark);
  else if(info.tree)tree(parent,dx,dz,info.region==='forest'?'forest':'normal');
@@ -49,7 +48,7 @@ function buildTile(parent,dx,dz,info){
  if(info.boss){shadow(parent,dx,dz,.56,.4,.4);const m=makePixelSprite('monster',info.boss.icon);m.scale.set(1.25,1.5,1);m.position.set(dx,.72,dz);parent.add(m);}
 }
 function rebuild(){
- const s=window.getImmortal3DState?.();if(!s)return;
+ const s=window.getImmortal3DState?.();if(!s||!scene)return;
  const q=document.documentElement.dataset.qualityLevel||'high';
  if(s.x===lastX&&s.y===lastY&&q===lastQuality)return;
  lastX=s.x;lastY=s.y;lastQuality=q;
@@ -57,46 +56,50 @@ function rebuild(){
  worldGroup=new THREE.Group();scene.add(worldGroup);hits.length=0;
  const radius=q==='low'?8:q==='high'?10:12;
  for(let dz=-radius;dz<=radius;dz++)for(let dx=-radius;dx<=radius;dx++){
-  const wx=s.x+dx,wy=s.y+dz,info=window.getImmortal3DInfo?.(wx,wy)||{};
-  buildTile(worldGroup,dx,dz,info);
-  const hit=worldGroup.children.find(o=>o.userData&&o.userData.dx===dx&&o.userData.dz===dz);
-  if(hit)hits.push(hit);
+  const info=window.getImmortal3DInfo?.(s.x+dx,s.y+dz)||{};buildTile(worldGroup,dx,dz,info);
  }
- hero.position.set(0,.02,0);
+ if(hero)hero.position.set(0,.68,0);
 }
 function resize(){if(!host||!renderer)return;const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 function quality(){
- const q=document.documentElement.dataset.qualityLevel||'high';
- renderer.setPixelRatio(Math.min(devicePixelRatio||1,q==='low'?.8:q==='high'?1.1:(matchMedia('(max-width:700px)').matches?1.25:1.5)));
+ if(!renderer||!host)return;const q=document.documentElement.dataset.qualityLevel||'high',mobile=matchMedia('(max-width:700px)').matches;
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,q==='low'?.8:q==='high'?1.1:(mobile?1.25:1.5)));
  renderer.shadowMap.enabled=q!=='low';renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- renderer.toneMapping=q==='extreme'?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;
- renderer.toneMappingExposure=q==='extreme'?1.1:1;
+ renderer.toneMapping=q==='extreme'?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;renderer.toneMappingExposure=q==='extreme'?1.1:1;
  renderer.setSize(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight),false);
 }
+function ensureHost(){
+ const next=document.getElementById('immortalMapWorld');if(!next||!renderer)return;
+ if(host===next&&renderer.domElement.parentElement===next){resize();return;}
+ if(resizeObserver)resizeObserver.disconnect();
+ host=next;host.appendChild(renderer.domElement);
+ resizeObserver=new ResizeObserver(()=>{resize();});resizeObserver.observe(host);
+ lastX=NaN;rebuild();quality();resize();
+}
 function clickWorld(e){
- const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+ if(!host||!renderer)return;const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
  ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(hits,false)[0];if(!hit)return;
- const {dx,dz}=hit.object.userData,s=window.getImmortal3DState?.();if(!s)return;
- if(Math.abs(dx)+Math.abs(dz)===1)window.moveImmortalOpenWorld?.(Math.sign(dx),Math.sign(dz));
- else if(dx===0&&dz===0)window.interactImmortalMap?.();
+ const {dx,dz,info}=hit.object.userData;
+ if(dx===0&&dz===0){if(info.site||info.boss)window.interactImmortalMap?.();return;}
+ if(Math.abs(dx)+Math.abs(dz)===1){window.moveImmortalOpenWorld?.(Math.sign(dx),Math.sign(dz));return;}
+ if(info.site||info.boss)window.toast?.('请走到地点旁边，再按「调查」进行互动');
 }
 function boot(){
- host=document.getElementById('immortalMapWorld');if(!host)return;
  scene=new THREE.Scene();scene.background=new THREE.Color(0x263a55);scene.fog=new THREE.FogExp2(0x263a55,.025);
  camera=new THREE.PerspectiveCamera(52,1,.1,100);camera.position.set(0,10,13);camera.lookAt(0,0,0);
  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer.domElement.id='immortal3DCanvas';
- Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',display:'block',touchAction:'pan-y'});
- host.appendChild(renderer.domElement);
+ Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',display:'block',touchAction:'manipulation'});
  scene.add(new THREE.HemisphereLight(0xddeaff,0x30283f,1.8));
- const sun=new THREE.DirectionalLight(0xffe5bf,3);sun.position.set(-6,12,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-15;sun.shadow.camera.right=15;sun.shadow.camera.top=15;sun.shadow.camera.bottom=-15;scene.add(sun);
+ const sun=new THREE.DirectionalLight(0xffe5bf,3);sun.position.set(-6,12,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-15;sun.shadow.camera.right=15;sun.shadow.camera.top=15;sun.shadow.camera.bottom=-15;sun.shadow.bias=-.0002;sun.shadow.normalBias=.03;scene.add(sun);
  hero=makePixelSprite('hero');hero.position.set(0,.68,0);scene.add(hero);
- const shadowMesh=new THREE.Mesh(new THREE.CircleGeometry(.38,20),new THREE.MeshBasicMaterial({color:0x080b18,transparent:true,opacity:.35,depthWrite:false}));shadowMesh.rotation.x=-Math.PI/2;shadowMesh.position.y=.012;scene.add(shadowMesh);
+ const sh=new THREE.Mesh(new THREE.CircleGeometry(.38,20),new THREE.MeshBasicMaterial({color:0x080b18,transparent:true,opacity:.35,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=.012;scene.add(sh);
  ray=new THREE.Raycaster();pointer=new THREE.Vector2();renderer.domElement.addEventListener('click',clickWorld);
- resizeObserver=new ResizeObserver(resize);resizeObserver.observe(host);clock=new THREE.Clock();rebuild();quality();
- const observer=new MutationObserver(()=>{if(document.getElementById('immortalMapWorld')===host){lastX=NaN;rebuild();resize();}});
- observer.observe(host,{attributes:true,attributeFilter:['class','style']});
- function frame(){requestAnimationFrame(frame);const active=host&&host.isConnected&&host.offsetParent!==null;if(active){const s=window.getImmortal3DState?.();if(s){const target=new THREE.Vector3(0,10,13);camera.position.lerp(target,.12);camera.lookAt(0,0,0);}hero.position.y=.68+Math.sin(clock.getElapsedTime()*3)*.035;hero.material.rotation=0;renderer.render(scene,camera);}}
- frame();window.updateImmortalWorld3D=()=>{rebuild();};window.mountImmortalWorld3D=()=>{lastX=NaN;rebuild();resize();};
+ stageObserver=new MutationObserver(()=>{ensureHost();});const stage=document.getElementById('immortalStage');if(stage)stageObserver.observe(stage,{childList:true,subtree:true});
+ ensureHost();clock=new THREE.Clock();
+ const qualityObserver=new MutationObserver(()=>{lastQuality='';quality();rebuild();});qualityObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-quality-level']});
+ function frame(){requestAnimationFrame(frame);if(host&&host.isConnected&&host.offsetParent!==null){hero.position.y=.68+Math.sin(clock.getElapsedTime()*3)*.035;renderer.render(scene,camera);}}
+ frame();
+ window.updateImmortalWorld3D=()=>{rebuild();};window.mountImmortalWorld3D=()=>{ensureHost();lastX=NaN;rebuild();resize();};
 }
 async function start(){try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);add=createMeshAdder(THREE);boot();}catch(e){console.warn('Immortal open world 3D unavailable',e);const el=document.getElementById('immortalMapWorld');if(el)el.innerHTML='<div class="immortal-world-fallback">3D 地图暂时无法加载，请检查网络或浏览器 WebGL 支持</div>';}}
 start();
