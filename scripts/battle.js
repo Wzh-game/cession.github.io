@@ -1448,6 +1448,8 @@ function finishBattle(result){
     P.gold += gold;
     P.battles++;
     P.kills = (P.kills || 0) + battle.units.filter(u => u.isEnemy && !u.alive).length;
+    const dailyDefeated=battle.units.filter(u=>u.isEnemy&&!u.alive);
+    if(typeof advanceDailyQuestProgress==='function')advanceDailyQuestProgress(dailyDefeated.length,dailyDefeated.filter(u=>u.isBoss).length);
     if (!P.killStats || typeof P.killStats !== 'object') P.killStats = {};
     const bossLoot=[];
     battle.units.filter(u=>u.isEnemy&&!u.alive).forEach(u=>{
