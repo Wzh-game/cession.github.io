@@ -282,7 +282,7 @@ let lastRenderX = null, lastRenderY = null;
 let cameraX = 0, cameraY = 0;
 
 function renderWorld(){
- if(typeof window.renderWorld3D==='function'){window.renderWorld3D();return;}
+ if(window.map3DEnabled!==false&&typeof window.renderWorld3D==='function'){window.renderWorld3D();return;}
   const vw = stage.clientWidth;
   const vh = stage.clientHeight;
   if (!vw || !vh) return;
