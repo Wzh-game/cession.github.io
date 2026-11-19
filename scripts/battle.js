@@ -612,6 +612,7 @@ function shakeUnit(uid){
 function battlePrepare(mobs){
   const overlay = createBattleUI();
   battle.active = true;
+  document.getElementById('stage')?.classList.add('battle-active');
   battle.immortalBossId = null;
   battle.immortalEncounterId = null;
   battle.over = false;
