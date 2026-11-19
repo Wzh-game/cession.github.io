@@ -557,6 +557,9 @@ function tryMove(dx, dy){
   onStep(nx, ny);
 }
 
+// Explicit bridge for the isolated input controller (including module contexts).
+window.tryMove = tryMove;
+
 /* ================= 每一步的随机事件 ================= */
 function onStep(x, y){
   const scene = getSceneAt(x, y);
