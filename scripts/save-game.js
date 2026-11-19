@@ -348,7 +348,7 @@ function setImmortalView(view){const r=P.immortalRealm;if(view==='immortal'&&!r.
 function syncImmortalNavigation(){
  const r=P.immortalRealm||createImmortalRealmState(),inside=!!(r.unlocked&&r.view==='immortal'),top=$('topbar'),mortal=$('stage'),immortal=$('immortalStage');
  if(top)top.style.display=inside?'none':'';if(mortal)mortal.style.display=inside?'none':'';if(immortal)immortal.style.display=inside?'flex':'none';
- const mortalMenus=['char','bag','equipment','skill','pet','task','cultivation'];
+ const mortalMenus=['char','bag','equipment','skill','pet','task','challenge','cultivation'];
  document.querySelectorAll('#bottomBar [data-menu]').forEach(btn=>{const key=btn.dataset.menu;let show=true;if(mortalMenus.includes(key))show=!inside;else if(['immortalMansion','immortalSect','immortalTravel'].includes(key))show=inside;else if(key==='realmSwitch')show=r.unlocked;btn.style.display=show?'flex':'none';});
  const sw=$('#bottomBar [data-menu="realmSwitch"]');if(sw){sw.querySelector('.mi').textContent=inside?'🏞️':'🌌';sw.querySelector('.mt').textContent=inside?'凡界':'仙界';}
 }
