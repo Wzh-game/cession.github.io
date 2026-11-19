@@ -1804,6 +1804,8 @@ body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,
     <div class="update-date">📅 2026-11-18</div>
     <div class="update-entry"><b>🎨 画质切换</b><small>视觉更新</small><p>加入经典 2D 与 CSS 透视立体 2.5D 画质切换，偏好独立保存。当前 2.5D 并非真正 WebGL 3D。</p></div>
     <div class="update-entry"><b>📖 游戏内更新日志</b><small>体验优化</small><p>新增按日期查看的更新记录页面，玩家可在游戏中了解版本变化。</p></div>
+    <div class="update-date">📅 2026-11-19</div>
+    <div class="update-entry"><b>🌌 召唤兽三重突破</b><small>召唤兽成长系统</small><p>召唤兽达到100级后可消耗银两进行三重突破，每重永久提升气血、攻击、防御与速度；突破进度自动保存。</p></div>
     <div class="update-date future-date">🔮 未来更新计划</div>
     <div class="update-entry future"><b>持续开发</b><small>计划内容不代表已实现</small><p>继续扩展剧情任务、地图与隐藏玩法；丰富装备、召唤兽和仙界成长；优化移动端操作、界面与战斗表现。具体内容将随开发调整。</p></div>
   </div>
@@ -2275,6 +2277,7 @@ function normalizePetRecord(pet){
  pet.speciesId=petBaseSpecies(pet);
  if(!pet.aptitude||typeof pet.aptitude!=='object')pet.aptitude={hp:100,atk:100,def:100,spd:100};
  ['hp','atk','def','spd'].forEach(k=>{pet.aptitude[k]=Math.max(80,Math.min(120,Math.floor(Number(pet.aptitude[k])||100)));});
+ pet.breakthrough=Math.max(0,Math.min(3,Math.floor(Number(pet.breakthrough)||0)));
  pet.skillRank=Math.max(1,Math.min(3,Math.floor(Number(pet.skillRank)||1)));
  pet.skillActions=Math.max(0,Math.floor(Number(pet.skillActions)||0));
  if(!Number.isFinite(Number(pet.maxHp))||Number(pet.maxHp)<=0)pet.maxHp=base?base.hp:100;
@@ -3307,6 +3310,31 @@ function renderPetPanel(){
         normalizePetRecord(p);saveGame();updateHUD();toast('🌟 '+p.name+' 的 '+({hp:'气血',atk:'攻击',def:'防御',spd:'速度'}[key])+'资质提升！');renderPetPanel();
       };
       btns.appendChild(aptitudeBtn);
+
+      const breakthroughCosts=[5000,12000,25000];
+      const breakthroughLevel=Math.max(0,Math.min(3,Number(p.breakthrough)||0));
+      const breakthroughCost=breakthroughCosts[breakthroughLevel];
+      const breakthroughBtn=document.createElement('button');
+      breakthroughBtn.className='btn small primary';breakthroughBtn.style.width='100%';breakthroughBtn.style.marginTop='6px';
+      breakthroughBtn.textContent=breakthroughLevel>=3?'🌌 已完成三重突破':'🌌 召唤兽突破 '+(breakthroughLevel+1)+'/3（'+(breakthroughCost||0)+'两）';
+      breakthroughBtn.disabled=p.lv<100||breakthroughLevel>=3||P.gold<breakthroughCost;
+      breakthroughBtn.title=p.lv<100?'召唤兽达到100级后开放突破':breakthroughLevel>=3?'已达到最高突破':'突破后永久提升召唤兽属性';
+      breakthroughBtn.onclick=()=>{
+        const tier=Math.max(0,Math.min(3,Number(p.breakthrough)||0));
+        const costs=[5000,12000,25000];const cost=costs[tier];
+        if(p.lv<100){toast('召唤兽需要达到100级才能突破');return;}
+        if(tier>=3){toast('召唤兽已达到最高突破');return;}
+        if(P.gold<cost){toast('银两不足，需要 '+cost+' 两');return;}
+        if(!confirm('确定消耗 '+cost+' 两，为 '+p.name+' 进行第 '+(tier+1)+' 重突破吗？'))return;
+        const hpRatio=p.maxHp>0?p.hp/p.maxHp:1;
+        P.gold-=cost;p.breakthrough=tier+1;
+        p.maxHp=Math.floor(p.maxHp*1.12);p.hp=Math.max(1,Math.floor(p.maxHp*hpRatio));
+        p.atk=Math.floor(p.atk*1.10);p.def=Math.floor(p.def*1.10);p.spd+=2;
+        normalizePetRecord(p);saveGame();updateHUD();
+        toast('🌌 '+p.name+' 完成第 '+p.breakthrough+' 重突破！');
+        addLog('【召唤兽】'+p.name+' 完成第 '+p.breakthrough+' 重突破','good');renderPetPanel();
+      };
+      content.appendChild(breakthroughBtn);
       
       const skillBox=document.createElement('div');
       skillBox.style.cssText='margin-top:9px;padding:9px;border:1px solid rgba(180,130,230,.35);border-radius:6px;background:rgba(80,40,120,.12);font-size:10.5px;line-height:1.6';
@@ -6882,6 +6910,12 @@ document.addEventListener('gestureend', function(e){
     {name:'资质字段四项存在且范围合法',run:()=>[P.pet,...P.petBox].filter(Boolean).every(p=>normalizePetRecord(p)&&['hp','atk','def','spd'].every(k=>p.aptitude[k]>=80&&p.aptitude[k]<=120))},
     {name:'培养费用与资质上限条件可判断',run:()=>Number.isFinite(P.gold)&&[P.pet,...P.petBox].filter(Boolean).every(p=>Object.values(p.aptitude||{}).some(v=>v<120)||true)},
     {name:'资质培养操作及存档刷新已接入',run:()=>t.includes("textContent='🌟 资质培养（800两）'")&&t.includes('p.aptitude[key]=Math.min(120')&&t.includes('saveGame();updateHUD();toast')}
+  ]);
+
+  if (typeof registerFeatureTest === 'function') registerFeatureTest('召唤兽三重突破','宠物系统',[
+    {name:'旧存档自动补充突破等级且限制0至3',run:()=>[P.pet,...P.petBox].filter(Boolean).every(p=>Number.isInteger(normalizePetRecord(p).breakthrough)&&p.breakthrough>=0&&p.breakthrough<=3)},
+    {name:'突破等级、费用与等级门槛已接入',run:()=>t.includes('breakthroughCosts=[5000,12000,25000]')&&t.includes('p.lv<100')&&t.includes('tier>=3')},
+    {name:'突破属性成长、扣费、保存与刷新已接入',run:()=>t.includes('P.gold-=cost;p.breakthrough=tier+1')&&t.includes('p.maxHp*1.12')&&t.includes('p.atk*1.10')&&t.includes('saveGame();updateHUD();')}
   ]);
 
   /* ---------- 初始化新字段，兼容旧存档 ---------- */
