@@ -41,3 +41,9 @@
   #bottomBar .menu-btn .mt{font-size:7px}
   #dpad{left:8px;bottom:8px;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:2px}
 }
+
+
+/* 方向键始终位于 3D 地图 Canvas 之上，并接收 iOS Pointer/Touch 输入 */
+#dpad{position:absolute;z-index:300;pointer-events:auto;touch-action:none;isolation:isolate}
+#dpad button{position:relative;z-index:301;pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+#world3dCanvas{z-index:1!important}
