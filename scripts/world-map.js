@@ -648,7 +648,8 @@ function onTileClick(wx, wy, tile){
 }
 
 /* ================= 方向键绑定：iPad/iPhone 触控 + 按住连续移动 ================= */
-$('#dpad button[data-dir]').forEach(btn => {
+/* $$ 才是 querySelectorAll；$ 只接受元素 ID，误用会导致本文件在此处中断。 */
+$$('#dpad button[data-dir]').forEach(btn => {
   const dir = btn.dataset.dir;
   const delta = {up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[dir];
   if (!delta) return;
@@ -659,19 +660,30 @@ $('#dpad button[data-dir]').forEach(btn => {
     lastMoveAt = now;
     tryMove(delta[0], delta[1]);
   };
-  const stop = () => {
-    if (repeatTimer) clearInterval(repeatTimer);
-    repeatTimer = null;
-  };
-  btn.addEventListener('pointerdown', e => {
-    e.preventDefault(); e.stopPropagation();
-    stop(); lastMoveAt = 0; move();
-    repeatTimer = setInterval(move, 190);
-    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
-  });
-  ['pointerup','pointercancel','lostpointercapture'].forEach(type => btn.addEventListener(type, stop));
+  const stop = () => { if (repeatTimer) clearInterval(repeatTimer); repeatTimer = null; };
+  if (window.PointerEvent) {
+    btn.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      stop(); lastMoveAt = 0; move();
+      repeatTimer = setInterval(move, 190);
+      try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    ['pointerup','pointercancel','lostpointercapture'].forEach(type => btn.addEventListener(type, stop));
+  } else {
+    btn.addEventListener('touchstart', e => {
+      e.preventDefault(); e.stopPropagation(); stop(); lastMoveAt = 0; move();
+      repeatTimer = setInterval(move, 190);
+    }, {passive:false});
+    ['touchend','touchcancel'].forEach(type => btn.addEventListener(type, stop));
+    btn.addEventListener('mousedown', e => { e.preventDefault(); stop(); lastMoveAt=0; move(); repeatTimer=setInterval(move,190); });
+    ['mouseup','mouseleave'].forEach(type => btn.addEventListener(type, stop));
+  }
   btn.addEventListener('contextmenu', e => e.preventDefault());
 });
+window.addEventListener('blur', () => $$('#dpad button[data-dir]').forEach(btn => {
+  btn.dispatchEvent(new Event('pointercancel'));
+}));
 /* 中心按钮：原地休息 */
 $('btnCenter').addEventListener('click', () => {
   if (typeof battle !== 'undefined' && battle && battle.active) return;
