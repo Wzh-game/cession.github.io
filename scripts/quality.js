@@ -3,7 +3,8 @@ function initGraphicsMode(){
  const btn=document.getElementById('graphicsToggle');
  if(!btn)return;
  btn.textContent='地图3D：开';
- btn.disabled=true;
+ btn.disabled=false;
+ btn.style.pointerEvents='none';
  btn.setAttribute('aria-pressed','true');
  btn.setAttribute('aria-label','世界地图与仙界地图使用3D，其余游戏界面使用2D');
  btn.title='地图使用3D；人物、战斗、召唤兽、装备和菜单保持2D';
