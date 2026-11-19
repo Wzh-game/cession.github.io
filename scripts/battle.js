@@ -1525,6 +1525,8 @@ function finishBattle(result){
 }
 
 function closeBattleUI(){
+  const returnToImmortalWorld=!!battle.returnToImmortalWorld;
+  battle.returnToImmortalWorld=false;
   // 彻底清理战斗锁与当前回合状态。
   battle.token++;
   battle.loopRunning = false;
@@ -1543,7 +1545,8 @@ function closeBattleUI(){
   }
   battle.units = [];
   battle.round = 0;
-  if(P.immortalRealm&&P.immortalRealm.view==='immortal')renderImmortalRealm(P.immortalRealm.activeTab);else renderWorld();
+  if(returnToImmortalWorld){setTimeout(()=>setImmortalView('immortal'),330);}
+  else if(P.immortalRealm&&P.immortalRealm.view==='immortal')renderImmortalRealm(P.immortalRealm.activeTab);else renderWorld();
 }
 
 
