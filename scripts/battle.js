@@ -282,7 +282,10 @@
       position:absolute;inset:0;
       display:none;flex-direction:column;
       align-items:center;justify-content:center;
-      gap:16px;z-index:180;
+      gap:12px;z-index:220;
+      overflow-y:auto;overscroll-behavior:contain;
+      padding:18px 12px max(24px,env(safe-area-inset-bottom));
+      -webkit-overflow-scrolling:touch;
       background:radial-gradient(circle at 50% 50%,rgba(0,0,0,.7),rgba(0,0,0,.9));
       backdrop-filter:blur(3px);
     }
@@ -315,7 +318,7 @@
     .rb-loot-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:3px 6px;margin-top:3px;border-radius:4px;background:rgba(255,255,255,.06);text-align:left}
     .rb-loot-item small{font-size:10px;color:#d5baff;white-space:nowrap}
     .rb-btn{
-      padding:11px 40px;
+      padding:11px 40px;flex:0 0 auto;min-height:44px;
       font-family:inherit;font-size:14px;font-weight:bold;
       letter-spacing:4px;
       color:#3a1f0e;
@@ -384,13 +387,13 @@ function createBattleUI(){
         <div class="battle-row enemy" id="enemyRow"></div>
         <div class="battle-row player" id="playerRow"></div>
         <div class="turn-banner" id="turnBanner"></div>
-        <div class="result-banner" id="resultBanner"></div>
       </div>
       <aside class="battle-log-panel">
         <div class="battle-log-title">战 斗 记 录</div>
         <div id="battleLog"></div>
       </aside>
     </div>
+    <div class="result-banner" id="resultBanner"></div>
     <div class="battle-footer">
       <div id="battleActions"></div>
       <div class="battle-tip">经典回合制战斗：普通攻击、技能、物品、防御、逃跑、自动战斗，策略自由搭配。</div>
