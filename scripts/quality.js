@@ -1,13 +1,42 @@
 /* 2.0 混合画面策略：凡界世界地图与仙界探索地图保持真实 3D，其余界面固定 2D。 */
+const MAP_3D_KEY='wzhgame_map_3d_v1';
+function isMap3DEnabled(){
+ try{return localStorage.getItem(MAP_3D_KEY)!=='0';}catch(_){return true;}
+}
+function setMapGraphicsMode(enabled,announce=true){
+ const on=!!enabled;
+ window.map3DEnabled=on;
+ const canvas=document.getElementById('world3dCanvas');
+ const legacy=document.getElementById('world');
+ if(canvas)canvas.style.display=on?'block':'none';
+ if(legacy)legacy.style.display=on?'none':'';
+ const btn=document.getElementById('graphicsToggle');
+ if(btn){
+  btn.disabled=false;
+  btn.style.pointerEvents='auto';
+  btn.textContent=on?'地图3D：开':'地图2D：开';
+  btn.setAttribute('aria-pressed',String(on));
+  btn.setAttribute('aria-label',on?'当前为3D地图，点击切换到2D地图':'当前为2D地图，点击切换到3D地图');
+  btn.title=on?'3D地图：Three.js立体地形与3D人物':'2D地图：经典像素地图与2D人物';
+ }
+ try{localStorage.setItem(MAP_3D_KEY,on?'1':'0');}catch(_){}
+ if(on){
+  if(typeof window.renderWorld3D==='function')window.renderWorld3D();
+ }else if(typeof window.renderWorld==='function'){
+  window.renderWorld();
+ }
+ if(announce&&typeof toast==='function')toast(on?'已切换为3D地图':'已切换为2D地图');
+ return on;
+}
+function toggleMapGraphicsMode(){return setMapGraphicsMode(!window.map3DEnabled);}
 function initGraphicsMode(){
  const btn=document.getElementById('graphicsToggle');
  if(!btn)return;
- btn.textContent='地图3D：开';
+ window.map3DEnabled=isMap3DEnabled();
  btn.disabled=false;
- btn.style.pointerEvents='none';
- btn.setAttribute('aria-pressed','true');
- btn.setAttribute('aria-label','世界地图与仙界地图使用3D，其余游戏界面使用2D');
- btn.title='地图使用3D；人物、战斗、召唤兽、装备和菜单保持2D';
+ btn.style.pointerEvents='auto';
+ btn.onclick=()=>toggleMapGraphicsMode();
+ setMapGraphicsMode(window.map3DEnabled,false);
 }
 const QUALITY_LEVELS=['low','high','extreme'];
 const QUALITY_LABELS={low:'低',high:'高',extreme:'极致'};
