@@ -1489,8 +1489,9 @@ function finishBattle(result){
     P.hp=Math.max(1,Math.floor(P.maxHp*.35));P.mp=Math.max(0,Math.floor(P.maxMp*.35));
     banner.innerHTML='<div class="rb-title lose">探索受挫</div><div class="rb-info">仙界妖物将你击退。凡界银两与经验不会损失。</div><button class="rb-btn" id="rbOk">返回仙界</button>';
   } else {
-    if(battle.challengeRound&&typeof failChallengeRun==='function')failChallengeRun('挑战失败');
-    const lost = Math.floor(P.gold * 0.1);
+    const challengeFailed=!!battle.challengeRound;
+    if(challengeFailed&&typeof failChallengeRun==='function')failChallengeRun('挑战失败');
+    const lost = challengeFailed ? 0 : Math.floor(P.gold * 0.1);
     P.gold = Math.max(0, P.gold - lost);
     P.hp = Math.max(1, Math.floor(P.maxHp * 0.25));
     P.mp = Math.max(0, Math.floor(P.maxMp * 0.3));
@@ -1498,8 +1499,7 @@ function finishBattle(result){
     banner.innerHTML = `
       <div class="rb-title lose">战 败</div>
       <div class="rb-info">
-        你被击倒在地……<br>
-        损失银两 <b>${fmt(lost)}</b> 两
+        ${challengeFailed?'挑战赛未能通过本关，本日挑战机会已结束。<br>挑战赛失败不扣除银两。':'你被击倒在地……<br>损失银两 <b>'+fmt(lost)+'</b> 两'}
       </div>
       <button class="rb-btn" id="rbOk">继 续</button>
     `;
