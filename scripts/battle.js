@@ -1514,7 +1514,7 @@ function finishBattle(result){
     const okBtn = $('rbOk');
     if (okBtn){
       okBtn.addEventListener('click', () => {
-        const nextChallenge=!!(battle.challengeRound&&battle.victory&&P.challenge&&P.challenge.active&&P.challenge.stage<=5);
+        const nextChallenge=!!(battle.victory&&P.challenge&&P.challenge.active&&P.challenge.stage<=5);
         closeBattleUI();
         if(nextChallenge)setTimeout(()=>startChallengeRound(),380);
       });
