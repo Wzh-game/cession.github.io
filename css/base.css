@@ -1582,7 +1582,7 @@ body.quality-extreme #world{filter:saturate(1.24) contrast(1.12) brightness(1.03
 body.quality-extreme .tile{box-shadow:inset 0 2px 0 rgba(255,255,255,.24),0 4px 0 rgba(0,0,0,.24),0 9px 13px rgba(0,0,0,.34)}
 body.quality-extreme .tile .deco,body.quality-extreme .tile .build,body.quality-extreme .tile .npc{filter:drop-shadow(0 5px 3px rgba(0,0,0,.72))}
 body.quality-extreme #player{filter:drop-shadow(0 9px 6px rgba(0,0,0,.82)) drop-shadow(0 0 9px rgba(255,220,130,.32))}
-body.quality-extreme #stage::before{opacity:.72;animation:qualityRain .42s linear infinite}
+body.quality-extreme #stage::before{opacity:0!important;animation:none!important}
 body.quality-extreme #stage::after{opacity:.78;background:radial-gradient(ellipse at 50% 40%,rgba(75,100,130,.08),rgba(4,10,22,.72) 100%),linear-gradient(180deg,rgba(90,115,145,.18),transparent 45%)}
 body.quality-high #stage::before{opacity:.16;background:linear-gradient(180deg,rgba(190,210,225,.2),transparent 45%)}
 @keyframes qualityRain{from{background-position:0 0}to{background-position:-18px 42px}}
