@@ -8,7 +8,7 @@ const ACHIEVEMENTS = [
  {id:'battle50',icon:'🏅',name:'身经百战',desc:'累计完成 50 场战斗',field:'battles',target:50,reward:{gold:2200,exp:1000}},
  {id:'kill100',icon:'👹',name:'百妖斩',desc:'累计击败 100 名敌人',field:'kills',target:100,reward:{gold:900,exp:450}},
  {id:'kill500',icon:'🔥',name:'妖魔克星',desc:'累计击败 500 名敌人',field:'kills',target:500,reward:{gold:3500,exp:1800}},
- {id:'regions5',icon:'🧭',name:'行走三界',desc:'发现全部 5 个凡界基础区域',field:'regions',target:5,reward:{gold:1000,exp:500}},
+ {id:'regions5',icon:'🧭',name:'东海寻踪',desc:'发现第一个隐藏凡界区域',field:'regions',target:6,reward:{gold:1000,exp:500}},
  {id:'regions7',icon:'🗺️',name:'踏遍山河',desc:'发现全部 7 个凡界区域',field:'regions',target:7,reward:{gold:2200,exp:1100}},
  {id:'boss3',icon:'👑',name:'镇域先锋',desc:'首次击败 3 个不同区域 Boss',field:'bosses',target:3,reward:{gold:1800,exp:900}},
  {id:'boss5',icon:'🐉',name:'五方镇守',desc:'首次击败全部 5 个区域 Boss',field:'bosses',target:5,reward:{gold:5000,exp:2500}},
