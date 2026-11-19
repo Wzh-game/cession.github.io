@@ -41,7 +41,7 @@ function initGraphicsMode(){
  setMapGraphicsMode(window.map3DEnabled,false);
 }
 const QUALITY_LEVELS=['low','high','extreme'];
-const QUALITY_LABELS={low:'低',high:'高',extreme:'极致'};
+const QUALITY_LABELS={low:'低',high:'高',extreme:'最真实'};
 const QUALITY_KEY='wzhgame_quality_level_v1';
 function getQualityLevel(){try{const v=localStorage.getItem(QUALITY_KEY);return QUALITY_LEVELS.includes(v)?v:'high';}catch(_){return 'high';}}
 function setQualityLevel(level,announce=true){
@@ -50,9 +50,9 @@ function setQualityLevel(level,announce=true){
  document.body.classList.add('quality-'+next);
  document.documentElement.dataset.qualityLevel=next;
  const btn=document.getElementById('qualityToggle');
- if(btn){btn.textContent='画质：'+QUALITY_LABELS[next];btn.setAttribute('aria-label','当前画质：'+QUALITY_LABELS[next]+'，点击切换');btn.title=next==='low'?'低画质：降低地图阴影与特效':next==='high'?'高画质：增强地图光影与天气':'极致画质：地图动态天气与精细光影';}
+ if(btn){btn.textContent='画质：'+QUALITY_LABELS[next];btn.setAttribute('aria-label','当前画质：'+QUALITY_LABELS[next]+'，点击切换');btn.title=next==='low'?'低画质：降低地图阴影与特效':next==='high'?'高画质：增强地图光影与天气':'最真实画质：高精度实时阴影、环境光遮蔽、动态天气与细致材质';}
  try{localStorage.setItem(QUALITY_KEY,next);}catch(_){}
- if(announce&&typeof toast==='function')toast('地图画质已切换：'+QUALITY_LABELS[next]);
+ if(announce&&typeof toast==='function')toast('画质已切换：'+QUALITY_LABELS[next]);
  window.renderWorld3D?.();
  return next;
 }
