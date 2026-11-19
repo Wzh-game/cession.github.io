@@ -495,10 +495,10 @@ function ensureDailyQuestState(){
  if(!Array.isArray(P.dailyQuestClaimed))P.dailyQuestClaimed=[];
  return false;
 }
-function advanceDailyQuestProgress(kills=0,bosses=0){
+function advanceDailyQuestProgress(kills=0,bosses=0,normalWins=1){
  ensureDailyQuestState();
  if(P.dailyQuestDate!==localQuestDate())return false;
- P.dailyQuestProgress.wins=Math.max(0,Number(P.dailyQuestProgress.wins)||0)+1;
+ P.dailyQuestProgress.wins=Math.max(0,Number(P.dailyQuestProgress.wins)||0)+Math.max(0,normalWins);
  P.dailyQuestProgress.kills=Math.max(0,Number(P.dailyQuestProgress.kills)||0)+Math.max(0,kills);
  P.dailyQuestProgress.bosses=Math.max(0,Number(P.dailyQuestProgress.bosses)||0)+Math.max(0,bosses);
  saveGame();
