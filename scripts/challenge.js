@@ -8,7 +8,7 @@ function challengeLocalDate(){
 function normalizeChallengeState(data){
  const d=data&&typeof data==='object'&&!Array.isArray(data)?data:{};
  return {
-  date:/^\\d{4}-\\d{2}-\\d{2}$/.test(String(d.date||''))?String(d.date):'',
+  date:/^\d{4}-\d{2}-\d{2}$/.test(String(d.date||''))?String(d.date):'',
   entered:d.entered===true,
   active:d.active===true,
   stage:Math.max(0,Math.min(5,Math.floor(Number(d.stage)||0))),
