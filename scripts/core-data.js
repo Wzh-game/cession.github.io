@@ -484,7 +484,7 @@ const P = {
   challenge:{date:'',entered:false,active:false,stage:0,bestStage:0,totalWins:0,totalCompletions:0},
   flags: {},
   avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, bossGearDrops:{}, laomuCooldownUntil:0, discoveredRegions:['changan','jiangnan','datang','beiju','huoyan'],
-  immortalRealm:{unlocked:false,stageIndex:0,dao:0,qi:0,jade:0,body:100,spirit:100,trialStep:0,onlineSeconds:0,notice:'仙界尚未开启',activeTab:'mansion',view:'mortal',sect:null,techniques:[],artifacts:[],bosses:{},materials:{starSand:0,swordShard:0,chaosShard:0,voidCrystal:0,immortalHerb:0},mansion:{arrayLevel:0,fieldLevel:0,puppetLevel:0,fieldPlanted:false,fieldProgress:0,herbs:0}},
+  immortalRealm:{unlocked:false,stageIndex:0,dao:0,qi:0,jade:0,body:100,spirit:100,trialStep:0,onlineSeconds:0,notice:'仙界尚未开启',activeTab:'mansion',view:'mortal',sect:null,techniques:[],artifacts:[],bosses:{},mapWorldVersion:2,mapX:0,mapY:0,mapSteps:0,lastMapEncounterStep:0,mapDiscovered:[],mapClaimed:[],materials:{starSand:0,swordShard:0,chaosShard:0,voidCrystal:0,immortalHerb:0},mansion:{arrayLevel:0,fieldLevel:0,puppetLevel:0,fieldPlanted:false,fieldProgress:0,herbs:0}},
 };
 
 /* 经验公式 */
