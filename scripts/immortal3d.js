@@ -37,8 +37,9 @@ function landmark(parent,x,z,kind){
  else{add(parent,new THREE.CylinderGeometry(.6,.75,.25,8),mat(0xc3a56c),x,.12,z);add(parent,new THREE.ConeGeometry(.55,.8,8),mat(0x9d7a46),x,.6,z);}
 }
 function buildTile(parent,dx,dz,info){
- const color=info.water?0x285b82:info.blocked?0x59677d:info.region==='chaos'?0x51415e:info.region==='zhuxian'?0x89705c:info.region==='yaochi'?0x5a9b9a:info.region==='forest'?0x376e45:info.region==='jiutian'?0x68964e:0x648a5a;
+ const color=info.hidden?0x172538:info.water?0x285b82:info.blocked?0x59677d:info.region==='chaos'?0x51415e:info.region==='zhuxian'?0x89705c:info.region==='yaochi'?0x5a9b9a:info.region==='forest'?0x376e45:info.region==='jiutian'?0x68964e:0x648a5a;
  const base=add(parent,new THREE.BoxGeometry(.98,.18,.98),mat(color),dx,-.11,dz,false,true);base.userData={dx,dz,info};hits.push(base);
+ if(info.hidden)return;
  if(info.water){const w=add(parent,new THREE.PlaneGeometry(.94,.94),new THREE.MeshStandardMaterial({color:0x54b7d0,transparent:true,opacity:.62,roughness:.2}),dx,-.012,dz,false,false);w.rotation.x=-Math.PI/2;}
  if(info.landmark)landmark(parent,dx,dz,info.landmark);
  else if(info.tree)tree(parent,dx,dz,info.region==='forest'?'forest':'normal');
