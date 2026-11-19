@@ -112,3 +112,15 @@ function renderChallengePanel(){
  body.appendChild(btn);
  const note=document.createElement('div');note.style.cssText='margin-top:10px;color:#9e8b73;font-size:10px;line-height:1.6';note.textContent='关卡敌人会根据角色等级动态强化。第 5 关为擂台冠军。挑战过程自动保存，刷新页面后可继续当前关卡。';body.appendChild(note);
 }
+
+/* 开发者测试中心：只读回归检查 */
+document.addEventListener('DOMContentLoaded',()=>{
+ if(typeof registerFeatureTest!=='function')return;
+ registerFeatureTest('每日挑战赛','2.0战斗玩法',[
+  {name:'五关挑战核心接口完整',run:()=>typeof startChallengeTournament==='function'&&typeof startChallengeRound==='function'&&typeof completeChallengeRound==='function'&&typeof failChallengeRun==='function'},
+  {name:'旧存档可安全补齐挑战字段',run:()=>{const x=normalizeChallengeState(null);return x.entered===false&&x.active===false&&x.stage===0&&x.totalCompletions===0;}},
+  {name:'挑战敌人随等级和关卡生成且最终关为Boss',run:()=>{const old=P.lv;try{P.lv=10;const a=challengeEnemyForStage(1),b=challengeEnemyForStage(5);return a.length===1&&b.length===1&&b[0].isBoss===true&&b[0].hp>a[0].hp;}finally{P.lv=old;}}},
+  {name:'挑战进度纳入存档',run:()=>!!getSaveData().challenge&&getSaveData().challenge===P.challenge&&applySaveData.toString().includes('normalizeChallengeState(data.challenge)')},
+  {name:'挑战胜利与失败均有单独结算钩子',run:()=>finishBattle.toString().includes('completeChallengeRound')&&finishBattle.toString().includes('failChallengeRun')}
+ ]);
+});
