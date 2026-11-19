@@ -672,15 +672,6 @@ $('#dpad button[data-dir]').forEach(btn => {
   ['pointerup','pointercancel','lostpointercapture'].forEach(type => btn.addEventListener(type, stop));
   btn.addEventListener('contextmenu', e => e.preventDefault());
 });
-document.addEventListener('pointerup', () => {
-  $('#dpad button[data-dir]').forEach(btn => {
-    if (btn.releasePointerCapture && btn.hasPointerCapture?.()) {
-      try { btn.releasePointerCapture([...[]][0]); } catch (_) {}
-    }
-  });
-});
-
-
 /* 中心按钮：原地休息 */
 $('btnCenter').addEventListener('click', () => {
   if (typeof battle !== 'undefined' && battle && battle.active) return;
