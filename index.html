@@ -6349,10 +6349,19 @@ function grantImmortalBossReward(id){
  if(first)r.bosses[id]=true;
  immortalMessage((first?'首胜':'再次击败')+b.name+'，获得仙界战利品。');saveGame();return {first,qi:Math.floor(b.reward.qi*scale),jade:Math.floor(b.reward.jade*scale),dao:Math.floor(b.reward.dao*scale),material:b.reward.material,amount:Math.max(1,Math.floor(b.reward.amount*scale))};
 }
+let immortalMapMoveTimer=null,immortalMapSuppressClick=false;
+function stopImmortalMapHold(){if(immortalMapMoveTimer!==null){clearInterval(immortalMapMoveTimer);immortalMapMoveTimer=null;}if(immortalMapSuppressClick)setTimeout(()=>{immortalMapSuppressClick=false;},350);}
+function bindImmortalMapHold(stage){
+ if(stage.dataset.mapHoldBound)return;stage.dataset.mapHoldBound='1';
+ stage.addEventListener('pointerdown',e=>{const btn=e.target.closest('[data-immortal-action="map-move"]');if(!btn||e.button!==0)return;e.preventDefault();immortalMapSuppressClick=true;const p=String(btn.dataset.value||'').split(',').map(Number);if(p.length!==2||!p.every(Number.isFinite))return;stopImmortalMapHold();immortalMapSuppressClick=true;if(!moveImmortalMap(p[0],p[1])){stopImmortalMapHold();return;}immortalMapMoveTimer=setInterval(()=>{if(!moveImmortalMap(p[0],p[1]))stopImmortalMapHold();},180);});
+ stage.addEventListener('click',e=>{if(!immortalMapSuppressClick)return;const btn=e.target.closest('[data-immortal-action="map-move"]');if(!btn)return;e.preventDefault();e.stopImmediatePropagation();immortalMapSuppressClick=false;},true);
+ document.addEventListener('pointerup',stopImmortalMapHold);document.addEventListener('pointercancel',stopImmortalMapHold);window.addEventListener('blur',stopImmortalMapHold);
+}
 function renderImmortalRealm(tab){
  const r=P.immortalRealm;if(!r.unlocked)return false;if(['mansion','sect','travel'].includes(tab))r.activeTab=tab;else tab=r.activeTab;
- const stage=$('immortalStage');if(!stage)return false;const title=tab==='mansion'?'仙府':tab==='sect'?'仙宗':'游历仙界',content=tab==='mansion'?renderImmortalMansion():tab==='sect'?renderImmortalSect():renderImmortalTravel(),cost=immortalBreakthroughCost(),canBreak=r.stageIndex<8&&r.dao>=cost.dao&&r.qi>=cost.qi;
+ const stage=$('immortalStage');if(!stage)return false;bindImmortalMapHold(stage);const oldBody=stage.querySelector('.dialog-body'),oldScrollTop=oldBody?oldBody.scrollTop:0;const title=tab==='mansion'?'仙府':tab==='sect'?'仙宗':'游历仙界',content=tab==='mansion'?renderImmortalMansion():tab==='sect'?renderImmortalSect():renderImmortalTravel(),cost=immortalBreakthroughCost(),canBreak=r.stageIndex<8&&r.dao>=cost.dao&&r.qi>=cost.qi;
  stage.innerHTML='<div class="dialog" style="width:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;flex:1;min-height:0"><div class="dialog-head"><div class="dialog-title">🌌 仙界 · '+title+'</div><span style="font-size:10px;color:#ffe8a0">'+immortalStageName()+'</span></div><div class="dialog-body" style="flex:1;overflow-y:auto"><div class="list-item"><div class="li-icon">🌌</div><div class="li-body"><div class="li-name">仙界境界：'+immortalStageName()+'</div><div class="li-desc">独立修行体系 · 在线生产资源 · 当前在线 '+r.onlineSeconds+' 秒</div></div><button class="li-btn" data-immortal-action="breakthrough" '+(!canBreak?'disabled':'')+'>'+(r.stageIndex>=8?'已达道祖':'突破')+'</button></div>'+immortalResourcePanel()+'<div class="dev-help">仙界资源与凡界银两、背包、功法和装备完全独立，不会自动兑换或互通。</div>'+content+'<div class="dev-help">仙界动态：'+escapeDevText(r.notice)+'</div></div><div class="dialog-foot"><button class="btn" data-immortal-action="back">返回凡界</button></div></div>';
+ const newBody=stage.querySelector('.dialog-body');if(newBody)newBody.scrollTop=oldScrollTop;
  stage.querySelectorAll('[data-immortal-action]').forEach(btn=>btn.addEventListener('click',()=>handleImmortalAction(btn.dataset.immortalAction,btn.dataset.value)));return true;
 }
 function setImmortalView(view){const r=P.immortalRealm;if(view==='immortal'&&!r.unlocked)return false;r.view=view==='immortal'?'immortal':'mortal';syncImmortalNavigation();if(r.view==='immortal')renderImmortalRealm(r.activeTab);saveGame();return true;}
