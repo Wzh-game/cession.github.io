@@ -1628,3 +1628,11 @@ body.graphics-3d #worldMapCanvas{border:2px solid #d4a94e;border-radius:10px;box
 body.graphics-3d #immortalStage .dialog{background-image:linear-gradient(145deg,rgba(125,170,150,.08),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
 #graphicsToggle{min-width:62px}
 @media(max-width:520px){#graphicsToggle{min-width:58px;font-size:9px}}
+
+
+/* 最真实画质：物品、装备与场景对象的材质投影和接触阴影 */
+body.quality-extreme .li-icon,body.quality-extreme .gear-icon,body.quality-extreme .pet-icon,body.quality-extreme .item-icon,body.quality-extreme .bu-icon,body.quality-extreme .shop-icon{filter:drop-shadow(0 3px 2px rgba(0,0,0,.72)) drop-shadow(0 0 5px rgba(255,224,155,.18));}
+body.quality-extreme .list-item,body.quality-extreme .gear-card,body.quality-extreme .pet-card,body.quality-extreme .quest-card,body.quality-extreme .stat-box{box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -3px 6px rgba(0,0,0,.2),0 4px 0 rgba(12,8,4,.48),0 9px 17px rgba(0,0,0,.34);}
+body.quality-extreme .list-item .li-icon,body.quality-extreme .gear-card img,body.quality-extreme .pet-card img{filter:drop-shadow(0 4px 3px rgba(0,0,0,.72));}
+body.quality-extreme #stage{background-image:radial-gradient(ellipse at 50% 8%,rgba(255,231,180,.12),transparent 52%),linear-gradient(180deg,rgba(20,30,20,.08),rgba(3,8,13,.18));}
+@media(max-width:700px){body.quality-extreme #stage{filter:saturate(1.08) contrast(1.04);}}
