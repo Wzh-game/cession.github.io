@@ -317,7 +317,7 @@ function getImmortalWorldSite(){return IMMORTAL_EXPLORATION_SITES.find(v=>v.x===
 function getImmortalWorldBoss(){const r=P.immortalRealm;for(const [id,p] of Object.entries(IMMORTAL_BOSS_WORLD_POSITIONS))if(p.x===r.mapX&&p.y===r.mapY)return id;return null;}
 function refreshImmortalWorldHud(){const r=P.immortalRealm,region=immortalRegionAt(r.mapX,r.mapY),site=getImmortalWorldSite(),coords=$('immortalWorldCoords'),name=$('immortalWorldName'),hint=$('immortalWorldHint'),count=$('immortalWorldExploreCount');if(coords)coords.textContent='坐标 '+r.mapX+','+r.mapY;if(name)name.textContent=region.name;if(hint)hint.textContent=site?site.name+' · 按中央「调查」探索':'方向键或 WASD 自由移动 · 探索仙界遗迹与灵物';if(count)count.textContent='已探索 '+r.mapDiscovered.length+' 处';}
 window.getImmortal3DState=()=>({x:P.immortalRealm.mapX,y:P.immortalRealm.mapY,region:immortalRegionAt(P.immortalRealm.mapX,P.immortalRealm.mapY).id});
-window.getImmortal3DInfo=(x,y)=>immortalMapTerrain(x,y);
+window.getImmortal3DInfo=(x,y)=>{const info=immortalMapTerrain(x,y),seen=P.immortalRealm.mapDiscovered.includes(immortalMapKey(x,y));return seen?info:{name:'未探索迷雾',region:info.region,hidden:true,blocked:false};};
 window.isImmortalOpenWorldActive=()=>!!(P.immortalRealm&&P.immortalRealm.unlocked&&P.immortalRealm.view==='immortal'&&P.immortalRealm.activeTab==='travel'&&!battle.active);
 window.moveImmortalOpenWorld=(dx,dy)=>moveImmortalMap(dx,dy);
 function startImmortalBattle(mob,flag,id){battle.returnToImmortalWorld=P.immortalRealm.view==='immortal';if(battle.returnToImmortalWorld)setImmortalView('mortal');battlePrepare([mob]);battle[flag]=id;return true;}
