@@ -647,24 +647,39 @@ function onTileClick(wx, wy, tile){
   }
 }
 
-/* ================= 方向键绑定 ================= */
-$$('#dpad button').forEach(btn => {
+/* ================= 方向键绑定：iPad/iPhone 触控 + 按住连续移动 ================= */
+$('#dpad button[data-dir]').forEach(btn => {
   const dir = btn.dataset.dir;
-  if (!dir) return;
-  let lastMoveAt = 0;
-  const move = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const delta = {up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[dir];
+  if (!delta) return;
+  let repeatTimer = null, lastMoveAt = 0;
+  const move = () => {
     const now = Date.now();
-    if (now - lastMoveAt < 80) return;
+    if (now - lastMoveAt < 115) return;
     lastMoveAt = now;
-    if (dir === 'up')    tryMove(0, -1);
-    if (dir === 'down')  tryMove(0, 1);
-    if (dir === 'left')  tryMove(-1, 0);
-    if (dir === 'right') tryMove(1, 0);
+    tryMove(delta[0], delta[1]);
   };
-  btn.addEventListener('click', move);
+  const stop = () => {
+    if (repeatTimer) clearInterval(repeatTimer);
+    repeatTimer = null;
+  };
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    stop(); lastMoveAt = 0; move();
+    repeatTimer = setInterval(move, 190);
+    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type => btn.addEventListener(type, stop));
+  btn.addEventListener('contextmenu', e => e.preventDefault());
 });
+document.addEventListener('pointerup', () => {
+  $('#dpad button[data-dir]').forEach(btn => {
+    if (btn.releasePointerCapture && btn.hasPointerCapture?.()) {
+      try { btn.releasePointerCapture([...[]][0]); } catch (_) {}
+    }
+  });
+});
+
 
 /* 中心按钮：原地休息 */
 $('btnCenter').addEventListener('click', () => {
