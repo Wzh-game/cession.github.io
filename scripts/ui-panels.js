@@ -467,13 +467,79 @@ function renderPetPanel(){
    任务面板
    ============================================================ */
 const QUESTS = [
-  { id:'q1', name:'初入江湖',   desc:'击败3只野狼或山贼', target:3, type:'kill_any', reward:{gold:200, exp:100}, icon:'⚔️' },
+  { id:'q1', name:'初入江湖',   desc:'赢得3场战斗', target:3, type:'kill_any', reward:{gold:200, exp:100}, icon:'⚔️' },
   { id:'q2', name:'江湖历练',   desc:'击败10只怪物', target:10, type:'kill_any', reward:{gold:500, exp:300}, icon:'🗡️' },
   { id:'q3', name:'威震一方',   desc:'击败30只怪物', target:30, type:'kill_any', reward:{gold:1500, exp:1200}, icon:'👑' },
   { id:'q4', name:'名扬三界',   desc:'击败100只怪物', target:100, type:'kill_any', reward:{gold:5000, exp:5000}, icon:'🏆' },
 ];
 
+const DAILY_BOUNTIES=[
+ {id:'daily_wins',name:'巡山除妖',desc:'赢得 3 场凡界普通战斗',target:3,field:'wins',reward:{gold:500,exp:250},icon:'⚔️'},
+ {id:'daily_boss',name:'斩妖除魔',desc:'击败 1 名凡界区域 Boss',target:1,field:'bosses',reward:{gold:1200,exp:600},icon:'👹'},
+ {id:'daily_kills',name:'清剿妖患',desc:'累计击败 8 只凡界敌人',target:8,field:'kills',reward:{gold:800,exp:400},icon:'🏹'}
+];
+function localQuestDate(){
+ const d=new Date(),pad=n=>String(n).padStart(2,'0');
+ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function ensureDailyQuestState(){
+ const today=localQuestDate();
+ if(!P.dailyQuestDate||today>P.dailyQuestDate){
+  P.dailyQuestDate=today;
+  P.dailyQuestProgress={wins:0,bosses:0,kills:0};
+  P.dailyQuestClaimed=[];
+  saveGame();
+  return true;
+ }
+ if(!P.dailyQuestProgress||typeof P.dailyQuestProgress!=='object')P.dailyQuestProgress={wins:0,bosses:0,kills:0};
+ if(!Array.isArray(P.dailyQuestClaimed))P.dailyQuestClaimed=[];
+ return false;
+}
+function advanceDailyQuestProgress(kills=0,bosses=0){
+ ensureDailyQuestState();
+ if(P.dailyQuestDate!==localQuestDate())return false;
+ P.dailyQuestProgress.wins=Math.max(0,Number(P.dailyQuestProgress.wins)||0)+1;
+ P.dailyQuestProgress.kills=Math.max(0,Number(P.dailyQuestProgress.kills)||0)+Math.max(0,kills);
+ P.dailyQuestProgress.bosses=Math.max(0,Number(P.dailyQuestProgress.bosses)||0)+Math.max(0,bosses);
+ saveGame();
+ return true;
+}
+function claimDailyBounty(id){
+ ensureDailyQuestState();
+ const q=DAILY_BOUNTIES.find(x=>x.id===id);
+ if(!q||P.dailyQuestClaimed.includes(id)||P.dailyQuestDate!==localQuestDate())return false;
+ const cur=Math.min(q.target,Number(P.dailyQuestProgress[q.field])||0);
+ if(cur<q.target)return false;
+ P.dailyQuestClaimed.push(id);
+ P.questDone=(Number(P.questDone)||0)+1;
+ P.gold+=q.reward.gold;
+ gainExp(q.reward.exp);
+ saveGame();updateHUD();
+ toast('🎁 每日悬赏完成：'+q.name+'，获得 '+q.reward.gold+' 两与 '+q.reward.exp+' 经验');
+ addLog('【每日悬赏】领取 '+q.name+' 奖励','good');
+ renderTaskPanel();
+ return true;
+}
+function renderDailyBounties(body){
+ ensureDailyQuestState();
+ const section=document.createElement('section');
+ section.style.cssText='margin-top:14px;padding-top:10px;border-top:1px solid rgba(240,200,96,.25)';
+ section.innerHTML='<div class="section-title"><span class="sti">📅</span>每日悬赏 <small style="margin-left:auto;color:#a98f70;font-size:10px">'+P.dailyQuestDate+'</small></div><div style="font-size:10px;color:#a98f70;margin:-4px 0 8px">每日进度自动保存；日期向前推进时刷新，不会因重复刷新页面重复领取。</div>';
+ DAILY_BOUNTIES.forEach(q=>{
+  const cur=Math.min(q.target,Math.max(0,Number(P.dailyQuestProgress[q.field])||0));
+  const claimed=P.dailyQuestClaimed.includes(q.id);
+  const pct=Math.min(100,cur/q.target*100);
+  const row=document.createElement('div');row.className='list-item';
+  if(claimed)row.classList.add('rare-3');
+  row.innerHTML='<div class="li-icon" style="font-size:22px">'+q.icon+'</div><div class="li-body"><div class="li-name">'+q.name+(claimed?'<span style="color:#80ffa0;font-size:10px;margin-left:5px">✓ 已领取</span>':'')+'</div><div class="li-desc">'+q.desc+'</div><div style="height:7px;margin-top:5px;background:#180c04;border:1px solid #060302;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#268b63,#72e6a0)"></div></div><div style="margin-top:4px;font-size:10px;color:#c0a870">进度 <b style="color:#ffe8a0">'+cur+'/'+q.target+'</b> · 💰'+q.reward.gold+' · ⭐'+q.reward.exp+'</div></div>';
+  if(claimed){const tag=document.createElement('span');tag.className='li-right';tag.style.color='#80ffa0';tag.textContent='已领';row.appendChild(tag);}
+  else if(cur>=q.target){const btn=document.createElement('button');btn.className='li-btn';btn.textContent='领取';btn.addEventListener('click',()=>claimDailyBounty(q.id));row.appendChild(btn);}
+  section.appendChild(row);
+ });
+ body.appendChild(section);
+}
 function openTaskPanel(){
+  ensureDailyQuestState();
   renderTaskPanel();
   openModal('modalTask');
 }
@@ -485,7 +551,7 @@ function renderTaskPanel(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
       <div class="stat-box gold">
         <span class="sk"><span class="ski">⚔️</span>累计击杀</span>
-        <span class="sv">${P.battles}</span>
+        <span class="sv">${P.kills||0}</span>
       </div>
       <div class="stat-box">
         <span class="sk"><span class="ski">🏁</span>完成任务</span>
@@ -550,6 +616,7 @@ function renderTaskPanel(){
     
     body.appendChild(it);
   });
+  renderDailyBounties(body);
 }
 
 /* ============================================================
