@@ -372,6 +372,7 @@ const battle = {
   musicBuffUntilRound: 0,
   jiangjunStacks: 0,
   previousRoundDamage:0, incomingRoundDamage:0,
+  challengeRound:false,
 };
 
 /* 创建战斗界面 DOM */
@@ -615,6 +616,8 @@ function battlePrepare(mobs){
   document.getElementById('stage')?.classList.add('battle-active');
   battle.immortalBossId = null;
   battle.immortalEncounterId = null;
+  battle.challengeRound = !!(window.challengeBattlePending);
+  window.challengeBattlePending = false;
   battle.over = false;
   battle.victory = false;
   battle.fled = false;
@@ -1413,6 +1416,7 @@ function finishBattle(result){
   banner.innerHTML = '';
   
   if (result === 'flee' || battle.fled){
+    if(battle.challengeRound&&typeof failChallengeRun==='function')failChallengeRun('主动退出挑战');
     banner.innerHTML = `
       <div class="rb-title win" style="color:#80d0ff;text-shadow:3px 3px 0 #000,0 0 30px rgba(128,208,255,.9)">脱 离</div>
       <div class="rb-info">你成功脱离了战斗</div>
@@ -1464,14 +1468,16 @@ function finishBattle(result){
     rollPetCaptureOffer();
     const petGearLoot=rollPetGearDrop();if(petGearLoot)toast('🐾 召唤兽装备掉落：'+petGearLoot.name+'！');
     
+    const challengeResult=battle.challengeRound&&typeof completeChallengeRound==='function'?completeChallengeRound():null;
     banner.innerHTML = `
       <div class="rb-title win">胜 利</div>
       <div class="rb-info">
         获得经验 <b>+${fmt(exp)}</b><br>
         获得银两 <b>+${fmt(gold)}</b>
         ${bossLoot.length?'<div class="rb-loot-title">🎁 战利品</div>'+bossLoot.map(x=>'<div class="rb-loot-item"><span>'+x.icon+' '+x.name+'</span><small>'+x.quality+' '+x.type+'</small></div>').join(''):''}
+        ${challengeResult?'<div class="rb-loot-title">🏆 挑战赛 · 第 '+challengeResult.stage+' 关</div>额外奖励：'+challengeResult.gold+' 两 · '+challengeResult.exp+' 经验'+(challengeResult.finished?'<br>🎉 五关全部通关！':''):''}
       </div>
-      <button class="rb-btn" id="rbOk">继 续</button>
+      <button class="rb-btn" id="rbOk">${challengeResult&&!challengeResult.finished?'下一关':'继 续'}</button>
     `;
     
     addLog(`【战斗】胜利！经验 +${exp}，银两 +${gold}`, 'good');
@@ -1483,6 +1489,7 @@ function finishBattle(result){
     P.hp=Math.max(1,Math.floor(P.maxHp*.35));P.mp=Math.max(0,Math.floor(P.maxMp*.35));
     banner.innerHTML='<div class="rb-title lose">探索受挫</div><div class="rb-info">仙界妖物将你击退。凡界银两与经验不会损失。</div><button class="rb-btn" id="rbOk">返回仙界</button>';
   } else {
+    if(battle.challengeRound&&typeof failChallengeRun==='function')failChallengeRun('挑战失败');
     const lost = Math.floor(P.gold * 0.1);
     P.gold = Math.max(0, P.gold - lost);
     P.hp = Math.max(1, Math.floor(P.maxHp * 0.25));
@@ -1507,7 +1514,9 @@ function finishBattle(result){
     const okBtn = $('rbOk');
     if (okBtn){
       okBtn.addEventListener('click', () => {
+        const nextChallenge=!!(battle.challengeRound&&battle.victory&&P.challenge&&P.challenge.active&&P.challenge.stage<5);
         closeBattleUI();
+        if(nextChallenge)setTimeout(()=>startChallengeRound(),380);
       });
     }
   }, 50);
