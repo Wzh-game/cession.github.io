@@ -662,26 +662,7 @@ $('btnCenter').addEventListener('click', () => {
   toast(inTown ? '🏠 客栈小憩，气血法力微复' : '· 原地调息');
 });
 
-/* 键盘移动 */
-const keyMap = {
-  'w':'up','W':'up','ArrowUp':'up',
-  's':'down','S':'down','ArrowDown':'down',
-  'a':'left','A':'left','ArrowLeft':'left',
-  'd':'right','D':'right','ArrowRight':'right',
-};
-document.addEventListener('keydown', e => {
-  // 弹窗打开时忽略
-  if (document.querySelector('.modal.show')) return;
-  if (typeof battle !== 'undefined' && battle && battle.active) return;
-  const dir = keyMap[e.key];
-  if (!dir) return;
-  e.preventDefault();
-  if (dir === 'up')    tryMove(0, -1);
-  if (dir === 'down')  tryMove(0, 1);
-  if (dir === 'left')  tryMove(-1, 0);
-  if (dir === 'right') tryMove(1, 0);
-});
-
+/* 键盘方向输入统一由 scripts/movement-controls.js 捕获，避免重复移动。 */
 /* 触摸滑动 */
 let touchStartPt = null;
 stage.addEventListener('touchstart', e => {
