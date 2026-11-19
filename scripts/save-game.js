@@ -26,6 +26,7 @@ function getSaveData(){
     gold:P.gold, x:P.x, y:P.y, scene:P.scene, subScene:P.subScene,
     bag:P.bag, pet:P.pet, petBox:P.petBox, petCaptureOffer:P.petCaptureOffer, petGearInventory:P.petGearInventory, petGearEquipped:P.petGearEquipped, steps:P.steps, lastEncounterStep:P.lastEncounterStep, teleportStones:P.teleportStones, equipment:P.equipment, gearInventory:P.gearInventory, gearCodex:P.gearCodex, gearSetApplied:P.gearSetApplied, cultivationBooks:P.cultivationBooks, cultivationActive:P.cultivationActive, cultivationProgressMs:P.cultivationProgressMs, bossDrops:P.bossDrops, bossGearDrops:P.bossGearDrops, laomuCooldownUntil:P.laomuCooldownUntil, flags:P.flags, discoveredRegions:P.discoveredRegions,
     battles:P.battles, kills:P.kills, killStats:P.killStats, bankGold:P.bankGold,
+    dailyQuestDate:P.dailyQuestDate, dailyQuestProgress:P.dailyQuestProgress, dailyQuestClaimed:P.dailyQuestClaimed,
     immortalRealm:serializeImmortalRealm(),
     logs:Array.isArray(P.logs) ? P.logs.slice(-50) : []
   };
@@ -37,7 +38,7 @@ function applySaveData(data){
   const allowed = [
     'name','sect','avatar','lv','exp','hp','maxHp','mp','maxMp',
     'atk','def','spd','magic','gold','x','y','scene','subScene',
-    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','lastEncounterStep','teleportStones','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions','immortalRealm'
+    'bag','pet','petBox','petCaptureOffer','petGearInventory','petGearEquipped','steps','lastEncounterStep','teleportStones','battles','kills','killStats','bankGold','equipment','gearInventory','gearCodex','gearSetApplied','logs','cultivationBooks','cultivationActive','cultivationProgressMs','bossDrops','bossGearDrops','laomuCooldownUntil','flags','discoveredRegions','immortalRealm','dailyQuestDate','dailyQuestProgress','dailyQuestClaimed'
   ];
   if(!Object.prototype.hasOwnProperty.call(data,'gearCodex'))P.gearCodex={};
   if(!Object.prototype.hasOwnProperty.call(data,'gearSetApplied'))P.gearSetApplied={};
@@ -90,6 +91,11 @@ function applySaveData(data){
   if (!P.bossDrops || typeof P.bossDrops!=='object') P.bossDrops={};
   if (!P.bossGearDrops || typeof P.bossGearDrops!=='object') P.bossGearDrops={};
   if (!P.flags || typeof P.flags!=='object') P.flags={};
+  P.dailyQuestDate=typeof P.dailyQuestDate==='string'?P.dailyQuestDate:'';
+  if(!P.dailyQuestProgress||typeof P.dailyQuestProgress!=='object')P.dailyQuestProgress={wins:0,bosses:0,kills:0};
+  P.dailyQuestProgress={wins:Math.max(0,Math.floor(Number(P.dailyQuestProgress.wins)||0)),bosses:Math.max(0,Math.floor(Number(P.dailyQuestProgress.bosses)||0)),kills:Math.max(0,Math.floor(Number(P.dailyQuestProgress.kills)||0))};
+  if(!Array.isArray(P.dailyQuestClaimed))P.dailyQuestClaimed=[];
+  P.dailyQuestClaimed=Array.from(new Set(P.dailyQuestClaimed.filter(id=>['daily_wins','daily_boss','daily_kills'].includes(id))));
   P.immortalRealm=normalizeImmortalRealm(data.immortalRealm);
   P.cultivationProgressMs=Math.max(0,Number(P.cultivationProgressMs)||0);
   P.laomuCooldownUntil=Math.max(0,Number(P.laomuCooldownUntil)||0);
