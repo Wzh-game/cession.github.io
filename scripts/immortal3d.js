@@ -102,5 +102,5 @@ function boot(){
  frame();
  window.updateImmortalWorld3D=()=>{rebuild();};window.mountImmortalWorld3D=()=>{ensureHost();lastX=NaN;rebuild();resize();};
 }
-async function start(){try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);add=createMeshAdder(THREE);boot();}catch(e){console.warn('Immortal open world 3D unavailable',e);const el=document.getElementById('immortalMapWorld');if(el)el.innerHTML='<div class="immortal-world-fallback">3D 地图暂时无法加载，请检查网络或浏览器 WebGL 支持</div>';}}
+async function start(){try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);add=createMeshAdder(THREE);boot();}catch(e){console.warn('Immortal open world 3D unavailable',e);const showFallback=()=>{const el=document.getElementById('immortalMapWorld');if(el)el.innerHTML='<div class="immortal-world-fallback">3D 地图暂时无法加载，请检查网络或浏览器 WebGL 支持</div>';};showFallback();const stage=document.getElementById('immortalStage');if(stage)new MutationObserver(showFallback).observe(stage,{childList:true,subtree:true});}}
 start();
