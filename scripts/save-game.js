@@ -399,7 +399,7 @@ function renderImmortalRealm(tab){
  const newBody=stage.querySelector('.dialog-body');if(newBody)newBody.scrollTop=oldScrollTop;
  stage.querySelectorAll('[data-immortal-action]').forEach(btn=>btn.addEventListener('click',()=>handleImmortalAction(btn.dataset.immortalAction,btn.dataset.value)));return true;
 }
-function setImmortalView(view){const r=P.immortalRealm;if(view==='immortal'&&!r.unlocked)return false;r.view=view==='immortal'?'immortal':'mortal';syncImmortalNavigation();if(r.view==='immortal')renderImmortalRealm(r.activeTab);saveGame();return true;}
+function setImmortalView(view){P.immortalRealm=normalizeImmortalRealm(P.immortalRealm);const r=P.immortalRealm;if(view==='immortal'&&!r.unlocked)return false;r.view=view==='immortal'?'immortal':'mortal';syncImmortalNavigation();if(r.view==='immortal')renderImmortalRealm(r.activeTab);saveGame();return true;}
 function syncImmortalNavigation(){
  const r=P.immortalRealm||createImmortalRealmState(),inside=!!(r.unlocked&&r.view==='immortal'),top=$('topbar'),mortal=$('stage'),immortal=$('immortalStage');
  if(top)top.style.display=inside?'none':'';if(mortal)mortal.style.display=inside?'none':'';if(immortal)immortal.style.display=inside?'flex':'none';
