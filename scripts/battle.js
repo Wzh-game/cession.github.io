@@ -1440,8 +1440,8 @@ function finishBattle(result){
     // 计算奖励
     let exp = 0, gold = 0;
     battle.units.filter(u => u.isEnemy).forEach(m => {
-      exp += m.exp || 30;
-      gold += m.gold || 15;
+      exp += battle.challengeRound ? 0 : (m.exp || 30);
+      gold += battle.challengeRound ? 0 : (m.gold || 15);
     });
     
     // 加成
