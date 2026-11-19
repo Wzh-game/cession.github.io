@@ -480,7 +480,7 @@ const P = {
   gearInventory: [], gearCodex:{}, gearSetApplied:{},
   quest: null,
   questDone: 0,
-  dailyQuestDate: '', dailyQuestProgress: {wins:0,bosses:0,kills:0}, dailyQuestClaimed: [],
+  dailyQuestDate: '', dailyQuestProgress: {wins:0,bosses:0,kills:0}, dailyQuestClaimed: [], achievementsClaimed: [],
   challenge:{date:'',entered:false,active:false,stage:0,bestStage:0,totalWins:0,totalCompletions:0},
   flags: {},
   avatar: 'original', cultivationBooks:[], cultivationActive:null, cultivationProgressMs:0, bossDrops:{}, bossGearDrops:{}, laomuCooldownUntil:0, discoveredRegions:['changan','jiangnan','datang','beiju','huoyan'],
@@ -952,6 +952,7 @@ $$('.menu-btn').forEach(btn => {
     if (menu === 'pet')   openPetPanel();
     if (menu === 'task')  openTaskPanel();
     if (menu === 'challenge') openChallengePanel();
+    if (menu === 'achievements') openAchievementsPanel();
     if (menu === 'cultivation'){ renderCultivation(); openModal('modalCultivation'); }
 if(menu==='developer'){openDeveloperPanelWithPassword();}
     if(menu==='realmSwitch'){setImmortalView(P.immortalRealm.view==='immortal'?'mortal':'immortal');}
