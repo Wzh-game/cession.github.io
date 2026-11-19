@@ -1,7 +1,8 @@
 /* 战斗场景 3D 视觉层：战斗数值卡片仍作为可读 HUD */
 #battleOverlay .battle-scene{isolation:isolate;overflow:hidden;background:transparent}
 #battle3DCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
-#battleOverlay .battle-scene-title,#battleOverlay .battle-row,#battleOverlay .turn-banner,#battleOverlay .result-banner{position:relative;z-index:2}
+#battleOverlay .battle-scene-title,#battleOverlay .battle-row,#battleOverlay .turn-banner{position:relative;z-index:2}
+#battleOverlay .result-banner{position:absolute;inset:0;z-index:220}
 #battleOverlay.battle3d-ready .battle-scene:before,#battleOverlay.battle3d-ready .battle-scene:after{opacity:.25}
 #battleOverlay.battle3d-ready .bu-icon{display:none!important}
 #battleOverlay.battle3d-ready .battle-unit{background:rgba(20,18,34,.68);backdrop-filter:blur(3px)}
