@@ -1,0 +1,4 @@
+/* 识海九宫地图的 3D 图层；透明按钮保留原有触控、迷雾与奖励逻辑 */
+#immortalMapGrid.immortal-map-3d-ready{isolation:isolate}
+#immortalMapGrid #immortal3DCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block}
+#immortalMapGrid.immortal-map-3d-ready button[data-immortal-action="map-step"]{position:relative;z-index:2;opacity:0!important}
