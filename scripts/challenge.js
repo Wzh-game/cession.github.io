@@ -72,7 +72,8 @@ function startChallengeTournament(){
  return startChallengeRound();
 }
 function completeChallengeRound(){
- if(!P.challenge||!P.challenge.active)return null;
+ if(!P.challenge||!P.challenge.active||!battle.challengeRound)return null;
+ battle.challengeRound=false;
  const stage=Math.max(1,Math.min(5,Number(P.challenge.stage)||1));
  const gold=100*stage+Math.max(1,Number(P.lv)||1)*10;
  const exp=65*stage+Math.max(1,Number(P.lv)||1)*7;
@@ -89,7 +90,8 @@ function completeChallengeRound(){
  return {stage,gold,exp,finished:false};
 }
 function failChallengeRun(reason){
- if(!P.challenge||!P.challenge.active)return false;
+ if(!P.challenge||!P.challenge.active||!battle.challengeRound)return false;
+ battle.challengeRound=false;
  P.challenge.bestStage=Math.max(P.challenge.bestStage,Math.max(0,P.challenge.stage-1));
  P.challenge.active=false;P.challenge.stage=0;saveGame();
  addLog('【挑战赛】'+(reason||'挑战结束')+'，本日挑战机会已用完','bad');
@@ -121,6 +123,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   {name:'旧存档可安全补齐挑战字段',run:()=>{const x=normalizeChallengeState(null);return x.entered===false&&x.active===false&&x.stage===0&&x.totalCompletions===0;}},
   {name:'挑战敌人随等级和关卡生成且最终关为Boss',run:()=>{const old=P.lv;try{P.lv=10;const a=challengeEnemyForStage(1),b=challengeEnemyForStage(5);return a.length===1&&b.length===1&&b[0].isBoss===true&&b[0].hp>a[0].hp;}finally{P.lv=old;}}},
   {name:'挑战进度纳入存档',run:()=>!!getSaveData().challenge&&getSaveData().challenge===P.challenge&&applySaveData.toString().includes('normalizeChallengeState(data.challenge)')},
-  {name:'挑战胜利与失败均有单独结算钩子',run:()=>finishBattle.toString().includes('completeChallengeRound')&&finishBattle.toString().includes('failChallengeRun')}
+  {name:'挑战胜利与失败均有单独结算钩子',run:()=>finishBattle.toString().includes('completeChallengeRound')&&finishBattle.toString().includes('failChallengeRun')&&finishBattle.toString().includes('P.challenge.stage<=5')}
  ]);
 });
