@@ -502,8 +502,7 @@ let moveLock = false;
 function tryMove(dx, dy){
   // 地图移动的唯一地形碰撞规则：水面。
   // 战斗界面显示时由战斗界面本身拦截输入；战斗结束后不再使用残留状态锁死地图。
-  const battleOverlay = $('battleOverlay');
-  if (battleOverlay && battleOverlay.classList.contains('show')) return;
+  if (typeof battle !== 'undefined' && battle && battle.active) return;
 
   // 只允许四方向单格移动。
   dx = Math.sign(Number(dx) || 0);
@@ -647,43 +646,10 @@ function onTileClick(wx, wy, tile){
   }
 }
 
-/* ================= 方向键绑定：iPad/iPhone 触控 + 按住连续移动 ================= */
-/* $$ 才是 querySelectorAll；$ 只接受元素 ID，误用会导致本文件在此处中断。 */
-$$('#dpad button[data-dir]').forEach(btn => {
-  const dir = btn.dataset.dir;
-  const delta = {up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[dir];
-  if (!delta) return;
-  let repeatTimer = null, lastMoveAt = 0;
-  const move = () => {
-    const now = Date.now();
-    if (now - lastMoveAt < 115) return;
-    lastMoveAt = now;
-    tryMove(delta[0], delta[1]);
-  };
-  const stop = () => { if (repeatTimer) clearInterval(repeatTimer); repeatTimer = null; };
-  if (window.PointerEvent) {
-    btn.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      e.preventDefault(); e.stopPropagation();
-      stop(); lastMoveAt = 0; move();
-      repeatTimer = setInterval(move, 190);
-      try { btn.setPointerCapture(e.pointerId); } catch (_) {}
-    });
-    ['pointerup','pointercancel','lostpointercapture'].forEach(type => btn.addEventListener(type, stop));
-  } else {
-    btn.addEventListener('touchstart', e => {
-      e.preventDefault(); e.stopPropagation(); stop(); lastMoveAt = 0; move();
-      repeatTimer = setInterval(move, 190);
-    }, {passive:false});
-    ['touchend','touchcancel'].forEach(type => btn.addEventListener(type, stop));
-    btn.addEventListener('mousedown', e => { e.preventDefault(); stop(); lastMoveAt=0; move(); repeatTimer=setInterval(move,190); });
-    ['mouseup','mouseleave'].forEach(type => btn.addEventListener(type, stop));
-  }
-  btn.addEventListener('contextmenu', e => e.preventDefault());
-});
-window.addEventListener('blur', () => $$('#dpad button[data-dir]').forEach(btn => {
-  btn.dispatchEvent(new Event('pointercancel'));
-}));
+/* ================= 方向键输入 =================
+   触控监听由 movement-controls.js 在 document 捕获阶段统一处理，
+   避免 Three.js 全屏 Canvas 或重绘后的 DOM 影响按钮事件。
+*/
 /* 中心按钮：原地休息 */
 $('btnCenter').addEventListener('click', () => {
   if (typeof battle !== 'undefined' && battle && battle.active) return;
