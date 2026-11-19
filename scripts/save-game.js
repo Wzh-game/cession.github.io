@@ -476,3 +476,5 @@ document.addEventListener('gestureend', function(e){
   e.preventDefault();
 }, {passive:false});
 
+
+/* Immortal open-world migration: branch-target verification marker. */
