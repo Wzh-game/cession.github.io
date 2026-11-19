@@ -7,3 +7,5 @@ export function createMaterialFactory(THREE){
   return cache.get(key);
  };
 }
+
+export function createMeshAdder(THREE){return function addMesh(parent,geometry,material,x=0,y=0,z=0,castShadow=true,receiveShadow=true){const object=new THREE.Mesh(geometry,material);object.position.set(x,y,z);object.castShadow=castShadow;object.receiveShadow=receiveShadow;parent.add(object);return object;};}

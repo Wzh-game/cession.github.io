@@ -1,6 +1,5 @@
-import {createMaterialFactory} from './three-shared.js';
-let THREE,mat,renderer,scene,camera,tiles,player,clock,host=null,observer=null,resizeObserver=null,lastSignature='';
-function add(g,geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;}
+import {createMaterialFactory,createMeshAdder} from './three-shared.js';
+let THREE,mat,add,renderer,scene,camera,tiles,player,clock,host=null,observer=null,resizeObserver=null,lastSignature='';
 function makeHero(){const g=new THREE.Group();add(g,new THREE.CylinderGeometry(.19,.3,.68,7),mat(0x3c8980),0,.43,0);add(g,new THREE.SphereGeometry(.18,9,7),mat(0xf0c9a7),0,.91,0);add(g,new THREE.SphereGeometry(.19,8,6),mat(0x30252c),0,1.02,-.03).scale.set(1,.6,1);scene.add(g);return g;}
 function drawTile(parent,x,z,button){
  const label=button.title||button.getAttribute('aria-label')||'',icon=button.textContent.trim(),isPlayer=icon==='🧙';
@@ -55,8 +54,8 @@ function boot(){
  observer=new MutationObserver(()=>{const grid=document.getElementById('immortalMapGrid');if(grid&&document.getElementById('immortalStage')?.offsetParent!==null)mount(grid);});
  observer.observe(document.getElementById('immortalStage')||document.body,{childList:true,subtree:true});
  const grid=document.getElementById('immortalMapGrid');if(grid)mount(grid);
- function frame(){requestAnimationFrame(frame);if(player)player.position.y=.02+Math.sin(clock.getElapsedTime()*3)*.035;if(host&&host.isConnected&&host.offsetParent!==null)renderer.render(scene,camera);}
- frame();
+ function renderImmortalFrame(){requestAnimationFrame(renderImmortalFrame);if(player)player.position.y=.02+Math.sin(clock.getElapsedTime()*3)*.035;if(host&&host.isConnected&&host.offsetParent!==null)renderer.render(scene,camera);}
+ renderImmortalFrame();
 }
-async function start(){try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);boot();}catch(e){console.warn('Immortal 3D map unavailable',e);}}
+async function start(){try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);add=createMeshAdder(THREE);boot();}catch(e){console.warn('Immortal 3D map unavailable',e);}}
 start();

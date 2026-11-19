@@ -1,8 +1,7 @@
-import {createMaterialFactory} from './three-shared.js';
-let THREE,mat;
+import {createMaterialFactory,createMeshAdder} from './three-shared.js';
+let THREE,mat,part;
 const stage=document.getElementById('stage');
 let renderer,scene,camera,arena,unitLayer,rayClock,resizeObserver,qualityKey='';
-function part(g,geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;}
 function makeBattleFigure(card,index,total){
  const enemy=!card.classList.contains('is-player')&&!card.classList.contains('is-pet');
  const pet=card.classList.contains('is-pet'),dead=card.classList.contains('dead');
@@ -69,12 +68,12 @@ function setupOverlay(overlay){
   rows.observe(overlay,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   syncBattleUnits(overlay);
   const clock=new THREE.Clock();
-  function frame(){requestAnimationFrame(frame);if(!overlay.isConnected)return;const t=clock.getElapsedTime();unitLayer.children.forEach((g,i)=>{g.position.y=.035+Math.sin(t*2.8+g.userData.phase)*.045;g.rotation.y=Math.sin(t*.7+g.userData.phase)*.08;if(g.userData.acting)g.scale.setScalar(1.08);else g.scale.setScalar(1);});applyBattleQuality();if(overlay.classList.contains('show'))renderer.render(scene,camera);}
-  frame();
+  function renderBattleFrame(){requestAnimationFrame(renderBattleFrame);if(!overlay.isConnected)return;const t=clock.getElapsedTime();unitLayer.children.forEach((g,i)=>{g.position.y=.035+Math.sin(t*2.8+g.userData.phase)*.045;g.rotation.y=Math.sin(t*.7+g.userData.phase)*.08;if(g.userData.acting)g.scale.setScalar(1.08);else g.scale.setScalar(1);});applyBattleQuality();if(overlay.classList.contains('show'))renderer.render(scene,camera);}
+  renderBattleFrame();
  }catch(e){console.error('3D battle scene failed',e);renderer?.domElement.remove();}
 }
 async function start(){
- try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);}
+ try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');mat=createMaterialFactory(THREE);part=createMeshAdder(THREE);}
  catch(e){console.warn('Battle 3D engine unavailable',e);return;}
  const observer=new MutationObserver(()=>{const overlay=document.getElementById('battleOverlay');if(overlay)setupOverlay(overlay);});
  observer.observe(stage,{childList:true,subtree:true});
