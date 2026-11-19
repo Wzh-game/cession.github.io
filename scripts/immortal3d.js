@@ -1,5 +1,5 @@
 import {createMaterialFactory,createMeshAdder} from './three-shared.js';
-let THREE,mat,add,renderer,scene,camera,tiles,player,clock,host=null,observer=null,resizeObserver=null,lastSignature='';
+let THREE,mat,add,renderer,scene,camera,tiles,player,clock,host=null,observer=null,resizeObserver=null,lastSignature='',sunLight;
 function makeHero(){const g=new THREE.Group();add(g,new THREE.CylinderGeometry(.19,.3,.68,7),mat(0x3c8980),0,.43,0);add(g,new THREE.SphereGeometry(.18,9,7),mat(0xf0c9a7),0,.91,0);add(g,new THREE.SphereGeometry(.19,8,6),mat(0x30252c),0,1.02,-.03).scale.set(1,.6,1);scene.add(g);return g;}
 function drawTile(parent,x,z,button){
  const label=button.title||button.getAttribute('aria-label')||'',icon=button.textContent.trim(),isPlayer=icon==='🧙';
@@ -47,8 +47,8 @@ function boot(){
  camera=new THREE.PerspectiveCamera(42,1,.1,60);camera.position.set(0,10,11);camera.lookAt(0,0,0);
  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer.domElement.id='immortal3DCanvas';
  Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',pointerEvents:'none'});
- renderer.shadowMap.enabled=true;scene.add(new THREE.HemisphereLight(0xe1f4ee,0x30412e,2));
- const sun=new THREE.DirectionalLight(0xffe5b5,2.7);sun.position.set(-4,10,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;scene.add(new THREE.HemisphereLight(0xe1f4ee,0x30412e,1.65));
+ sunLight=new THREE.DirectionalLight(0xffe5b5,2.9);sunLight.position.set(-4,10,7);sunLight.castShadow=true;sunLight.shadow.mapSize.set(1024,1024);sunLight.shadow.camera.left=-9;sunLight.shadow.camera.right=9;sunLight.shadow.camera.top=9;sunLight.shadow.camera.bottom=-9;sunLight.shadow.bias=-.0002;sunLight.shadow.normalBias=.03;scene.add(sunLight);
  const floor=add(scene,new THREE.PlaneGeometry(30,30),mat(0x2a4935),0,-.28,0);floor.rotation.x=-Math.PI/2;
  player=makeHero();clock=new THREE.Clock();
  observer=new MutationObserver(()=>{const grid=document.getElementById('immortalMapGrid');if(grid&&document.getElementById('immortalStage')?.offsetParent!==null)mount(grid);});
