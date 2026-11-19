@@ -363,7 +363,7 @@ function huntImmortalRegion(regionId,randomValue){
  if(roll<.22){const jade=6+Math.floor(roll*20);r.jade+=jade;r.dao+=12;r.materials[m.material]++;immortalMessage('探索 '+m.name+'：发现灵物，获得 '+jade+' 仙玉与 '+m.materialName+'。');saveGame();renderImmortalRealm('travel');return {type:'treasure',jade};}
  const pool=IMMORTAL_ENCOUNTERS.filter(x=>x.region===regionId),e=pool[Math.floor(roll*pool.length)%pool.length];
  const mob={id:'immortal_encounter_'+e.id,name:e.name,icon:e.icon,lv:P.lv+Math.max(1,r.stageIndex*8),hp:Math.max(500,Math.floor(P.maxHp*e.hp+r.stageIndex*100)),maxHp:Math.max(500,Math.floor(P.maxHp*e.hp+r.stageIndex*100)),atk:Math.max(25,Math.floor(P.atk*e.atk+r.stageIndex*8)),def:Math.max(12,Math.floor(P.def*e.def+r.stageIndex*5)),spd:Math.max(15,Math.floor(P.spd*e.spd+r.stageIndex*4)),exp:0,gold:0,isBoss:false,skills:[e.skill]};
- battlePrepare([mob]);battle.immortalEncounterId=e.id;return {type:'battle',enemy:e.id};
+ startImmortalBattle(mob,'immortalEncounterId',e.id);return {type:'battle',enemy:e.id};
 }
 function grantImmortalEncounterReward(id){
  const e=IMMORTAL_ENCOUNTERS.find(x=>x.id===id);if(!e)return null;const r=P.immortalRealm;
@@ -373,7 +373,7 @@ function grantImmortalEncounterReward(id){
 function challengeImmortalBoss(id){
  const r=P.immortalRealm,b=IMMORTAL_BOSSES.find(x=>x.id===id);if(!r.unlocked||!b||r.stageIndex<b.req||battle.active)return false;
  const mob={id:'immortal_boss_'+b.id,name:b.name,icon:b.icon,lv:P.lv+Math.max(1,r.stageIndex*8),hp:Math.max(900,Math.floor(P.maxHp*b.hp+r.stageIndex*180)),maxHp:Math.max(900,Math.floor(P.maxHp*b.hp+r.stageIndex*180)),atk:Math.max(35,Math.floor(P.atk*b.atk+r.stageIndex*12)),def:Math.max(20,Math.floor(P.def*b.def+r.stageIndex*8)),spd:Math.max(20,Math.floor(P.spd*b.spd+r.stageIndex*6)),exp:0,gold:0,isBoss:true,bossSkill:b.skill};
- battlePrepare([mob]);battle.immortalBossId=b.id;return true;
+ startImmortalBattle(mob,'immortalBossId',b.id);return true;
 }
 function grantImmortalBossReward(id){
  const r=P.immortalRealm,b=IMMORTAL_BOSSES.find(x=>x.id===id);if(!r||!b)return null;
