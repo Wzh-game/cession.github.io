@@ -8,8 +8,10 @@ function setMapGraphicsMode(enabled,announce=true){
  window.map3DEnabled=on;
  const canvas=document.getElementById('world3dCanvas');
  const legacy=document.getElementById('world');
+ const legacyPlayer=document.getElementById('player');
  if(canvas)canvas.style.display=on?'block':'none';
  if(legacy)legacy.style.display=on?'none':'';
+ if(legacyPlayer)legacyPlayer.style.display=on?'none':'';
  const btn=document.getElementById('graphicsToggle');
  if(btn){
   btn.disabled=false;
