@@ -608,11 +608,11 @@ function renderSectSelect(){
   body.appendChild(tip);
   
   const list = document.createElement('div');
-  list.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  list.className = 'sect-list';
   
   SECTS.forEach(s => {
     const card = document.createElement('div');
-    card.className = 'list-item clickable';
+    card.className = 'list-item clickable sect-card';
     card.dataset.sectId = s.id;
     card.style.cssText = 'padding:11px 12px;border-width:2px';
     card.innerHTML = `
