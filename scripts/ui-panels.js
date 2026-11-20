@@ -483,6 +483,36 @@ const DAILY_BOUNTIES=[
  {id:'daily_boss',name:'斩妖除魔',desc:'击败 1 名凡界区域 Boss',target:1,field:'bosses',reward:{gold:1200,exp:600},icon:'👹'},
  {id:'daily_kills',name:'清剿妖患',desc:'累计击败 8 只凡界敌人',target:8,field:'kills',reward:{gold:800,exp:400},icon:'🏹'}
 ];
+
+const EXPLORATION_QUESTS=[
+ {id:'explore_donghai',name:'潮声寻踪',desc:'发现隐藏区域「东海湾」',regions:['donghai'],reward:{gold:300,exp:180},icon:'🌊'},
+ {id:'explore_yougu',name:'幽谷探秘',desc:'发现隐藏区域「幽谷秘境」',regions:['yougu'],reward:{gold:450,exp:260},icon:'🌲'},
+ {id:'explore_both',name:'双境行者',desc:'同时发现东海湾与幽谷秘境',regions:['donghai','yougu'],reward:{gold:900,exp:600},icon:'🧭'}
+];
+function renderExplorationQuests(body){
+ const section=document.createElement('section');
+ section.style.cssText='margin-top:14px;padding-top:10px;border-top:1px solid rgba(240,200,96,.25)';
+ section.innerHTML='<div class="section-title"><span class="sti">🧭</span>开放世界探索委托</div><div style="font-size:10px;color:#a98f70;margin:-4px 0 8px">探索并发现隐藏区域即可推进，奖励每项仅可领取一次。</div>';
+ EXPLORATION_QUESTS.forEach(q=>{
+  const done=!!P.flags[q.id],found=q.regions.filter(id=>Array.isArray(P.discoveredRegions)&&P.discoveredRegions.includes(id)).length;
+  const cur=done?q.regions.length:found,pct=Math.min(100,cur/q.regions.length*100);
+  const row=document.createElement('div');row.className='list-item';if(done)row.classList.add('rare-3');
+  row.innerHTML='<div class="li-icon" style="font-size:22px">'+q.icon+'</div><div class="li-body"><div class="li-name">'+q.name+(done?'<span style="color:#80ffa0;font-size:10px;margin-left:5px">✓ 已领取</span>':'')+'</div><div class="li-desc">'+q.desc+'</div><div style="height:7px;margin-top:5px;background:#180c04;border:1px solid #060302;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#268b63,#72e6a0)"></div></div><div style="margin-top:4px;font-size:10px;color:#c0a870">探索进度 <b style="color:#ffe8a0">'+cur+'/'+q.regions.length+'</b> · 💰'+q.reward.gold+' · ⭐'+q.reward.exp+'</div></div>';
+  if(!done&&cur>=q.regions.length){
+   const btn=document.createElement('button');btn.className='li-btn';btn.textContent='领取';
+   btn.addEventListener('click',()=>{
+    if(P.flags[q.id])return;
+    const stillFound=q.regions.every(id=>Array.isArray(P.discoveredRegions)&&P.discoveredRegions.includes(id));
+    if(!stillFound)return;
+    P.flags[q.id]=true;P.questDone=(Number(P.questDone)||0)+1;P.gold+=q.reward.gold;gainExp(q.reward.exp);saveGame();updateHUD();
+    toast('🧭 探索委托完成：'+q.name+'，获得 '+q.reward.gold+' 两与 '+q.reward.exp+' 经验');addLog('【探索委托】完成 '+q.name,'good');renderTaskPanel();
+   });
+   row.appendChild(btn);
+  }else if(done){const tag=document.createElement('span');tag.className='li-right';tag.style.color='#80ffa0';tag.textContent='已领';row.appendChild(tag);}
+  section.appendChild(row);
+ });
+ body.appendChild(section);
+}
 function localQuestDate(){
  const d=new Date(),pad=n=>String(n).padStart(2,'0');
  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -623,6 +653,7 @@ function renderTaskPanel(){
     body.appendChild(it);
   });
   renderDailyBounties(body);
+  renderExplorationQuests(body);
 }
 
 /* ============================================================
