@@ -467,11 +467,16 @@ function renderPetPanel(){
    任务面板
    ============================================================ */
 const QUESTS = [
-  { id:'q1', name:'初入江湖',   desc:'赢得3场战斗', target:3, type:'kill_any', reward:{gold:200, exp:100}, icon:'⚔️' },
-  { id:'q2', name:'江湖历练',   desc:'击败10只怪物', target:10, type:'kill_any', reward:{gold:500, exp:300}, icon:'🗡️' },
-  { id:'q3', name:'威震一方',   desc:'击败30只怪物', target:30, type:'kill_any', reward:{gold:1500, exp:1200}, icon:'👑' },
-  { id:'q4', name:'名扬三界',   desc:'击败100只怪物', target:100, type:'kill_any', reward:{gold:5000, exp:5000}, icon:'🏆' },
+  { id:'q1', name:'初入江湖',   desc:'赢得3场战斗', target:3, type:'wins', reward:{gold:200, exp:100}, icon:'⚔️' },
+  { id:'q2', name:'江湖历练',   desc:'击败10只怪物', target:10, type:'kills', reward:{gold:500, exp:300}, icon:'🗡️' },
+  { id:'q3', name:'威震一方',   desc:'击败30只怪物', target:30, type:'kills', reward:{gold:1500, exp:1200}, icon:'👑' },
+  { id:'q4', name:'名扬三界',   desc:'击败100只怪物', target:100, type:'kills', reward:{gold:5000, exp:5000}, icon:'🏆' },
 ];
+
+function getQuestProgress(q, stats=P){
+  const value=q&&q.type==='kills'?stats.kills:stats.battles;
+  return Math.max(0,Math.floor(Number(value)||0));
+}
 
 const DAILY_BOUNTIES=[
  {id:'daily_wins',name:'巡山除妖',desc:'赢得 3 场凡界普通战斗',target:3,field:'wins',reward:{gold:500,exp:250},icon:'⚔️'},
@@ -565,7 +570,7 @@ function renderTaskPanel(){
   
   QUESTS.forEach(q => {
     const done = P.flags[q.id];
-    const cur = Math.min(P.battles, q.target);
+    const cur = Math.min(getQuestProgress(q), q.target);
     const pct = clamp(cur / q.target * 100, 0, 100);
     
     const it = document.createElement('div');
@@ -600,6 +605,7 @@ function renderTaskPanel(){
         P.questDone++;
         P.gold += q.reward.gold;
         gainExp(q.reward.exp);
+        saveGame();
         toast(`🎉 完成【${q.name}】！+${q.reward.gold}两 +${q.reward.exp}经验`);
         addLog(`【任务】完成 ${q.name}`, 'good');
         updateHUD();
