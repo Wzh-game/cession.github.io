@@ -601,51 +601,30 @@ let pendingSect = null;
 function renderSectSelect(){
   const body = $('sectBody');
   body.innerHTML = '';
-  
   const tip = document.createElement('div');
-  tip.style.cssText = 'text-align:center;font-size:12px;color:#ffd060;letter-spacing:3px;margin-bottom:14px;text-shadow:0 1px 0 #000';
-  tip.innerHTML = changingSectMode ? '选择新的门派。确认后等级、经验与全部召唤兽将清零' : '少侠初入江湖，请择一门派投之';
+  tip.className = 'sect-tip';
+  tip.textContent = changingSectMode ? '选择新的门派。确认后等级、经验与全部召唤兽将清零' : '少侠初入江湖，请择一门派投之';
   body.appendChild(tip);
-  
   const list = document.createElement('div');
   list.className = 'sect-list';
-  
   SECTS.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'list-item clickable sect-card';
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'sect-card';
     card.dataset.sectId = s.id;
-    card.style.cssText = 'padding:11px 12px;border-width:2px';
-    card.innerHTML = `
-      <div class="li-icon" style="font-size:26px;width:46px;height:46px;background:radial-gradient(circle at 50% 35%,${s.color}44,transparent 70%),linear-gradient(180deg,rgba(90,50,24,.6),rgba(40,20,8,.6));border-color:${s.color}66">
-        ${s.icon}
-      </div>
-      <div class="li-body">
-        <div class="li-name" style="color:${s.color};font-size:13.5px;text-shadow:0 1px 0 #000,0 0 6px ${s.color}66">${s.name}</div>
-        <div class="li-desc" style="margin-top:4px">${s.desc}</div>
-        <div style="margin-top:5px;font-size:9.5px;color:#c0a870;line-height:1.4">
-          气血${s.base.hp} · 法力${s.base.mp} · 攻击${s.base.atk} · 防御${s.base.def}
-        </div>
-        <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px">
-          ${s.skills.map(k=>`<span style="font-size:9px;padding:1px 6px;background:rgba(240,200,96,.15);border:1px solid rgba(240,200,96,.35);border-radius:8px;color:#ffe8a0">${k.name}</span>`).join('')}
-        </div>
-      </div>
-    `;
+    card.setAttribute('aria-pressed', 'false');
+    card.innerHTML = `<span class="sect-emblem" style="--sect-color:${s.color}"><span class="sect-emblem-glyph" aria-hidden="true">${s.icon}</span></span><span class="sect-content"><span class="sect-name" style="--sect-color:${s.color}">${s.name}</span><span class="sect-desc">${s.desc}</span><span class="sect-stats">气血 ${s.base.hp} · 法力 ${s.base.mp} · 攻击 ${s.base.atk} · 防御 ${s.base.def}</span><span class="sect-skills">${s.skills.map(k => `<span class="sect-skill">${k.name}</span>`).join('')}</span></span>`;
     card.addEventListener('click', () => {
-      $$('#sectBody .list-item').forEach(el => {
-        el.style.background = 'linear-gradient(180deg,rgba(255,220,160,.08),rgba(0,0,0,.25))';
-        el.style.borderColor = 'rgba(240,200,96,.22)';
-      });
-      card.style.background = 'linear-gradient(180deg,rgba(240,200,96,.22),rgba(0,0,0,.35))';
-      card.style.borderColor = 'rgba(240,200,96,.65)';
+      $$('#sectBody .sect-card').forEach(el => { el.classList.remove('selected'); el.setAttribute('aria-pressed', 'false'); });
+      card.classList.add('selected');
+      card.setAttribute('aria-pressed', 'true');
       pendingSect = s.id;
       $('btnSectConfirm').disabled = false;
     });
     list.appendChild(card);
   });
-  
   body.appendChild(list);
 }
-
 /* 确认选择门派 */
 let changingSectMode = false;
 
