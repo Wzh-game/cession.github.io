@@ -31,13 +31,17 @@ function setMapGraphicsMode(enabled,announce=true){
  return on;
 }
 function toggleMapGraphicsMode(){return setMapGraphicsMode(!window.map3DEnabled);}
+window.setMapGraphicsMode=setMapGraphicsMode;
+window.toggleMapGraphicsMode=toggleMapGraphicsMode;
+window.addEventListener('world3d-ready',()=>{const on=window.map3DEnabled!==false;const canvas=document.getElementById('world3dCanvas');if(canvas)canvas.style.display=on?'block':'none';if(on)window.renderWorld3D?.();});
 function initGraphicsMode(){
  const btn=document.getElementById('graphicsToggle');
  if(!btn)return;
  window.map3DEnabled=isMap3DEnabled();
  btn.disabled=false;
  btn.style.pointerEvents='auto';
- btn.onclick=()=>toggleMapGraphicsMode();
+ btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleMapGraphicsMode();},{capture:true});
+  btn.addEventListener('pointerup',e=>{if(e.pointerType==='touch')e.stopPropagation();},{passive:true});
  setMapGraphicsMode(window.map3DEnabled,false);
 }
 const QUALITY_LEVELS=['low','high','extreme'];
