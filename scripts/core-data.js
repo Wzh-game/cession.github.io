@@ -628,6 +628,9 @@ function renderSectSelect(){
 /* 确认选择门派 */
 let changingSectMode = false;
 
+// 初次进入游戏时，HTML 中的门派弹窗已显示，必须主动填充门派卡片
+renderSectSelect();
+
 $('btnSectConfirm').addEventListener('click', () => {
   if (!pendingSect) return;
   if (changingSectMode) convertSect(pendingSect);
