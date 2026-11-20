@@ -12,3 +12,8 @@
 .immortal-world-fallback{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:#ffe8aa;font-size:12px}
 @media(max-width:520px){#immortalMapWorld{height:58vh;min-height:320px}#immortalDpad{left:7px;bottom:7px;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,37px)}.immortal-world-hint{left:8px;right:8px;bottom:145px;max-width:calc(100% - 16px);font-size:9px}.immortal-world-top{left:7px;right:7px;top:7px;padding:6px 8px}}
 @media(orientation:landscape) and (max-height:520px){#immortalMapWorld{height:68vh;min-height:250px}.immortal-world-hint{bottom:8px;right:155px}}
+
+/* 识海地图视野修复：加大可视区域，避免地图看起来像一小块单色地面 */
+#immortalMapWorld{height:min(70vh,720px);min-height:420px;max-height:720px;background:radial-gradient(ellipse at 50% 42%,#315c68 0%,#203b4b 52%,#111b2c 100%)}
+#immortalMapWorld #immortal3DCanvas{image-rendering:auto}
+@media(max-width:520px){#immortalMapWorld{height:64vh;min-height:360px;max-height:720px}}
