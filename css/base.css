@@ -1712,3 +1712,63 @@ body.quality-extreme #stage{background-image:radial-gradient(ellipse at 50% 8%,r
   #modalSect .dialog-head{padding-top:8px;padding-bottom:7px}
   #modalSect .dialog-foot{padding:7px 10px}
 }
+
+/* 门派选择二次修复：宗门徽记独立居中，避免图标与卡片内容互相覆盖 */
+#modalSect .sect-list{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:12px!important;
+}
+#modalSect .sect-card{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  justify-items:stretch;
+  align-items:start;
+  gap:8px!important;
+  min-height:0!important;
+  height:auto!important;
+  padding:14px!important;
+  overflow:visible!important;
+}
+#modalSect .sect-card > .li-icon{
+  position:relative!important;
+  inset:auto!important;
+  justify-self:center!important;
+  align-self:center!important;
+  width:58px!important;
+  height:58px!important;
+  min-width:58px!important;
+  min-height:58px!important;
+  margin:0 auto 4px!important;
+  flex:none!important;
+  font-size:30px!important;
+  line-height:1!important;
+  z-index:1!important;
+}
+#modalSect .sect-card > .li-body{
+  display:flex!important;
+  position:relative!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  flex-direction:column!important;
+  gap:6px!important;
+  z-index:0!important;
+}
+#modalSect .sect-card .li-name{
+  text-align:center;
+  white-space:normal!important;
+  overflow:visible!important;
+  line-height:1.5!important;
+}
+#modalSect .sect-card .li-desc{
+  text-align:center;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+#modalSect .sect-card .li-body > div[style*="display:flex"]{
+  justify-content:center!important;
+  flex-wrap:wrap!important;
+  row-gap:6px!important;
+}
