@@ -310,14 +310,15 @@ function immortalMapTerrain(x,y){
  if(site){blocked=false;water=false;tree=false;terrain='landmark';}
  if(boss){blocked=false;water=false;terrain='boss';}
  const monster=!site&&!boss&&!blocked&&h2>.986?IMMORTAL_ENCOUNTERS.filter(e=>e.region===region.encounter)[Math.floor(immortalHash(x,y,911)*2)]:null;
- return {name:site?site.name:boss?'仙界守护者':water?'灵泉水域':blocked?'仙岩':tree?'仙林':crystal?'灵晶':region.name,region:region.id,regionName:region.name,terrain,blocked,water,tree,crystal,landmark:site&&site.id!=='gate'?site.id:site?'gate':null,site:site?site.id:null,boss:boss?IMMORTAL_BOSSES.find(b=>b.id===boss[0]):null,monster};
+ const path=!site&&((y===0&&x>=-38&&x<=16)||(x===0&&y>=0&&y<=48)||(x>0&&x<=38&&y===0)||(x===-38&&y>=0&&y<=48));
+ return {x,y,name:site?site.name:boss?'识海守护者':water?'灵泉水域':blocked?'仙岩':tree?'仙林':crystal?'灵晶':region.name,region:region.id,regionName:region.name,terrain,blocked,water,tree,crystal,path,landmark:site&&site.id!=='gate'?site.id:site?'gate':null,site:site?site.id:null,boss:boss?IMMORTAL_BOSSES.find(b=>b.id===boss[0]):null,monster};
 }
 function revealImmortalMap(){const r=P.immortalRealm,set=new Set(r.mapDiscovered||[]);for(let y=r.mapY-6;y<=r.mapY+6;y++)for(let x=r.mapX-6;x<=r.mapX+6;x++)set.add(immortalMapKey(x,y));r.mapDiscovered=Array.from(set).slice(-8000);}
 function getImmortalWorldSite(){return IMMORTAL_EXPLORATION_SITES.find(v=>v.x===P.immortalRealm.mapX&&v.y===P.immortalRealm.mapY)||null;}
 function getImmortalWorldBoss(){const r=P.immortalRealm;for(const [id,p] of Object.entries(IMMORTAL_BOSS_WORLD_POSITIONS))if(p.x===r.mapX&&p.y===r.mapY)return id;return null;}
 function refreshImmortalWorldHud(){const r=P.immortalRealm,region=immortalRegionAt(r.mapX,r.mapY),site=getImmortalWorldSite(),bossId=getImmortalWorldBoss(),boss=IMMORTAL_BOSSES.find(b=>b.id===bossId),coords=$('immortalWorldCoords'),name=$('immortalWorldName'),hint=$('immortalWorldHint'),count=$('immortalWorldExploreCount');if(coords)coords.textContent='坐标 '+r.mapX+','+r.mapY;if(name)name.textContent=region.name;if(hint)hint.textContent=site?site.name+' · 按中央「调查」探索':boss?boss.name+' · 按中央「调查」挑战':'方向键或 WASD 自由移动 · 探索仙界遗迹与灵物';if(count)count.textContent='已探索 '+r.mapDiscovered.length+' 处';}
 window.getImmortal3DState=()=>({x:P.immortalRealm.mapX,y:P.immortalRealm.mapY,region:immortalRegionAt(P.immortalRealm.mapX,P.immortalRealm.mapY).id});
-window.getImmortal3DInfo=(x,y)=>{const info=immortalMapTerrain(x,y),seen=P.immortalRealm.mapDiscovered.includes(immortalMapKey(x,y));return seen?info:{name:'未探索迷雾',region:info.region,hidden:true,blocked:false};};
+window.getImmortal3DInfo=(x,y)=>{const info=immortalMapTerrain(x,y),seen=P.immortalRealm.mapDiscovered.includes(immortalMapKey(x,y));return seen?info:{x,y,name:'未探索迷雾',region:info.region,hidden:true,blocked:false};};
 window.isImmortalOpenWorldActive=()=>!!(P.immortalRealm&&P.immortalRealm.unlocked&&P.immortalRealm.view==='immortal'&&P.immortalRealm.activeTab==='travel'&&!battle.active);
 window.moveImmortalOpenWorld=(dx,dy)=>moveImmortalMap(dx,dy);
 function startImmortalBattle(mob,flag,id){battle.returnToImmortalWorld=P.immortalRealm.view==='immortal';if(battle.returnToImmortalWorld)setImmortalView('mortal');battlePrepare([mob]);battle[flag]=id;return true;}
@@ -405,7 +406,7 @@ function syncImmortalNavigation(){
  if(top)top.style.display=inside?'none':'';if(mortal)mortal.style.display=inside?'none':'';if(immortal)immortal.style.display=inside?'flex':'none';
  const mortalMenus=['char','bag','equipment','skill','pet','task','challenge','achievements','cultivation'];
  document.querySelectorAll('#bottomBar [data-menu]').forEach(btn=>{const key=btn.dataset.menu;let show=true;if(mortalMenus.includes(key))show=!inside;else if(['immortalMansion','immortalSect','immortalTravel'].includes(key))show=inside;else if(key==='realmSwitch')show=r.unlocked;btn.style.display=show?'flex':'none';});
- const sw=$('#bottomBar [data-menu="realmSwitch"]');if(sw){sw.querySelector('.mi').textContent=inside?'🏞️':'🌌';sw.querySelector('.mt').textContent=inside?'凡界':'仙界';}
+ const sw=$('#bottomBar [data-menu="realmSwitch"]');if(sw){sw.querySelector('.mi').textContent=inside?'🏞️':'🌌';sw.querySelector('.mt').textContent=inside?'凡界':'识海';}
 }
 function upgradeImmortalFacility(type){
  const r=P.immortalRealm,m=r.mansion,keys={array:'arrayLevel',field:'fieldLevel',puppet:'puppetLevel'},key=keys[type];if(!key)return false;const level=m[key];if(level>=10)return false;
