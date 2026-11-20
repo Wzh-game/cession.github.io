@@ -36,15 +36,24 @@ function landmark(parent,x,z,kind){
  else if(kind==='voidaltar'){add(parent,new THREE.CylinderGeometry(.75,.9,.22,8),mat(0x40364e),x,.11,z);const ring=add(parent,new THREE.TorusGeometry(.52,.055,8,24),new THREE.MeshStandardMaterial({color:0x9c71df,emissive:0x3d176b,metalness:.35}),x,.72,z);ring.rotation.x=Math.PI/2;}
  else{add(parent,new THREE.CylinderGeometry(.6,.75,.25,8),mat(0xc3a56c),x,.12,z);add(parent,new THREE.ConeGeometry(.55,.8,8),mat(0x9d7a46),x,.6,z);}
 }
+function visualHash(x,y,seed=0){let n=Math.imul((x|0)+seed,374761393)^Math.imul((y|0)-seed,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;}
 function buildTile(parent,dx,dz,info){
- const color=info.hidden?0x172538:info.water?0x285b82:info.blocked?0x59677d:info.region==='chaos'?0x51415e:info.region==='zhuxian'?0x89705c:info.region==='yaochi'?0x5a9b9a:info.region==='forest'?0x376e45:info.region==='jiutian'?0x68964e:0x648a5a;
- const base=add(parent,new THREE.BoxGeometry(.98,.18,.98),mat(color),dx,-.11,dz,false,true);base.userData={dx,dz,info};hits.push(base);
+ const x=Number.isFinite(info.x)?info.x:dx,y=Number.isFinite(info.y)?info.y:dz,h=visualHash(x,y,19),h2=visualHash(x,y,83);
+ const palettes={jiutian:[0x668f4e,0x729d57,0x5e8548,0x7da45c,0x587e49],yaochi:[0x559b91,0x65aaa0,0x47877f,0x78b6a8],zhuxian:[0x88745d,0x9b8065,0x75634f,0xa18b70],forest:[0x356d43,0x417c4c,0x2f613c,0x508a54],chaos:[0x51415e,0x615071,0x44364f,0x6a5878],wilderness:[0x648a5a,0x739b61,0x587c50]};
+ const palette=palettes[info.region]||palettes.wilderness;
+ let color=info.hidden?0x172538:info.water?0x285b82:info.blocked?(info.region==='chaos'?0x51445f:0x687783):palette[Math.floor(h*palette.length)%palette.length];
+ if(info.path&&!info.hidden)color=info.region==='zhuxian'?0x9d8b78:0x9c8968;
+ const lift=(h2-.5)*.035;
+ const base=add(parent,new THREE.BoxGeometry(.98,.18,.98),mat(color),dx,-.11+lift,dz,false,true);base.userData={dx,dz,info};hits.push(base);
  if(info.hidden)return;
- if(info.water){const w=add(parent,new THREE.PlaneGeometry(.94,.94),new THREE.MeshStandardMaterial({color:0x54b7d0,transparent:true,opacity:.62,roughness:.2}),dx,-.012,dz,false,false);w.rotation.x=-Math.PI/2;}
+ if(info.path){for(let k=0;k<3;k++){const px=dx+(k-1)*.25,pz=dz+(k%2?.18:-.18);const stone=add(parent,new THREE.DodecahedronGeometry(.12,0),mat(0xb6a17b),px,-.005+lift,pz,false,true);stone.scale.set(1,.22,.72);}}
+ if(info.water){const w=add(parent,new THREE.PlaneGeometry(.94,.94),new THREE.MeshStandardMaterial({color:0x42b9d4,transparent:true,opacity:.78,roughness:.16,metalness:.12,emissive:0x07384a}),dx,-.012+lift,dz,false,false);w.rotation.x=-Math.PI/2;for(let k=0;k<2;k++){const ripple=add(parent,new THREE.TorusGeometry(.16+k*.12,.012,4,16),new THREE.MeshBasicMaterial({color:0xa4f2ff,transparent:true,opacity:.38,depthWrite:false}),dx+(k-.5)*.18,.006+lift,dz,false,false);ripple.rotation.x=Math.PI/2;}}
  if(info.landmark)landmark(parent,dx,dz,info.landmark);
  else if(info.tree)tree(parent,dx,dz,info.region==='forest'?'forest':'normal');
  else if(info.blocked)rock(parent,dx,dz,info.region==='chaos'?0x55445f:0x75828c);
- else if(info.crystal){const c=add(parent,new THREE.OctahedronGeometry(.22),new THREE.MeshStandardMaterial({color:0x9ceaff,metalness:.3,roughness:.18,emissive:0x174a70}),dx,.28,dz);c.rotation.y=.5;}
+ else if(info.crystal){const c=add(parent,new THREE.OctahedronGeometry(.25),new THREE.MeshStandardMaterial({color:0x9ceaff,metalness:.3,roughness:.16,emissive:0x245d83}),dx,.3+lift,dz);c.rotation.y=.5;const glow=add(parent,new THREE.OctahedronGeometry(.38),new THREE.MeshBasicMaterial({color:0x65cfff,transparent:true,opacity:.12,depthWrite:false}),dx,.3+lift,dz,false,false);}
+ else if(!info.path&&h>.35){const tuftCount=h>.78?5:3;for(let k=0;k<tuftCount;k++){const a=(k/tuftCount)*Math.PI*2+h2*2.4,rr=.2+visualHash(x+k,y-k,7)*.2,tx=dx+Math.cos(a)*rr,tz=dz+Math.sin(a)*rr,hh=.12+visualHash(x-k,y+k,9)*.18;const blade=add(parent,new THREE.ConeGeometry(.035,hh,4),mat(info.region==='chaos'?0x8770a0:info.region==='zhuxian'?0xb1a17b:0x91b96a),tx,hh/2-.015+lift,tz,false,false);blade.rotation.z=(visualHash(x+k*2,y-k*3,3)-.5)*.55;}}
+ if(!info.tree&&!info.blocked&&!info.water&&!info.landmark&&h2>.82){const flower=add(parent,new THREE.SphereGeometry(.055,6,5),mat(info.region==='chaos'?0xb08ee0:info.region==='yaochi'?0xd4f7f1:0xf1d28a),dx+(h-.5)*.55,.055+lift,dz+(h2-.5)*.55,false,false);}
  if(info.monster){shadow(parent,dx,dz,.42,.3,.35);const m=makePixelSprite('monster',info.monster.icon);m.position.set(dx,.56,dz);parent.add(m);}
  if(info.boss){shadow(parent,dx,dz,.56,.4,.4);const m=makePixelSprite('monster',info.boss.icon);m.scale.set(1.25,1.5,1);m.position.set(dx,.72,dz);parent.add(m);}
 }
@@ -87,7 +96,7 @@ function clickWorld(e){
 }
 function boot(){
  scene=new THREE.Scene();scene.background=new THREE.Color(0x263a55);scene.fog=new THREE.FogExp2(0x263a55,.025);
- camera=new THREE.PerspectiveCamera(52,1,.1,100);camera.position.set(0,10,13);camera.lookAt(0,0,0);
+ camera=new THREE.PerspectiveCamera(52,1,.1,100);camera.position.set(0,12.5,14.5);camera.lookAt(0,0,0);
  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer.domElement.id='immortal3DCanvas';
  Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',display:'block',touchAction:'manipulation'});
  scene.add(new THREE.HemisphereLight(0xddeaff,0x30283f,1.8));
