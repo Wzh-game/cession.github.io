@@ -1,351 +1,60 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>梦幻西游 · 2.0版本</title>
-<link rel="stylesheet" href="css/base.css?v=20261120-sectcomponent3">
-
-<link rel="stylesheet" href="css/layout.css?v=20261119-sidebar-left">
-<link rel="stylesheet" href="css/battle3d.css">
-<link rel="stylesheet" href="css/immortal3d.css?v=20261120-immortalvisual2">
-</head>
-<body>
-<div id="gameIntro" aria-hidden="true">
-  <div class="intro-title intro-en">wzhgame</div>
-  <div class="intro-title intro-cn">梦幻西游</div>
-</div>
-<div id="game">
-  
-  <!-- ============ 顶部状态栏 ============ -->
-  <header id="topbar">
-    <div id="portrait" title="点击更换人物形象">
-      <svg class="original-svg" viewBox="0 0 16 18" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
-        <!-- 头发 -->
-        <rect x="4" y="0" width="8" height="2" fill="#2a1620"/>
-        <rect x="3" y="2" width="1" height="4" fill="#2a1620"/>
-        <rect x="12" y="2" width="1" height="4" fill="#2a1620"/>
-        <rect x="4" y="2" width="8" height="2" fill="#3a2630"/>
-        <!-- 脸 -->
-        <rect x="4" y="2" width="8" height="7" fill="#f5d8b8"/>
-        <!-- 发带 -->
-        <rect x="3" y="3" width="10" height="1" fill="#4a9a7a"/>
-        <rect x="3" y="3" width="1" height="2" fill="#2a6a52"/>
-        <rect x="12" y="3" width="1" height="2" fill="#2a6a52"/>
-        <!-- 眼 -->
-        <rect x="5" y="5" width="2" height="2" fill="#1a0e18"/>
-        <rect x="9" y="5" width="2" height="2" fill="#1a0e18"/>
-        <rect x="5" y="5" width="1" height="1" fill="#ffffff"/>
-        <rect x="9" y="5" width="1" height="1" fill="#ffffff"/>
-        <!-- 腮红 -->
-        <rect x="4" y="7" width="1" height="1" fill="#f0a8a0"/>
-        <rect x="11" y="7" width="1" height="1" fill="#f0a8a0"/>
-        <!-- 嘴 -->
-        <rect x="7" y="7" width="2" height="1" fill="#c87868"/>
-        <!-- 脖子 -->
-        <rect x="7" y="9" width="2" height="1" fill="#e8c0a0"/>
-        <!-- 衣袍 -->
-        <rect x="2" y="10" width="12" height="8" fill="#e8d8b0"/>
-        <!-- 衣领 -->
-        <rect x="6" y="10" width="4" height="1" fill="#4a9a7a"/>
-        <rect x="5" y="11" width="1" height="1" fill="#4a9a7a"/>
-        <rect x="10" y="11" width="1" height="1" fill="#4a9a7a"/>
-        <!-- 外袖 -->
-        <rect x="1" y="11" width="1" height="5" fill="#3a5a80"/>
-        <rect x="14" y="11" width="1" height="5" fill="#3a5a80"/>
-        <!-- 腰带 -->
-        <rect x="3" y="15" width="10" height="1" fill="#3a5a80"/>
-        <rect x="7" y="15" width="2" height="1" fill="#f0c860"/>
-        <!-- 云纹 -->
-        <rect x="3" y="12" width="2" height="1" fill="#c8a860"/>
-        <rect x="11" y="12" width="2" height="1" fill="#c8a860"/>
-        <rect x="4" y="13" width="1" height="1" fill="#c8a860"/>
-        <rect x="11" y="13" width="1" height="1" fill="#c8a860"/>
-      </svg>
-      <svg class="frog-svg" viewBox="0 0 16 18" shape-rendering="crispEdges" role="img" aria-label="青蛙人物形象" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="0" width="4" height="2" fill="#28751e"/>
-        <rect x="9" y="0" width="4" height="2" fill="#28751e"/>
-        <rect x="2" y="2" width="12" height="3" fill="#3d9d20"/>
-        <rect x="1" y="5" width="14" height="7" fill="#67d51e"/>
-        <rect x="2" y="12" width="12" height="4" fill="#4ab51c"/>
-        <rect x="4" y="16" width="3" height="2" fill="#f28a08"/>
-        <rect x="9" y="16" width="3" height="2" fill="#f28a08"/>
-        <rect x="3" y="4" width="4" height="4" fill="#dbe8e8"/>
-        <rect x="9" y="4" width="4" height="4" fill="#dbe8e8"/>
-        <rect x="4" y="5" width="2" height="3" fill="#000"/>
-        <rect x="10" y="5" width="2" height="3" fill="#000"/>
-        <rect x="6" y="8" width="4" height="2" fill="#ffb20b"/>
-        <rect x="7" y="10" width="2" height="1" fill="#d86e08"/>
-        <rect x="4" y="12" width="2" height="1" fill="#75e62b"/>
-        <rect x="10" y="12" width="2" height="1" fill="#75e62b"/>
-      </svg>
-    </div>
-    
-    <div class="info-mid">
-      <div class="name-row">
-        <span id="pName">无名侠客</span>
-        <span id="pSect">大唐官府</span>
-        <span id="pLv">Lv.<b>1</b></span>
-      </div>
-      <div class="bars">
-        <div class="sbar hp">
-          <div class="fill" id="hpFill" style="width:100%"></div>
-          <div class="label"><span>气血</span><span><b id="hpText">100</b>/<i id="hpMax">100</i></span></div>
-        </div>
-        <div class="sbar mp">
-          <div class="fill" id="mpFill" style="width:100%"></div>
-          <div class="label"><span>法力</span><span><b id="mpText">50</b>/<i id="mpMax">50</i></span></div>
-        </div>
-        <div class="sbar exp">
-          <div class="fill" id="expFill" style="width:0%"></div>
-          <div class="label"><span>经验</span><span><b id="expText">0</b>/<i id="expMax">60</i></span></div>
-        </div>
-      </div>
-    </div>
-    
-    <div id="goldBox">
-      <div class="g-icon">💰</div>
-      <div class="g-val"><span id="goldVal">100</span><small>两</small></div>
-    </div>
-    
-    <button id="graphicsToggle" type="button" aria-label="切换2D和3D显示模式" aria-pressed="true">地图3D：开</button>
-    <button id="qualityToggle" type="button" aria-label="切换画质等级" onclick="cycleQualityLevel();return false;">画质：高</button>
-  </header>
-  
-  <!-- ============ 主视图区 ============ -->
-  <main id="stage">
-    <div id="world"></div>
-    
-    <div id="sceneTitle">
-      长安城 <b>·</b> <i>中心广场</i>
-    </div>
-    
-    <div id="miniMapControl"><div id="miniMapBtn"><div class="mi">🗺️</div><div class="mt">地图</div></div><div id="teleportBtn"><div class="mi">🪨</div><div class="mt">传送石碑</div></div><div id="playerCoordHud">坐标 X:0 Y:0</div></div>
-    
-    <div id="dpad">
-      <button type="button" class="u" data-dir="up">▲</button>
-      <button type="button" class="l" data-dir="left">◀</button>
-      <button type="button" class="c" id="btnCenter">中</button>
-      <button type="button" class="r" data-dir="right">▶</button>
-      <button type="button" class="d" data-dir="down">▼</button>
-    </div>
-    
-    <div id="toast"></div>
-    <div id="sceneBanner"></div>
-  </main>
-  
-<main id="immortalStage" style="display:none;flex:1;flex-direction:column;overflow:auto;padding:8px;background:#0a1a08;-webkit-overflow-scrolling:touch"></main>
-  <!-- ============ 底部主菜单 ============ -->
-  <footer id="bottomBar">
-    <button class="menu-btn" data-menu="char">
-      <span class="mi">🧝</span>
-      <span class="mt">人物</span>
-    </button>
-    <button class="menu-btn" data-menu="bag">
-      <span class="mi">🎒</span>
-      <span class="mt">背包</span>
-    </button>
-    <button class="menu-btn" data-menu="equipment"><span class="mi">⚔️</span><span class="mt">装备</span></button>
-    <button class="menu-btn" data-menu="skill">
-      <span class="mi">✨</span>
-      <span class="mt">技能</span>
-    </button>
-    <button class="menu-btn" data-menu="pet">
-      <span class="mi">🐾</span>
-      <span class="mt">召唤兽</span>
-    </button>
-    <button class="menu-btn" data-menu="challenge"><span class="mi">🏆</span><span class="mt">挑战赛</span></button>
-    <button class="menu-btn" data-menu="achievements"><span class="mi">🏅</span><span class="mt">成就</span></button>
-    <button class="menu-btn" data-menu="task">
-      <span class="mi">📜</span>
-      <span class="mt">任务</span>
-    </button>
-    <button class="menu-btn" data-menu="cultivation"><span class="mi">📚</span><span class="mt">功法</span></button>
-<button class="menu-btn" data-menu="developer"><span class="mi">🧪</span><span class="mt">开发者</span></button>
-    <button class="menu-btn" data-menu="updates"><span class="mi">📖</span><span class="mt">更新日志</span></button>
-    <button class="menu-btn" data-menu="realmSwitch" style="display:none"><span class="mi">🌌</span><span class="mt">识海</span></button>
-    <button class="menu-btn" data-menu="immortalMansion" style="display:none"><span class="mi">🏯</span><span class="mt">识府</span></button>
-    <button class="menu-btn" data-menu="immortalSect" style="display:none"><span class="mi">🏛️</span><span class="mt">识宗</span></button>
-    <button class="menu-btn" data-menu="immortalTravel" style="display:none"><span class="mi">🌌</span><span class="mt">游历识海</span></button>
-    <a class="menu-btn repo-link" href="https://github.com/wzh131213-dev/cession.github.io/tree/add-save-import-export" target="_blank" rel="noopener noreferrer" aria-label="打开GitHub项目仓库"><span class="mi">🐙</span><span class="mt">GitHub</span></a>
-  </footer>
-  
-  <!-- ============ 更新日志 ============ -->
-  <div class="modal" id="modalUpdates"><div class="dialog"><div class="dialog-head"><div class="dialog-title">📖 更新日志</div><button class="dialog-close" data-close="modalUpdates">✕</button></div><div class="dialog-body" id="updatesBody" style="overflow:auto;max-height:70vh">
-    <div class="updates-timeline">
-    <div class="update-date">📅 早期版本 · 日期未记录</div>
-    <div class="update-entry"><b>🌟 初版 · 梦幻西游网页 RPG</b><small>游戏基础框架</small><p>建立像素风单机 RPG：角色移动、地图探索、人物属性、银两、气血/法力、战斗、任务、门派与基础存档。</p></div>
-    <div class="update-date">📅 后续版本 · 日期未记录</div>
-    <div class="update-entry"><b>🗺️ 世界与探索扩展</b><small>地图更新</small><p>扩展长安城及多个野外区域，加入地形、怪物、Boss 挑战、区域探索、坐标 HUD、小地图和传送石碑。</p></div>
-    <div class="update-entry"><b>⚔️ 战斗与 Boss 更新</b><small>战斗系统</small><p>加入区域 Boss、专属技能、狂暴机制、首次击败奖励、功法与装备战利品。</p></div>
-    <div class="update-entry"><b>📚 功法修炼</b><small>成长系统</small><p>新增功法入口与在线修炼进度，功法按 Boss 难度递增，支持进度保存。</p></div>
-    <div class="update-entry"><b>🛡️ 装备成长与锻造</b><small>装备系统</small><p>新增角色装备、锻造强化、Boss 专属装备、套装与装备图鉴。</p></div>
-    <div class="update-entry"><b>🌌 隐藏区域与世界扩展</b><small>探索更新</small><p>加入东海湾、幽谷秘境及区域专属怪物、地貌和发现记录；调整遭遇频率并完善传送。</p></div>
-    <div class="update-date">📅 2026-11-15</div>
-    <div class="update-entry"><b>🐾 召唤兽系统扩展</b><small>宠物成长</small><p>更新召唤兽捕捉、成长、进化、专属技能、资质、技能研习、仓库管理、装备与培养功能。</p></div>
-    <div class="update-date">📅 2026-11-16</div>
-    <div class="update-entry"><b>☯️ 飞升仙界 · 仙界玩法</b><small>2.0 阶段更新</small><p>新增仙界独立进度、九重境界、仙府、仙宗、仙法、仙器、游历、仙界 Boss 与遭遇战。</p></div>
-    <div class="update-date">📅 2026-11-17</div>
-    <div class="update-entry"><b>💎 仙界每日签到</b><small>日常玩法</small><p>加入每日签到和连续签到奖励，修复日期记录问题，防止刷新重复领取。</p></div>
-    <div class="update-entry"><b>✨ 仙玉自动生成</b><small>资源系统</small><p>解锁仙界后，每秒自动产生 0.5 仙玉。</p></div>
-    <div class="update-date">📅 2026-11-18</div>
-    <div class="update-entry"><b>🎨 画质切换</b><small>视觉更新</small><p>加入经典 2D 与 CSS 透视立体 2.5D 画质切换，偏好独立保存。当前 2.5D 并非真正 WebGL 3D。</p></div>
-    <div class="update-entry"><b>📖 游戏内更新日志</b><small>体验优化</small><p>新增按日期查看的更新记录页面，玩家可在游戏中了解版本变化。</p></div>
-    <div class="update-date">📅 2026-11-20</div>
-    <div class="update-entry"><b>🏛️ 门派选择界面修复</b><small>移动端布局优化</small><p>门派选项改为独立响应式卡片，修复窄屏下门派名称、描述、属性与技能标签挤压重叠的问题；弹窗内容支持完整滚动。</p></div>
-    <div class="update-entry"><b>🏅 2.0 江湖成就系统</b><small>长期成长与一次性奖励</small><p>新增等级、战斗、击杀、隐藏区域探索、Boss、挑战赛、召唤兽、装备收集与仙界成就；支持进度展示、完成领取、奖励结算与存档兼容，每项成就仅可领取一次。</p></div>
-    <div class="update-entry"><b>🌌 游历识海开放世界</b><small>仙界地图升级</small><p>将原 9×9 九宫格升级为连续坐标的开放世界，支持四向无限延伸探索、程序生成的仙界地貌、森林、灵泉、遗迹、灵晶、野外仙界遭遇与区域 Boss。新增移动端方向键、键盘控制、地图点击移动、探索迷雾和坐标存档；旧九宫格存档自动迁移，原仙府、仙宗、境界、仙界资源、遗迹首领奖励及 Boss 首胜记录全部保留。</p></div>
-    <div class="update-date">📅 2026-11-19</div>
-    <div class="update-entry"><b>🏆 每日挑战赛</b><small>连续战斗玩法</small><p>新增五关连胜擂台，每日可报名一次，敌人会随角色等级和关卡动态强化；每关胜利获得额外银两与经验，五关全胜另有终极奖励。挑战进度、历史最佳关卡与通关次数自动保存，中途刷新可继续当前关卡。</p></div>
-    <div class="update-entry"><b>📅 每日悬赏系统</b><small>2.0 任务玩法</small><p>任务面板新增巡山除妖、斩妖除魔、清剿妖患三项每日悬赏，分别记录凡界战斗胜场、区域 Boss 击败数和敌人击败数；进度与领取记录自动存档，同一日期不会因刷新重复领取。</p></div>
-    <div class="update-entry"><b>🧭 地图 3D、其他界面 2D</b><small>2.0 视觉方案调整</small><p>统一为混合显示：凡界世界地图和仙界探索地图保留 Three.js 真实 3D 场景；地图中的主角与怪物改用 2D 像素精灵；战斗恢复 2D 回合制界面，人物、召唤兽、装备、技能、背包、任务、弹窗和菜单均保持 2D。</p></div>
-    <div class="update-entry"><b>📱 画质与移动端布局优化</b><small>界面体验</small><p>画质等级提供低、高、最真实三档；最真实档增强地图实时阴影、环境光影和天气，并为物品与装备图标增加立体投影；顶部模式提示改为“地图3D：开”，避免误以为全游戏都切换为 3D。</p></div>
-    <div class="update-entry"><b>🧭 右侧功能栏与移动操作</b><small>交互优化</small><p>底部功能菜单改为紧凑侧边栏，方向键支持触屏按住连续移动；战斗结算继续按钮布局已调整。</p></div>
-
-    <div class="update-entry"><b>🌌 召唤兽三重突破</b><small>召唤兽成长系统</small><p>召唤兽达到100级后可消耗银两进行三重突破，每重永久提升气血、攻击、防御与速度；突破进度自动保存。</p></div>
-    <div class="update-entry"><b>🧭 仙界自由探索地图</b><small>仙界探索系统</small><p>仙界游历升级为可移动的九宫地图，加入迷雾揭开、地形阻挡、触屏方向键、地点调查与一次性奖励；探索坐标和领取记录会随存档保存，原有仙界 Boss 挑战继续保留。</p></div>
-    <div class="update-date future-date">🔮 未来更新计划</div>
-    <div class="update-entry future"><b>持续开发</b><small>计划内容不代表已实现</small><p>继续扩展剧情任务、地图与隐藏玩法；丰富装备、召唤兽和仙界成长；优化移动端操作、界面与战斗表现。具体内容将随开发调整。</p></div>
-  </div>
-    <div class="update-entry"><b>🌟 初版 · 梦幻西游网页 RPG</b><small>游戏基础框架</small><p>建立像素风单机 RPG：角色移动、地图探索、人物属性、银两、气血/法力、战斗、任务、门派与基础存档。</p></div>
-    <div class="update-entry"><b>🗺️ 世界与探索扩展</b><small>地图更新</small><p>扩展长安城及多个野外区域，加入地形、怪物、Boss 挑战、区域探索、坐标 HUD、小地图和传送石碑。</p></div>
-    <div class="update-entry"><b>⚔️ 战斗与 Boss 更新</b><small>战斗系统</small><p>加入五大区域 Boss、专属技能、狂暴机制、首次击败奖励、功法与装备战利品。</p></div>
-    <div class="update-entry"><b>📚 功法修炼</b><small>成长系统</small><p>新增功法入口与在线修炼进度，功法按 Boss 难度递增，支持成功/失败、进度保存与离线暂停。</p></div>
-    <div class="update-entry"><b>🐾 召唤兽 2.0</b><small>宠物系统</small><p>新增捕捉、成长、进化、专属技能、资质、技能研习、仓库管理、装备和资质培养。</p></div>
-    <div class="update-entry"><b>🛡️ 装备成长与锻造</b><small>装备系统</small><p>新增五部位角色装备、锻造强化、Boss 专属装备、五方镇域套装与装备图鉴。</p></div>
-    <div class="update-entry"><b>🌌 隐藏区域与世界扩展</b><small>探索更新</small><p>加入东海湾、幽谷秘境及区域专属怪物、地貌和发现记录；调整遭遇频率并完善传送。</p></div>
-    <div class="update-entry"><b>☯️ 飞升仙界</b><small>2.0 第二阶段</small><p>新增独立仙界进度、九重境界、仙府、仙宗、仙法、仙器、游历、仙界 Boss 与普通遭遇战。</p></div>
-    <div class="update-entry"><b>💎 仙界日常与资源</b><small>近期更新</small><p>仙界每日签到、连续签到奖励、仙玉自动产出（解锁仙界后每秒 +0.5）、仙府设施与资源成长。</p></div>
-    <div class="update-entry"><b>🎨 画质切换</b><small>视觉更新</small><p>加入经典 2D 与 CSS 透视立体 2.5D 画质切换，偏好独立保存。当前 2.5D 并非真正 WebGL 3D。</p></div>
-    <div class="update-entry future"><b>🔮 未来更新计划</b><small>持续开发 · 计划内容不代表已实现</small><p>继续扩展剧情任务、地图与隐藏玩法；丰富装备、召唤兽和仙界成长；优化移动端操作、界面与战斗表现。具体内容将随开发调整。</p></div>
-  </div><div class="dialog-foot"><button class="btn primary" data-close="modalUpdates">关闭</button></div></div></div>
-  <!-- ============ 弹窗容器 ============ -->
-  
-  <!-- 人物面板 -->
-  <div class="modal" id="modalChar">
-    <div class="dialog">
-      <div class="dialog-head">
-        <div class="dialog-title">人 物</div>
-        <button class="dialog-close" data-close="modalChar">✕</button>
-      </div>
-
-      <!-- 人物形象选择 -->
-      <div class="modal" id="modalAvatar">
-        <div class="dialog">
-          <div class="dialog-head">
-            <div class="dialog-title">人物形象</div>
-            <button class="dialog-close" data-close="modalAvatar">✕</button>
-          </div>
-          <div class="dialog-body" id="avatarBody"></div>
-          <div class="dialog-foot">
-            <button class="btn primary" data-close="modalAvatar">关 闭</button>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-body" id="charBody"></div>
-      <div class="dialog-foot">
-        <button class="btn" id="btnExportSave">下载存档</button>
-        <button class="btn" id="btnImportSave">上传存档</button>
-        <button class="btn primary" data-close="modalChar">关 闭</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 传送石碑 -->
-  <div class="modal" id="modalTeleport"><div class="dialog"><div class="dialog-head"><div class="dialog-title">🪨 传送石碑</div><button class="dialog-close" data-close="modalTeleport">✕</button></div><div class="dialog-body" id="teleportBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalTeleport">关闭</button></div></div></div>
-  <!-- 背包 -->
-  <div class="modal" id="modalBag">
-    <div class="dialog">
-      <div class="dialog-head">
-        <div class="dialog-title">背 包</div>
-        <button class="dialog-close" data-close="modalBag">✕</button>
-      </div>
-      <div class="dialog-body" id="bagBody"></div>
-      <div class="dialog-foot">
-        <button class="btn primary" data-close="modalBag">关 闭</button>
-      </div>
-    </div>
-  </div>
-  
-  <div class="modal" id="modalEquipment"><div class="dialog"><div class="dialog-head"><div class="dialog-title">装备 · 锻造</div><button class="dialog-close" data-close="modalEquipment">✕</button></div><div class="dialog-body" id="equipmentBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalEquipment">关闭</button></div></div></div>
-  <div class="modal" id="modalGearCodex"><div class="dialog"><div class="dialog-head"><div class="dialog-title">装备图鉴</div><button class="dialog-close" data-close="modalGearCodex">✕</button></div><div class="dialog-body" id="gearCodexBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalGearCodex">关闭</button></div></div></div>
-  <!-- 技能 -->
-  <div class="modal" id="modalSkill">
-    <div class="dialog">
-      <div class="dialog-head">
-        <div class="dialog-title">技 能</div>
-        <button class="dialog-close" data-close="modalSkill">✕</button>
-      </div>
-      <div class="dialog-body" id="skillBody"></div>
-      <div class="dialog-foot">
-        <button class="btn primary" data-close="modalSkill">关 闭</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 召唤兽 -->
-  <div class="modal" id="modalPet">
-    <div class="dialog">
-      <div class="dialog-head">
-        <div class="dialog-title">召 唤 兽</div>
-        <button class="dialog-close" data-close="modalPet">✕</button>
-      </div>
-      <div class="dialog-body" id="petBody"></div>
-      <div class="dialog-foot">
-        <button class="btn primary" data-close="modalPet">关 闭</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 挑战赛 -->
-  <div class="modal" id="modalChallenge"><div class="dialog"><div class="dialog-head"><div class="dialog-title">🏆 每日挑战赛</div><button class="dialog-close" data-close="modalChallenge">✕</button></div><div class="dialog-body" id="challengeBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalChallenge">关闭</button></div></div></div>
-  <div class="modal" id="modalAchievements"><div class="dialog"><div class="dialog-head"><div class="dialog-title">🏅 江湖成就</div><button class="dialog-close" data-close="modalAchievements">✕</button></div><div class="dialog-body" id="achievementsBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalAchievements">关闭</button></div></div></div>
-  <!-- 任务 -->
-  <div class="modal" id="modalTask">
-    <div class="dialog">
-      <div class="dialog-head">
-        <div class="dialog-title">任 务</div>
-        <button class="dialog-close" data-close="modalTask">✕</button>
-      </div>
-      <div class="dialog-body" id="taskBody"></div>
-      <div class="dialog-foot">
-        <button class="btn primary" data-close="modalTask">关 闭</button>
-      </div>
-    </div>
-  </div>
-  
-    <div class="modal" id="modalCultivation"><div class="dialog"><div class="dialog-head"><div class="dialog-title">功法修炼</div><button class="dialog-close" data-close="modalCultivation">✕</button></div><div class="dialog-body" id="cultivationBody"></div><div class="dialog-foot"><button class="btn primary" data-close="modalCultivation">关闭</button></div></div></div>
-  <div class="modal" id="modalDeveloper"><div class="dialog dev-dialog"><div class="dialog-head"><div class="dialog-title">开发者测试中心</div><button class="dialog-close" data-close="modalDeveloper">✕</button></div><div class="dialog-body" id="developerBody"></div><div class="dialog-foot"><button class="btn" id="devRunAll">运行全部测试</button><button class="btn primary" data-close="modalDeveloper">关闭</button></div></div></div>
-<!-- 门派选择（初始弹窗） -->
-  <div class="modal show" id="modalSect">
-    <div class="dialog">
-      <div class="dialog-head">
-        <div class="dialog-title">选 择 门 派</div>
-      </div>
-      <div class="dialog-body" id="sectBody"></div>
-      <div class="dialog-foot">
-        <button class="btn primary" id="btnSectConfirm" disabled>确 定</button>
-      </div>
-    </div>
-  </div>
-  <input id="saveFileInput" type="file" accept=".json,application/json" hidden>
-
-<script src="scripts/core-data.js?v=20261120-sectcomponent4"></script>
-<script src="scripts/ui-panels.js?v=20261120-explorequests1"></script>
-<script src="scripts/world-map.js?v=20261119-move3"></script>
-<script src="scripts/movement-controls.js?v=20261120-openworld2"></script>
-<script src="scripts/battle.js?v=20261120-openworld2"></script>
-<script src="scripts/challenge.js?v=20261119-challenge3"></script>
-<script src="scripts/achievements.js?v=20261120-achievements1"></script>
-<script src="scripts/shops.js"></script>
-<script src="scripts/save-game.js?v=20261120-immortalvisual1"></script>
-<script src="scripts/quality.js?v=20261120-togglefix3"></script>
-<script src="scripts/features.js"></script>
-<script src="scripts/intro.js"></script>
-<script type="module" src="scripts/world3d.js?v=20261120-syntaxfix1"></script>
-<script type="module" src="scripts/immortal3d.js?v=20261120-perf1"></script>
-</div>
-
-
-</body>
-</html>
+import {createMaterialFactory,createMeshAdder} from './three-shared.js';
+let THREE,mat,add;
+const stage=document.getElementById('stage'),legacy=document.getElementById('world');
+let renderer,scene,camera,tiles,player,clouds,rain,ray,pointer,lastX=NaN,lastY=NaN,lastQuality='',lastWorldQuality='',tileHits=[],sunLight;
+const colors={grass:0x5aa044,grass2:0x43802f,path:0xb99a69,water:0x287fbd,water2:0x1c659b,tree:0x326b31,rock:0x777d80,sand:0xd7bb82,snow:0xe6f0f7,lava:0xb94d27,bridge:0x805335,'teleport-stone':0x958052,'build-memorial':0x888b83,'build-stall':0x9b7544,'build-house':0xb77c4e,'build-shop':0x9a8b6a,flower:0x4a903c};
+function contactShadow(g,x,z,sx=.7,sz=.55,opacity=.22){const m=new THREE.Mesh(new THREE.CircleGeometry(1,24),new THREE.MeshBasicMaterial({color:0x10170f,transparent:true,opacity,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));m.rotation.x=-Math.PI/2;m.position.set(x,.006,z);m.scale.set(sx,sz,1);m.renderOrder=1;g.add(m);return m;}
+function tree(g,x,z){const q=new THREE.Group();q.position.set(x,0,z);g.add(q);contactShadow(g,x,z,.58,.48,.34);add(q,new THREE.CylinderGeometry(.09,.14,.72,6),mat(0x654329),0,.36,0);add(q,new THREE.ConeGeometry(.7,1.35,7),mat(0x2f7836),0,1.22,0);add(q,new THREE.SphereGeometry(.4,7,6),mat(0x4c9943),0,1.55,-.08,false);}
+function building(g,x,z,type){const q=new THREE.Group();q.position.set(x,0,z);g.add(q);contactShadow(g,x,z,.62,.58,.32);add(q,new THREE.BoxGeometry(.7,.72,.7),mat(type==='build-memorial'?0x8b8e87:0xc5a06d),0,.36,0);const roof=add(q,new THREE.ConeGeometry(.64,.6,4),mat(type==='build-memorial'?0x696c70:0x914a32),0,1,0);roof.rotation.y=Math.PI/4;if(type==='build-stall')add(q,new THREE.BoxGeometry(1,.08,.76),mat(0xd8b75f),0,.82,0);}
+function make2DSprite(kind,boss=false){
+ const c=document.createElement('canvas');c.width=64;c.height=80;const x=c.getContext('2d');x.imageSmoothingEnabled=false;
+ if(kind==='hero'){
+  x.fillStyle='#17202a';x.fillRect(18,4,28,12);x.fillRect(12,12,8,20);x.fillRect(44,12,8,20);
+  x.fillStyle='#f1c9a5';x.fillRect(20,12,24,22);x.fillStyle='#30242b';x.fillRect(18,8,28,8);
+  x.fillStyle='#15131a';x.fillRect(24,21,5,5);x.fillRect(36,21,5,5);
+  x.fillStyle='#3c8980';x.fillRect(14,36,36,28);x.fillStyle='#d7b45e';x.fillRect(24,42,16,5);
+  x.fillStyle='#293d5d';x.fillRect(16,64,13,12);x.fillRect(35,64,13,12);
+ }else{
+  const body=boss?'#8d2938':'#57889c';x.fillStyle='#15121a';x.fillRect(10,24,44,42);
+  x.fillStyle=body;x.fillRect(12,22,40,40);x.fillRect(18,14,28,14);
+  x.fillStyle=boss?'#d8b67b':'#f5d36d';x.fillRect(18,8,7,16);x.fillRect(39,8,7,16);
+  x.fillStyle='#fff0b0';x.fillRect(20,30,7,7);x.fillRect(37,30,7,7);
+  x.fillStyle='#21131a';x.fillRect(23,32,4,5);x.fillRect(39,32,4,5);
+  x.fillStyle='#2a1720';x.fillRect(27,48,10,4);
+ }
+ const tex=new THREE.CanvasTexture(c);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;tex.colorSpace=THREE.SRGBColorSpace;
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,alphaTest:.08}));
+ sprite.scale.set(kind==='hero'?1.05:.9,kind==='hero'?1.32:1.12,1);sprite.position.set(0,kind==='hero'?.68:.56,0);return sprite;
+}
+function monster(g,x,z,boss){const q=new THREE.Group();q.position.set(x,terrainHeight(x,z),z);g.add(q);contactShadow(g,x,z,.55,.42,.42);const body=add(q,new THREE.SphereGeometry(boss?.34:.27,boss?16:12,boss?12:10),mat(boss?0x9e3444:0x4d8e9a),0,boss?.55:.43,0,true,true);body.scale.set(1,boss?1.08:.9,.82);const chest= boss?add(q,new THREE.BoxGeometry(.58,.34,.34),mat(0x542631),0,.58,.015,true,true):null;if(chest)chest.rotation.z=-.08;const head=add(q,new THREE.SphereGeometry(boss?.24:.2,12,10),mat(boss?0xd4a15b:0xe2c18a),0,boss?.99:.78,.02,true,true);for(const side of [-1,1]){const horn=add(q,new THREE.ConeGeometry(boss?.11:.075,boss?.38:.27,7),mat(boss?0xe5c77e:0x3b5663),side*(boss?.19:.13),boss?1.27:1.02,-.02,true,true);horn.rotation.z=side*-.35;if(boss){const shoulder=add(q,new THREE.SphereGeometry(.16,8,7),mat(0x6c2938),side*.36,.72,0,true,true);shoulder.scale.set(1,.7,1);}}const eyeMat=new THREE.MeshBasicMaterial({color:0xffe58a});for(const side of [-1,1])add(q,new THREE.SphereGeometry(boss?.045:.035,6,6),eyeMat,side*(boss?.09:.075),boss?1.01:.8,.22,false,false);if(boss){const ring=add(q,new THREE.TorusGeometry(.46,.04,7,24),mat(0xffc45d),0,.48,0,false,false);ring.rotation.x=Math.PI/2;const crown=add(q,new THREE.ConeGeometry(.2,.3,6),mat(0xf3c45e),0,1.38,-.02,true,true);}}
+function makePlayer(){
+ const g=new THREE.Group();
+ const robe=mat(0x3c8980),robeDark=mat(0x245d58),skin=mat(0xf1c9a5),hair=mat(0x24202a),gold=mat(0xd7b45e),boots=mat(0x293d5d);
+ add(g,new THREE.CylinderGeometry(.23,.34,.62,9),robe,0,.68,0,true,true);
+ add(g,new THREE.CylinderGeometry(.25,.32,.16,9),robeDark,0,.39,0,true,true);
+ add(g,new THREE.TorusGeometry(.27,.035,6,16),gold,0,.72,0,false,false);
+ const head=add(g,new THREE.SphereGeometry(.22,12,10),skin,0,1.18,0,true,true);
+ head.scale.set(1,.94,.9);
+ const cap=add(g,new THREE.SphereGeometry(.235,10,8),hair,0,1.32,-.015,true,true);
+ cap.scale.set(1,.55,1);
+ add(g,new THREE.BoxGeometry(.28,.045,.055),gold,0,1.28,.205,false,false);
+ const leftArm=add(g,new THREE.CylinderGeometry(.075,.09,.42,8),robe, -.29,.78,0,true,true);leftArm.rotation.z=-.48;
+ const rightArm=add(g,new THREE.CylinderGeometry(.075,.09,.42,8),robe, .29,.78,0,true,true);rightArm.rotation.z=.48;
+ const leftLeg=add(g,new THREE.CylinderGeometry(.085,.095,.34,8),boots,-.13,.19,0,true,true);
+ const rightLeg=add(g,new THREE.CylinderGeometry(.085,.095,.34,8),boots,.13,.19,0,true,true);
+ add(g,new THREE.BoxGeometry(.17,.09,.28),boots,-.13,.045,.045,true,true);
+ add(g,new THREE.BoxGeometry(.17,.09,.28),boots,.13,.045,.045,true,true);
+ const sh=add(g,new THREE.CircleGeometry(.36,20),new THREE.MeshBasicMaterial({color:0x07100b,transparent:true,opacity:.28,depthWrite:false}),0,.012,0,false,false);sh.rotation.x=-Math.PI/2;
+ scene.add(g);return g;
+}
+function terrainHeight(x,z){return .34*Math.sin(x*.19)*Math.cos(z*.17)+.16*Math.sin((x+z)*.31)+.08*Math.cos(z*.57-x*.23);}
+function flowerPatch(g,x,z,y){const q=new THREE.Group();q.position.set(x,y,z);g.add(q);contactShadow(g,x,z,.3,.25,.18);const stemMat=mat(0x397b35),leafMat=mat(0x4c9a42);for(let i=0;i<3;i++){const a=i*Math.PI*2/3,px=Math.cos(a)*.12,pz=Math.sin(a)*.12;const stem=add(q,new THREE.CylinderGeometry(.012,.018,.2,5),stemMat,px,.1,pz,false,false);stem.rotation.z=Math.cos(a)*.25;const leaf=add(q,new THREE.SphereGeometry(.07,7,5),leafMat,px*1.7,.08,pz*1.7,false,false);leaf.scale.set(1,.35,.55);}const colors=[0xf06caa,0xffd45c,0xe9f1ff];for(let i=0;i<5;i++){const a=i*Math.PI*2/5,p=add(q,new THREE.SphereGeometry(.075,8,6),mat(colors[i%colors.length]),Math.cos(a)*.095,.25,Math.sin(a)*.095,false,false);p.scale.set(1,.48,.8);}add(q,new THREE.SphereGeometry(.055,8,6),mat(0xffd34f),0,.27,0,false,false);}
+function teleportMonument(g,x,z,y){const q=new THREE.Group();q.position.set(x,y,z);g.add(q);contactShadow(g,x,z,.62,.48,.36);add(q,new THREE.CylinderGeometry(.43,.52,.16,10),mat(0x75634a),0,.08,0,true,true);add(q,new THREE.CylinderGeometry(.31,.38,.13,8),mat(0xb99b62),0,.19,0,true,true);const stone=add(q,new THREE.BoxGeometry(.3,.95,.2),mat(0x8b927f),0,.69,0,true,true);stone.rotation.z=-.06;const cap=add(q,new THREE.ConeGeometry(.24,.25,4),mat(0xd3b16c),0,1.28,0,true,true);cap.rotation.y=Math.PI/4;add(q,new THREE.TorusGeometry(.34,.035,7,24),new THREE.MeshStandardMaterial({color:0xffd77a,emissive:0x8a5b1a,emissiveIntensity:.5,metalness:.55,roughness:.25}),0,.54,.02,false,false).rotation.x=Math.PI/2;add(q,new THREE.OctahedronGeometry(.12),new THREE.MeshStandardMaterial({color:0xffe7a2,emissive:0xa36a20,emissiveIntensity:.8}),0,.75,.15,false,false);}
+function buildTile(g,x,z,info,wx,wy){const t=info.tile||'grass',geo=new THREE.BufferGeometry(),pos=[],idx=[],seg=2;for(let iz=0;iz<=seg;iz++)for(let ix=0;ix<=seg;ix++){const lx=-.5+ix/seg,lz=-.5+iz/seg;pos.push(lx,terrainHeight(wx+lx,wy+lz),lz);}for(let iz=0;iz<seg;iz++)for(let ix=0;ix<seg;ix++){const a=iz*(seg+1)+ix,b=a+1,c=a+seg+1,d=c+1;idx.push(a,c,b,b,c,d);}geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();const groundColor=colors[t]??0x557c4a,base=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:groundColor,roughness:t==='water'?.28:.96,metalness:t==='water'?.12:0,flatShading:false,side:THREE.DoubleSide}));base.position.set(x,0,z);base.receiveShadow=true;base.userData={wx,wy,type:t};g.add(base);tileHits.push(base);const y=terrainHeight(wx,wy);if(t==='water'||t==='water2'){const water=add(g,new THREE.PlaneGeometry(.96,.96),new THREE.MeshStandardMaterial({color:colors[t],transparent:true,opacity:.78,roughness:.16,metalness:.12}),x,y+.055,z,false,false);water.rotation.x=-Math.PI/2;}if(t==='tree'){const obj=new THREE.Group();obj.position.set(x,y,z);g.add(obj);tree(obj,0,0);}else if(t==='rock'){contactShadow(g,x,z,.43,.38,.3);const r=add(g,new THREE.DodecahedronGeometry(.38),mat(0x7b8588),x,y+.23,z);r.scale.set(1,.75,.85);}else if(t==='flower'||info.decor==='🌺'){flowerPatch(g,x,z,y);}else if(t==='teleport-stone'){teleportMonument(g,x,z,y);}else if(info.building)building(g,x,z,t);else if(t==='lava')add(g,new THREE.SphereGeometry(.18,7,5),new THREE.MeshBasicMaterial({color:0xff7134}),x,y+.1,z,false,false);if(info.boss)monster(g,x,z,true);else if(info.mob)monster(g,x,z,false);}
+function rebuild(){const raw=window.getGame3DState?.()||{},sx=Number(raw.x),sy=Number(raw.y),s={...raw,x:Number.isFinite(sx)?sx:0,y:Number.isFinite(sy)?sy:0},q=document.documentElement.dataset.qualityLevel||'high';if(s.x===lastX&&s.y===lastY&&q===lastWorldQuality)return;lastX=s.x;lastY=s.y;lastWorldQuality=q;if(tiles){scene.remove(tiles);tiles.traverse(o=>o.geometry?.dispose());}tiles=new THREE.Group();scene.add(tiles);tileHits=[];const mobile=matchMedia('(max-width: 700px)').matches;const r=mobile?(q==='low'?4:q==='high'?5:6):(q==='low'?6:q==='high'?8:10);for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){const wx=s.x+dx,wy=s.y+dz,info=window.getGame3DInfo?.(wx,wy)||{tile:'grass'};buildTile(tiles,dx,dz,info,wx,wy);}if(player)player.position.set(0,.02,0);window.updateSceneTitle?.();}
+function cloud(x,z,scale){const q=new THREE.Group();q.position.set(x,5,z);for(let i=0;i<4;i++){const s=add(q,new THREE.SphereGeometry(.8,8,6),new THREE.MeshStandardMaterial({color:0xe4edf4,transparent:true,opacity:.7}),(i-1.5)*.48,Math.sin(i)*.12,0,false,false);s.scale.set(1.3,.5,.75);}q.scale.setScalar(scale);clouds.add(q);}
+function weather(level){if(clouds)scene.remove(clouds);if(rain){scene.remove(rain);rain.geometry.dispose();rain.material.dispose();}clouds=null;rain=null;if(level==='low')return;clouds=new THREE.Group();scene.add(clouds);cloud(-5,-5,1.4);cloud(3,-7,1.8);cloud(7,3,1.2);if(level==='extreme'){const n=matchMedia('(max-width: 700px)').matches?96:240,a=new Float32Array(n*3);for(let i=0;i<n;i++){a[i*3]=(Math.random()-.5)*18;a[i*3+1]=Math.random()*10+1;a[i*3+2]=(Math.random()-.5)*18;}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(a,3));rain=new THREE.Points(geo,new THREE.PointsMaterial({color:0xc6d9ed,size:.055,transparent:true,opacity:.75}));scene.add(rain);}}
+function quality(){const q=document.documentElement.dataset.qualityLevel||'high';if(q===lastQuality)return;lastQuality=q;renderer.setPixelRatio(Math.min(devicePixelRatio||1,q==='low'?.8:q==='high'?1.2:1.65));renderer.shadowMap.enabled=!matchMedia('(max-width: 700px)').matches&&q!=='low';renderer.shadowMap.type=q==='extreme'?THREE.PCFSoftShadowMap:THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=true;renderer.toneMapping=q==='extreme'?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;renderer.toneMappingExposure=q==='extreme'?1.12:1;const mobile=matchMedia('(max-width: 700px)').matches;renderer.setPixelRatio(Math.min(devicePixelRatio||1,q==='low'?.8:q==='high'?1.15:(mobile?1.35:1.65)));if(sunLight){const mapSize=q==='extreme'?(mobile?1536:2048):1024;sunLight.shadow.mapSize.set(mapSize,mapSize);sunLight.shadow.camera.updateProjectionMatrix();sunLight.shadow.bias=-.00018;sunLight.shadow.normalBias=.025;sunLight.shadow.radius=q==='extreme'?4:2;}scene.fog.density=q==='extreme'?.024:q==='high'?.018:.008;weather(q);renderer.setSize(stage.clientWidth,stage.clientHeight,false);}
+function click3D(e){const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const h=ray.intersectObjects(tileHits,false)[0];if(!h)return;const {wx,wy,type}=h.object.userData,info=window.getGame3DInfo?.(wx,wy);if(info?.boss){window.challengeSceneBoss3D?.(wx,wy);return;}window.onTileClick?.(wx,wy,type);}
+function boot(){if(!stage){console.error('3D map stage #stage not found');return;}const topbar=document.getElementById('topbar');const layoutStage=()=>{const top=topbar?topbar.getBoundingClientRect().height:0;Object.assign(stage.style,{position:'absolute',left:'0',right:'0',top:top+'px',bottom:'0',width:'100%',height:'auto',flex:'none',minHeight:'0'});};layoutStage();scene=new THREE.Scene();scene.background=new THREE.Color(0x9db9c9);scene.fog=new THREE.FogExp2(0x9db9c9,.018);camera=new THREE.PerspectiveCamera(58,1,.1,180);camera.position.set(0,8.5,12.5);camera.lookAt(0,.2,-1.5);renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});renderer.domElement.id='world3dCanvas';Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',width:'100%',height:'100%',zIndex:'1',display:'block'});stage.appendChild(renderer.domElement);if(legacy)legacy.style.display=window.map3DEnabled===false?'':'none';const legacyPlayer=document.getElementById('player');if(legacyPlayer)legacyPlayer.style.display=window.map3DEnabled===false?'':'none';renderer.domElement.style.display=window.map3DEnabled===false?'none':'block';scene.add(new THREE.HemisphereLight(0xe5f3ff,0x35452c,2));sunLight=new THREE.DirectionalLight(0xffe2b1,3.2);sunLight.position.set(-5,12,8);sunLight.castShadow=true;sunLight.shadow.mapSize.set(1024,1024);sunLight.shadow.camera.near=.5;sunLight.shadow.camera.far=40;sunLight.shadow.camera.left=-14;sunLight.shadow.camera.right=14;sunLight.shadow.camera.top=14;sunLight.shadow.camera.bottom=-14;sunLight.shadow.bias=-.00018;sunLight.shadow.normalBias=.025;scene.add(sunLight);const groundCanvas=document.createElement('canvas');groundCanvas.width=groundCanvas.height=256;const gx=groundCanvas.getContext('2d');gx.fillStyle='#416f35';gx.fillRect(0,0,256,256);for(let i=0;i<1800;i++){const px=Math.random()*256,py=Math.random()*256;gx.fillStyle=i%3===0?'rgba(151,177,91,.16)':i%3===1?'rgba(18,54,25,.18)':'rgba(211,190,111,.08)';gx.fillRect(px,py,1+Math.random()*3,1+Math.random()*2);}const groundTexture=new THREE.CanvasTexture(groundCanvas);groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(42,42);groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());const groundMaterial=new THREE.MeshStandardMaterial({map:groundTexture,color:0xffffff,roughness:1});const floor=add(scene,new THREE.PlaneGeometry(100,100),groundMaterial,0,-.62,0,false,true);floor.rotation.x=-Math.PI/2;player=makePlayer();ray=new THREE.Raycaster();pointer=new THREE.Vector2();renderer.domElement.addEventListener('click',click3D);const resize=()=>{layoutStage();const rect=stage.getBoundingClientRect(),w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));renderer.domElement.style.width='100%';renderer.domElement.style.height='100%';camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);};const stageObserver=new ResizeObserver(resize);stageObserver.observe(stage);if(topbar)stageObserver.observe(topbar);window.addEventListener('resize',resize,{passive:true});window.visualViewport?.addEventListener('resize',resize,{passive:true});resize();window.renderWorld3D=()=>{if(renderer?.domElement)renderer.domElement.style.display=window.map3DEnabled===false?'none':'block';rebuild();quality();};new MutationObserver(()=>{lastQuality='';lastX=NaN;window.renderWorld3D();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-quality-level']});rebuild();quality();window.dispatchEvent(new Event('world3d-ready'));const clock=new THREE.Clock();let lastFrameAt=0;function renderWorldFrame(now=0){requestAnimationFrame(renderWorldFrame);if(document.hidden||window.map3DEnabled===false||renderer.domElement.style.display==='none')return;const mobile=matchMedia('(max-width: 700px)').matches,interval=mobile?1000/30:1000/45;if(now-lastFrameAt<interval)return;lastFrameAt=now;const t=clock.getElapsedTime();const st=window.getGame3DState?.()||{},px=Number(st.x)||0,pz=Number(st.y)||0;player.position.y=terrainHeight(px,pz)+.035+Math.sin(t*3.2)*.025;player.rotation.y=Math.sin(t*.7)*.08;camera.position.x+=(0-camera.position.x)*.035;camera.position.y+=(8.5-camera.position.y)*.035;camera.position.z+=(12.5-camera.position.z)*.035;camera.lookAt(0,.15,-1.5);if(clouds)clouds.position.x=Math.sin(t*.025)*.6;if(rain){const a=rain.geometry.attributes.position;for(let i=0;i<a.count;i++){let y=a.getY(i)-.24;if(y<0)y=10;a.setY(i,y);}a.needsUpdate=true;}renderer.render(scene,camera);}renderWorldFrame();}
+try{try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');}catch(primaryError){console.warn('Three.js primary CDN failed; trying fallback CDN',primaryError);THREE=await import('https://unpkg.com/three@0.180.0/build/three.module.js');}mat=createMaterialFactory(THREE);add=createMeshAdder(THREE);boot();}catch(e){console.error('3D engine boot failed',e);document.getElementById('world3dCanvas')?.remove();if(legacy){legacy.style.display='block';legacy.style.visibility='visible';legacy.style.pointerEvents='auto';}const legacyPlayer=document.getElementById('player');if(legacyPlayer)legacyPlayer.style.display='';window.map3DEnabled=false;document.body.classList.remove('graphics-3d');const btn=document.getElementById('graphicsToggle');if(btn){btn.textContent='地图2D：开';btn.setAttribute('aria-pressed','false');}window.toast?.('3D地图初始化失败，已自动恢复2D地图；请检查网络或设备WebGL支持');}
