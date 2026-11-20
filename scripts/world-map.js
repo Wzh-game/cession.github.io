@@ -261,6 +261,34 @@ function getMapMonster(x, y){
   return MOBS[pool[index]] || null;
 }
 
+/* ================= 2D 地图 -> 3D 地图数据桥接 =================
+   3D 不再自行猜测/生成地形，而是直接读取 2D 地图的同一套坐标、
+   地形、装饰、Boss 与怪物数据，保证两种视图是同一张地图。
+*/
+function getGame3DState(){
+  return {x:Number(P.x)||0,y:Number(P.y)||0,scene:(getSceneAt(P.x,P.y)||{}).id||'wilderness'};
+}
+function getGame3DInfo(x,y){
+  x=Math.round(Number(x)||0);y=Math.round(Number(y)||0);
+  const tile=getTile(x,y);
+  const boss=getSceneBossAt(x,y);
+  const mob=boss?null:getMapMonster(x,y);
+  return {
+    tile,
+    decor:getDecor(x,y,tile),
+    building:tile==='build-memorial'||tile==='build-stall'||tile==='build-house'||tile==='build-shop',
+    boss,
+    mob,
+    scene:(getSceneAt(x,y)||{}).id||'wilderness'
+  };
+}
+window.getGame3DState=getGame3DState;
+window.getGame3DInfo=getGame3DInfo;
+window.challengeSceneBoss3D=(x,y)=>{
+  const scene=SCENES.find(s=>Math.round(s.cx)===Math.round(x)&&Math.round(s.cy)===Math.round(y));
+  if(scene)challengeSceneBoss(scene.id);
+};
+
 /* ================= 怪物地图图片 ================= */
 function makeMonsterImage(mob){
  if(makeMonsterImage.cache.has(mob.id))return makeMonsterImage.cache.get(mob.id);
