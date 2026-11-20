@@ -1636,3 +1636,79 @@ body.quality-extreme .list-item,body.quality-extreme .gear-card,body.quality-ext
 body.quality-extreme .list-item .li-icon,body.quality-extreme .gear-card img,body.quality-extreme .pet-card img{filter:drop-shadow(0 4px 3px rgba(0,0,0,.72));}
 body.quality-extreme #stage{background-image:radial-gradient(ellipse at 50% 8%,rgba(255,231,180,.12),transparent 52%),linear-gradient(180deg,rgba(20,30,20,.08),rgba(3,8,13,.18));}
 @media(max-width:700px){body.quality-extreme #stage{filter:saturate(1.08) contrast(1.04);}}
+
+
+/* 门派选择专属布局：避免通用横向列表挤压长文本 */
+#modalSect{padding:10px}
+#modalSect .dialog{
+  width:min(640px,100%);
+  max-height:min(90dvh,780px);
+}
+#modalSect .dialog-body{
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:12px;
+}
+#modalSect .sect-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;
+  gap:10px;
+}
+#modalSect .sect-card{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  min-width:0;
+  min-height:132px;
+  height:auto;
+  margin:0;
+  padding:11px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+#modalSect .sect-card .li-icon{
+  width:42px!important;
+  height:42px!important;
+  flex:0 0 42px;
+  margin-top:2px;
+}
+#modalSect .sect-card .li-body{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+  overflow:visible;
+}
+#modalSect .sect-card .li-name{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  line-height:1.45;
+}
+#modalSect .sect-card .li-desc{
+  margin-top:0!important;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+#modalSect .sect-card .li-body > div{
+  min-width:0;
+}
+#modalSect .sect-card .li-body > div[style*="display:flex"]{
+  row-gap:5px!important;
+}
+@media(max-width:560px){
+  #modalSect{padding:8px}
+  #modalSect .dialog{max-height:92dvh}
+  #modalSect .sect-list{grid-template-columns:minmax(0,1fr);gap:8px}
+  #modalSect .sect-card{min-height:0;padding:10px}
+  #modalSect .dialog-head{padding:12px 24px 9px}
+  #modalSect .dialog-body{padding:10px}
+}
+@media(max-height:520px){
+  #modalSect .dialog{max-height:94dvh}
+  #modalSect .dialog-head{padding-top:8px;padding-bottom:7px}
+  #modalSect .dialog-foot{padding:7px 10px}
+}
