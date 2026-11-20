@@ -12,6 +12,31 @@
 @media(max-width:390px){#bottomBar .menu-btn .mi{font-size:15px}#bottomBar .menu-btn .mt{font-size:7px}}
 
 
+/* 2.0 左侧菜单栏：覆盖旧横屏底部导航的固定高度，防止菜单被压扁 */
+#bottomBar{
+  box-sizing:border-box;
+  height:auto!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 170px);
+  flex:0 1 auto!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+@media(max-width:899px) and (orientation:landscape){
+  #bottomBar{
+    height:auto!important;
+    max-height:calc(100dvh - 120px);
+    top:50%;
+    bottom:auto;
+    transform:translateY(-50%);
+  }
+}
+@media(max-height:500px) and (orientation:landscape){
+  #bottomBar{height:auto!important;max-height:calc(100dvh - 92px);}
+}
+
 /* 2.0 移动端菜单改为紧凑左侧栏 */
 #bottomBar{
   position:absolute;left:7px;right:auto;top:50%;bottom:auto;
