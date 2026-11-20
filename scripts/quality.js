@@ -6,42 +6,29 @@ function isMap3DEnabled(){
 function setMapGraphicsMode(enabled,announce=true){
  const on=!!enabled;
  window.map3DEnabled=on;
+ document.body.classList.toggle('graphics-3d',on);
  const canvas=document.getElementById('world3dCanvas');
  const legacy=document.getElementById('world');
  const legacyPlayer=document.getElementById('player');
- if(canvas)canvas.style.display=on?'block':'none';
- if(legacy)legacy.style.display=on?'none':'';
+ if(canvas){canvas.style.display=on?'block':'none';canvas.style.visibility=on?'visible':'hidden';canvas.style.pointerEvents=on?'auto':'none';}
+ if(legacy){legacy.style.display=on?'none':'';legacy.style.visibility=on?'hidden':'';}
  if(legacyPlayer)legacyPlayer.style.display=on?'none':'';
  const btn=document.getElementById('graphicsToggle');
- if(btn){
-  btn.disabled=false;
-  btn.style.pointerEvents='auto';
-  btn.textContent=on?'地图3D：开':'地图2D：开';
-  btn.setAttribute('aria-pressed',String(on));
-  btn.setAttribute('aria-label',on?'当前为3D地图，点击切换到2D地图':'当前为2D地图，点击切换到3D地图');
-  btn.title=on?'3D地图：Three.js立体地形与3D人物':'2D地图：经典像素地图与2D人物';
- }
+ if(btn){btn.disabled=false;btn.textContent=on?'地图3D：开':'地图2D：开';btn.setAttribute('aria-pressed',String(on));btn.setAttribute('aria-label',on?'当前为3D地图，点击切换到2D地图':'当前为2D地图，点击切换到3D地图');btn.title=on?'点击切换为经典2D地图':'点击切换为立体3D地图';}
  try{localStorage.setItem(MAP_3D_KEY,on?'1':'0');}catch(_){}
- if(on){
-  if(typeof window.renderWorld3D==='function')window.renderWorld3D();
- }else if(typeof window.renderWorld==='function'){
-  window.renderWorld();
- }
+ if(on){if(typeof window.renderWorld3D==='function')window.renderWorld3D();}else if(typeof window.renderWorld==='function'){window.renderWorld();}
  if(announce&&typeof toast==='function')toast(on?'已切换为3D地图':'已切换为2D地图');
  return on;
 }
-function toggleMapGraphicsMode(){return setMapGraphicsMode(!window.map3DEnabled);}
+function toggleMapGraphicsMode(){return setMapGraphicsMode(window.map3DEnabled===false,true);}
 window.setMapGraphicsMode=setMapGraphicsMode;
 window.toggleMapGraphicsMode=toggleMapGraphicsMode;
-window.addEventListener('world3d-ready',()=>{const on=window.map3DEnabled!==false;const canvas=document.getElementById('world3dCanvas');if(canvas)canvas.style.display=on?'block':'none';if(on)window.renderWorld3D?.();});
+window.addEventListener('world3d-ready',()=>{const on=window.map3DEnabled!==false;const canvas=document.getElementById('world3dCanvas');if(canvas){canvas.style.display=on?'block':'none';canvas.style.visibility=on?'visible':'hidden';}if(on)window.renderWorld3D?.();});
 function initGraphicsMode(){
- const btn=document.getElementById('graphicsToggle');
- if(!btn)return;
+ const btn=document.getElementById('graphicsToggle');if(!btn)return;
  window.map3DEnabled=isMap3DEnabled();
- btn.disabled=false;
- btn.style.pointerEvents='auto';
- btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleMapGraphicsMode();},{capture:true});
-  btn.addEventListener('pointerup',e=>{if(e.pointerType==='touch')e.stopPropagation();},{passive:true});
+ btn.disabled=false;btn.style.pointerEvents='auto';btn.style.touchAction='manipulation';
+ btn.onclick=function(e){e.preventDefault();e.stopPropagation();window.toggleMapGraphicsMode();return false;};
  setMapGraphicsMode(window.map3DEnabled,false);
 }
 const QUALITY_LEVELS=['low','high','extreme'];
