@@ -16,7 +16,7 @@ function hash(c, r, salt){
   h = Math.imul(h, 0x85ebca6b) >>> 0;
   h ^= h >>> 13;
   h = Math.imul(h, 0xc2b2ae35) >>> 0;
-  h ^= h >>> 16;
+  h = (h ^ (h >>> 16)) >>> 0;
   return h / 4294967296;
 }
 function noise2(x, y, salt){
