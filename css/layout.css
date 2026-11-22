@@ -79,3 +79,41 @@
 
 /* 战斗界面覆盖地图时隐藏探索方向键，避免战斗中误触移动。 */
 #stage.battle-active #dpad{display:none!important;}
+
+/* iPad 横屏最终覆盖：3D 视觉主题不能把左侧菜单改回普通文档流 */
+#bottomBar{
+  position:fixed!important;
+  left:max(6px,env(safe-area-inset-left))!important;
+  right:auto!important;
+  top:50%!important;
+  bottom:auto!important;
+  width:72px!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 150px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  flex-wrap:nowrap!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  padding:6px 5px!important;
+  gap:5px!important;
+  box-sizing:border-box!important;
+  transform:translateY(-50%) translateZ(10px)!important;
+  z-index:500!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+#bottomBar .menu-btn{
+  display:flex!important;
+  flex:0 0 43px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:43px!important;
+  box-sizing:border-box!important;
+}
+@media(max-width:520px){
+  #bottomBar{left:max(4px,env(safe-area-inset-left))!important;width:62px!important;max-height:calc(100dvh - 132px)!important;}
+  #bottomBar .menu-btn{flex-basis:40px!important;min-height:40px!important;}
+}
